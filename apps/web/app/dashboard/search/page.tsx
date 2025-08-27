@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect } from "react";
 import BookmarksGrid from "@/components/dashboard/bookmarks/BookmarksGrid";
-import { FullPageSpinner } from "@/components/ui/full-page-spinner";
+import BookmarksGridSkeleton from "@/components/dashboard/bookmarks/BookmarksGridSkeleton";
 import { useBookmarkSearch } from "@/lib/hooks/bookmark-search";
 import { useInSearchPageStore } from "@/lib/store/useInSearchPageStore";
 import { useSortOrderStore } from "@/lib/store/useSortOrderStore";
@@ -35,7 +35,7 @@ function SearchComp() {
           bookmarks={data.pages.flatMap((b) => b.bookmarks)}
         />
       ) : (
-        <FullPageSpinner />
+        <BookmarksGridSkeleton />
       )}
     </div>
   );
