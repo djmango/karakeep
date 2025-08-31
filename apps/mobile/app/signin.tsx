@@ -1,8 +1,7 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   Keyboard,
   KeyboardAvoidingView,
-  Platform,
   Pressable,
   TouchableWithoutFeedback,
   View,
@@ -15,7 +14,7 @@ import { Input } from "@/components/ui/Input";
 import { Text } from "@/components/ui/Text";
 import useAppSettings from "@/lib/settings";
 import { api } from "@/lib/trpc";
-import { Bug, Check, Edit3, X } from "lucide-react-native";
+import { Bug, Check, Edit3 } from "lucide-react-native";
 
 enum LoginType {
   Password,
@@ -29,7 +28,14 @@ export default function Signin() {
   const [error, setError] = useState<string | undefined>();
   const [loginType, setLoginType] = useState<LoginType>(LoginType.Password);
   const [isEditingServerAddress, setIsEditingServerAddress] = useState(false);
-  const [tempServerAddress, setTempServerAddress] = useState("");
+  const [tempServerAddress, setTempServerAddress] = useState(
+    "https://cloud.karakeep.app",
+  );
+
+  const emailRef = useRef<string>("");
+  const passwordRef = useRef<string>("");
+  const apiKeyRef = useRef<string>("");
+
   const toggleLoginType = () => {
     setLoginType((prev) => {
       if (prev === LoginType.Password) {
@@ -57,7 +63,8 @@ export default function Signin() {
   const { mutate: validateApiKey, isPending: apiKeyValueRequestIsPending } =
     api.apiKeys.validate.useMutation({
       onSuccess: () => {
-        setSettings({ ...settings, apiKey: formState.apiKey });
+        const apiKey = apiKeyRef.current;
+        setSettings({ ...settings, apiKey: apiKey });
       },
       onError: (e) => {
         if (e.data?.code === "UNAUTHORIZED") {
@@ -68,52 +75,42 @@ export default function Signin() {
       },
     });
 
-  const [formState, setFormState] = useState<{
-    serverAddress: string;
-    email: string;
-    password: string;
-    apiKey: string;
-  }>({
-    serverAddress: "https://cloud.karakeep.app",
-    email: "",
-    password: "",
-    apiKey: "",
-  });
-
   if (settings.apiKey) {
     return <Redirect href="dashboard" />;
   }
 
   const onSignin = () => {
-    if (!formState.serverAddress) {
+    if (!tempServerAddress) {
       setError("Server address is required");
       return;
     }
 
     if (
-      !formState.serverAddress.startsWith("http://") &&
-      !formState.serverAddress.startsWith("https://")
+      !tempServerAddress.startsWith("http://") &&
+      !tempServerAddress.startsWith("https://")
     ) {
       setError("Server address must start with http:// or https://");
       return;
     }
 
     if (loginType === LoginType.Password) {
+      const email = emailRef.current;
+      const password = passwordRef.current;
+
       const randStr = (Math.random() + 1).toString(36).substring(5);
       login({
-        email: formState.email,
-        password: formState.password,
+        email: email.trim(),
+        password: password,
         keyName: `Mobile App: (${randStr})`,
       });
     } else if (loginType === LoginType.ApiKey) {
-      validateApiKey({ apiKey: formState.apiKey });
+      const apiKey = apiKeyRef.current;
+      validateApiKey({ apiKey: apiKey });
     }
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
+    <KeyboardAvoidingView behavior="padding">
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View className="flex h-full flex-col justify-center gap-2 px-4">
           <View className="items-center">
@@ -136,13 +133,12 @@ export default function Signin() {
             {!isEditingServerAddress ? (
               <View className="flex-row items-center gap-2">
                 <View className="flex-1 rounded-md border border-border bg-card px-3 py-2">
-                  <Text>{formState.serverAddress}</Text>
+                  <Text>{tempServerAddress}</Text>
                 </View>
                 <Button
                   size="icon"
                   variant="secondary"
                   onPress={() => {
-                    setTempServerAddress(formState.serverAddress);
                     setIsEditingServerAddress(true);
                   }}
                 >
@@ -171,10 +167,6 @@ export default function Signin() {
                   variant="primary"
                   onPress={() => {
                     if (tempServerAddress.trim()) {
-                      setFormState((s) => ({
-                        ...s,
-                        serverAddress: tempServerAddress.trim(),
-                      }));
                       setSettings({
                         ...settings,
                         address: tempServerAddress.trim().replace(/\/$/, ""),
@@ -190,21 +182,6 @@ export default function Signin() {
                     className="text-white"
                   />
                 </Button>
-                <Button
-                  size="icon"
-                  variant="secondary"
-                  onPress={() => {
-                    setTempServerAddress("");
-                    setIsEditingServerAddress(false);
-                  }}
-                >
-                  <TailwindResolver
-                    comp={(styles) => (
-                      <X size={16} color={styles?.color?.toString()} />
-                    )}
-                    className="color-foreground"
-                  />
-                </Button>
               </View>
             )}
           </View>
@@ -218,10 +195,8 @@ export default function Signin() {
                   placeholder="Email"
                   keyboardType="email-address"
                   autoCapitalize="none"
-                  value={formState.email}
-                  onChangeText={(e) =>
-                    setFormState((s) => ({ ...s, email: e.trim() }))
-                  }
+                  defaultValue={""}
+                  onChangeText={(text) => (emailRef.current = text)}
                 />
               </View>
               <View className="gap-2">
@@ -231,12 +206,10 @@ export default function Signin() {
                   inputClasses="bg-card"
                   placeholder="Password"
                   secureTextEntry
-                  value={formState.password}
+                  defaultValue={""}
                   autoCapitalize="none"
                   textContentType="password"
-                  onChangeText={(e) =>
-                    setFormState((s) => ({ ...s, password: e }))
-                  }
+                  onChangeText={(text) => (passwordRef.current = text)}
                 />
               </View>
             </>
@@ -250,10 +223,10 @@ export default function Signin() {
                 inputClasses="bg-card"
                 placeholder="API Key"
                 secureTextEntry
-                value={formState.apiKey}
+                defaultValue={""}
                 autoCapitalize="none"
                 textContentType="password"
-                onChangeText={(e) => setFormState((s) => ({ ...s, apiKey: e }))}
+                onChangeText={(text) => (apiKeyRef.current = text)}
               />
             </View>
           )}
