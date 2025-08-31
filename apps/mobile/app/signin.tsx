@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/Input";
 import { Text } from "@/components/ui/Text";
 import useAppSettings from "@/lib/settings";
 import { api } from "@/lib/trpc";
-import { Bug } from "lucide-react-native";
+import { Bug, Check, Edit3, X } from "lucide-react-native";
 
 enum LoginType {
   Password,
@@ -28,6 +28,8 @@ export default function Signin() {
 
   const [error, setError] = useState<string | undefined>();
   const [loginType, setLoginType] = useState<LoginType>(LoginType.Password);
+  const [isEditingServerAddress, setIsEditingServerAddress] = useState(false);
+  const [tempServerAddress, setTempServerAddress] = useState("");
   const toggleLoginType = () => {
     setLoginType((prev) => {
       if (prev === LoginType.Password) {
@@ -72,7 +74,7 @@ export default function Signin() {
     password: string;
     apiKey: string;
   }>({
-    serverAddress: "",
+    serverAddress: "https://cloud.karakeep.app",
     email: "",
     password: "",
     apiKey: "",
@@ -131,18 +133,80 @@ export default function Signin() {
           )}
           <View className="gap-2">
             <Text className="font-bold">Server Address</Text>
-            <Input
-              className="w-full"
-              inputClasses="bg-card"
-              placeholder="Server Address"
-              value={formState.serverAddress}
-              autoCapitalize="none"
-              keyboardType="url"
-              onChangeText={(e) => {
-                setFormState((s) => ({ ...s, serverAddress: e }));
-                setSettings({ ...settings, address: e.replace(/\/$/, "") });
-              }}
-            />
+            {!isEditingServerAddress ? (
+              <View className="flex-row items-center gap-2">
+                <View className="flex-1 rounded-md border border-border bg-card px-3 py-2">
+                  <Text>{formState.serverAddress}</Text>
+                </View>
+                <Button
+                  size="icon"
+                  variant="secondary"
+                  onPress={() => {
+                    setTempServerAddress(formState.serverAddress);
+                    setIsEditingServerAddress(true);
+                  }}
+                >
+                  <TailwindResolver
+                    comp={(styles) => (
+                      <Edit3 size={16} color={styles?.color?.toString()} />
+                    )}
+                    className="color-foreground"
+                  />
+                </Button>
+              </View>
+            ) : (
+              <View className="flex-row items-center gap-2">
+                <Input
+                  className="flex-1"
+                  inputClasses="bg-card"
+                  placeholder="Server Address"
+                  value={tempServerAddress}
+                  autoCapitalize="none"
+                  keyboardType="url"
+                  onChangeText={setTempServerAddress}
+                  autoFocus
+                />
+                <Button
+                  size="icon"
+                  variant="primary"
+                  onPress={() => {
+                    if (tempServerAddress.trim()) {
+                      setFormState((s) => ({
+                        ...s,
+                        serverAddress: tempServerAddress.trim(),
+                      }));
+                      setSettings({
+                        ...settings,
+                        address: tempServerAddress.trim().replace(/\/$/, ""),
+                      });
+                    }
+                    setIsEditingServerAddress(false);
+                  }}
+                >
+                  <TailwindResolver
+                    comp={(styles) => (
+                      <Check size={16} color={styles?.color?.toString()} />
+                    )}
+                    className="text-white"
+                  />
+                </Button>
+                <Button
+                  size="icon"
+                  variant="secondary"
+                  onPress={() => {
+                    setTempServerAddress("");
+                    setIsEditingServerAddress(false);
+                  }}
+                >
+                  <TailwindResolver
+                    comp={(styles) => (
+                      <X size={16} color={styles?.color?.toString()} />
+                    )}
+                    className="color-foreground"
+                  />
+                </Button>
+              </View>
+            )}
           </View>
           {loginType === LoginType.Password && (
             <>
