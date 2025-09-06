@@ -4,6 +4,7 @@ import { workerStatsCounter } from "metrics";
 import cron from "node-cron";
 import Parser from "rss-parser";
 import { buildImpersonatingTRPCClient } from "trpc";
+import { fetchWithProxy } from "utils";
 import { z } from "zod";
 
 import type { ZFeedRequestSchema } from "@karakeep/shared/queues";
@@ -111,7 +112,7 @@ async function run(req: DequeuedJob<ZFeedRequestSchema>) {
     `[feed][${jobId}] Starting fetching feed "${feed.name}" (${feed.id}) ...`,
   );
 
-  const response = await fetch(feed.url, {
+  const response = await fetchWithProxy(feed.url, {
     signal: AbortSignal.timeout(5000),
     headers: {
       UserAgent:

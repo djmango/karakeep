@@ -9,8 +9,6 @@ import DOMPurify from "dompurify";
 import { eq } from "drizzle-orm";
 import { execa } from "execa";
 import { exitAbortController } from "exit";
-import { HttpProxyAgent } from "http-proxy-agent";
-import { HttpsProxyAgent } from "https-proxy-agent";
 import { JSDOM, VirtualConsole } from "jsdom";
 import { DequeuedJob, EnqueueOptions, Runner } from "liteque";
 import metascraper from "metascraper";
@@ -25,10 +23,10 @@ import metascraperTitle from "metascraper-title";
 import metascraperTwitter from "metascraper-twitter";
 import metascraperUrl from "metascraper-url";
 import { workerStatsCounter } from "metrics";
-import fetch from "node-fetch";
 import { Browser, BrowserContextOptions } from "playwright";
 import { chromium } from "playwright-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
+import { fetchWithProxy } from "utils";
 import { getBookmarkDetails, updateAsset } from "workerUtils";
 
 import type { ZCrawlLinkRequest } from "@karakeep/shared/queues";
@@ -86,44 +84,6 @@ const metascraperParser = metascraper([
   metascraperUrl(),
 ]);
 
-function getProxyAgent(url: string) {
-  const { proxy } = serverConfig;
-
-  if (!proxy.httpProxy && !proxy.httpsProxy) {
-    return undefined;
-  }
-
-  const urlObj = new URL(url);
-  const protocol = urlObj.protocol;
-
-  // Check if URL should bypass proxy
-  if (proxy.noProxy) {
-    const noProxyList = proxy.noProxy.split(",").map((host) => host.trim());
-    const hostname = urlObj.hostname;
-
-    for (const noProxyHost of noProxyList) {
-      if (
-        noProxyHost === hostname ||
-        (noProxyHost.startsWith(".") && hostname.endsWith(noProxyHost)) ||
-        hostname.endsWith("." + noProxyHost)
-      ) {
-        return undefined;
-      }
-    }
-  }
-
-  if (protocol === "https:" && proxy.httpsProxy) {
-    return new HttpsProxyAgent(proxy.httpsProxy);
-  } else if (protocol === "http:" && proxy.httpProxy) {
-    return new HttpProxyAgent(proxy.httpProxy);
-  } else if (proxy.httpProxy) {
-    // Fallback to HTTP proxy for HTTPS if HTTPS proxy not configured
-    return new HttpProxyAgent(proxy.httpProxy);
-  }
-
-  return undefined;
-}
-
 function getPlaywrightProxyConfig(): BrowserContextOptions["proxy"] {
   const { proxy } = serverConfig;
 
@@ -147,14 +107,6 @@ function getPlaywrightProxyConfig(): BrowserContextOptions["proxy"] {
     bypass: proxy.noProxy,
   };
 }
-
-const fetchWithProxy = (url: string, options: Record<string, unknown> = {}) => {
-  const agent = getProxyAgent(url);
-  if (agent) {
-    options.agent = agent;
-  }
-  return fetch(url, options);
-};
 
 let globalBrowser: Browser | undefined;
 let globalBlocker: PlaywrightBlocker | undefined;
