@@ -1150,14 +1150,16 @@ async function runCrawler(job: DequeuedJob<ZCrawlLinkRequest>) {
     // Update the search index
     await triggerSearchReindex(bookmarkId, enqueueOpts);
 
-    // Trigger a potential download of a video from the URL
-    await VideoWorkerQueue.enqueue(
-      {
-        bookmarkId,
-        url,
-      },
-      enqueueOpts,
-    );
+    if (serverConfig.crawler.downloadVideo) {
+      // Trigger a potential download of a video from the URL
+      await VideoWorkerQueue.enqueue(
+        {
+          bookmarkId,
+          url,
+        },
+        enqueueOpts,
+      );
+    }
 
     // Trigger a webhook
     await triggerWebhook(bookmarkId, "crawled", undefined, enqueueOpts);
