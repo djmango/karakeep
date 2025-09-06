@@ -1280,6 +1280,9 @@ importers:
 
   packages/shared-server:
     dependencies:
+      '@karakeep/db':
+        specifier: workspace:^0.1.0
+        version: link:../db
       '@karakeep/plugins-search-meilisearch':
         specifier: workspace:^0.1.0
         version: link:../plugins-search-meilisearch
@@ -1299,12 +1302,12 @@ importers:
       '@karakeep/db':
         specifier: workspace:*
         version: link:../db
-      '@karakeep/plugins-search-meilisearch':
-        specifier: workspace:*
-        version: link:../plugins-search-meilisearch
       '@karakeep/shared':
         specifier: workspace:*
         version: link:../shared
+      '@karakeep/shared-server':
+        specifier: workspace:*
+        version: link:../shared-server
       '@trpc/server':
         specifier: ^11.4.3
         version: 11.4.3(typescript@5.8.3)

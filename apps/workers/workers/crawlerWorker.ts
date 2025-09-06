@@ -41,6 +41,7 @@ import {
   bookmarks,
   users,
 } from "@karakeep/db/schema";
+import { QuotaService } from "@karakeep/shared-server";
 import {
   ASSET_TYPES,
   getAssetSize,
@@ -65,7 +66,6 @@ import {
 } from "@karakeep/shared/queues";
 import { tryCatch } from "@karakeep/shared/tryCatch";
 import { BookmarkTypes } from "@karakeep/shared/types/bookmarks";
-import { checkStorageQuota } from "@karakeep/trpc/lib/storageQuota";
 
 import metascraperReddit from "../metascraper-plugins/metascraper-reddit";
 
@@ -536,7 +536,7 @@ async function storeScreenshot(
 
   // Check storage quota before saving the screenshot
   const { data: quotaApproved, error: quotaError } = await tryCatch(
-    checkStorageQuota(db, userId, screenshot.byteLength),
+    QuotaService.checkStorageQuota(db, userId, screenshot.byteLength),
   );
 
   if (quotaError) {
@@ -586,7 +586,7 @@ async function downloadAndStoreFile(
 
     // Check storage quota before saving the asset
     const { data: quotaApproved, error: quotaError } = await tryCatch(
-      checkStorageQuota(db, userId, buffer.byteLength),
+      QuotaService.checkStorageQuota(db, userId, buffer.byteLength),
     );
 
     if (quotaError) {
@@ -655,7 +655,7 @@ async function archiveWebpage(
   const fileSize = stats.size;
 
   const { data: quotaApproved, error: quotaError } = await tryCatch(
-    checkStorageQuota(db, userId, fileSize),
+    QuotaService.checkStorageQuota(db, userId, fileSize),
   );
 
   if (quotaError) {
@@ -813,7 +813,7 @@ async function storeHtmlContent(
   }
 
   const { data: quotaApproved, error: quotaError } = await tryCatch(
-    checkStorageQuota(db, userId, contentBuffer.byteLength),
+    QuotaService.checkStorageQuota(db, userId, contentBuffer.byteLength),
   );
   if (quotaError) {
     logger.warn(
