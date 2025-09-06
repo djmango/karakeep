@@ -408,7 +408,7 @@ export async function runTagging(
   inferenceClient: InferenceClient,
 ) {
   if (!serverConfig.inference.enableAutoTagging) {
-    logger.info(
+    logger.debug(
       `[inference][${job.id}] Skipping tagging job for bookmark with id "${bookmarkId}" because it's disabled in the config.`,
     );
     return;

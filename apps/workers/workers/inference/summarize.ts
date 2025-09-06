@@ -43,7 +43,7 @@ export async function runSummarization(
   inferenceClient: InferenceClient,
 ) {
   if (!serverConfig.inference.enableAutoSummarization) {
-    logger.info(
+    logger.debug(
       `[inference][${job.id}] Skipping summarization job for bookmark with id "${bookmarkId}" because it's disabled in the config.`,
     );
     return;
