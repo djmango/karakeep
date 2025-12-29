@@ -80,10 +80,9 @@ Analyze the TEXT_CONTENT below and suggest relevant tags that describe its key t
 - Aim for a variety of tags, including broad categories, specific keywords, and potential sub-genres.
 - The tags must be in ${lang}.
 - If the tag is not generic enough, don't include it.
-- Return empty tags if the content is:
-    - An error page (404, 403, blocked, not found)
-    - Mostly boilerplate (cookie consent, login walls, GDPR notices)
-    - Garbled, truncated, or nonsensical
+- Do NOT generate tags related to:
+    - An error page (404, 403, blocked, not found, dns errors)
+    - Boilerplate content (cookie consent, login walls, GDPR notices)
 - Aim for 3-5 tags.
 - If there are no good tags, leave the array empty.
 ${tagStyleInstruction}
