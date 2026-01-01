@@ -40,7 +40,8 @@
     },
     "quota": "Quota",
     "bookmarks": "Bookmarks",
-    "storage": "Storage"
+    "storage": "Storage",
+    "default": "Default"
   },
   "layouts": {
     "masonry": "Masonry",
@@ -210,7 +211,7 @@
         "change": "Change avatar",
         "remove": "Remove avatar",
         "remove_confirm_title": "Remove avatar?",
-        "remove_confirm_description": "This will clear your current profile photo.",
+        "remove_confirm_description": "This will clear your current profile photo. Kinda like deleting cookies, but for your face.",
         "updated": "Avatar updated",
         "removed": "Avatar removed"
       },
@@ -226,6 +227,38 @@
           "show": "Show archived bookmarks in tags and lists",
           "hide": "Hide archived bookmarks in tags and lists"
         }
+      },
+      "reader_settings": {
+        "local_overrides_title": "Device-specific settings active",
+        "using_default": "Using client default",
+        "clear_override_hint": "Clear device override to use global setting ({{value}})",
+        "font_size": "Font Size",
+        "font_family": "Font Family",
+        "preview_inline": "(preview)",
+        "tooltip_preview": "Preview changes ain't saved yet",
+        "save_to_all_devices": "All devices, ya hear?",
+        "tooltip_local": "Device settings are different from the global ones",
+        "reset_preview": "Reset preview, mate",
+        "mono": "Monospace",
+        "line_height": "Line Height",
+        "tooltip_default": "Reading settings",
+        "title": "Reader Settings",
+        "serif": "Serif",
+        "preview": "Preview",
+        "not_set": "Not set",
+        "clear_local_overrides": "Clear device settings",
+        "preview_text": "The quick brown fox jumps over the lazy dog. This is how your reader view text will appear, ya dig?",
+        "local_overrides_cleared": "Device-specific settings have been cleared",
+        "local_overrides_description": "This device has reader settings that differ from your global defaults:",
+        "clear_defaults": "Clear all defaults",
+        "description": "Configure default text settings for the reader view. These settings sync across all your devices, sweet!",
+        "defaults_cleared": "Reader defaults have been cleared",
+        "save_hint": "Save settings just for this device or sync 'em across all devices",
+        "save_as_default": "Save as default",
+        "save_to_device": "This here device",
+        "sans": "Sans Serif",
+        "tooltip_preview_and_local": "Preview changes ain't saved yet; device settings are different from the global ones",
+        "adjust_hint": "Adjust the settings above to preview them changes"
       }
     },
     "ai": {
@@ -239,7 +272,21 @@
       "all_tagging": "All Tagging",
       "text_tagging": "Text Tagging",
       "image_tagging": "Image Tagging",
-      "summarization": "Summarization"
+      "summarization": "Summarization",
+      "tag_style": "Tag Style",
+      "auto_summarization_description": "Automatically generate summaries for your bookmarks using AI.",
+      "auto_tagging": "Auto-tagging",
+      "titlecase_spaces": "Title case with spaces",
+      "lowercase_underscores": "Lowercase with underscores",
+      "inference_language": "Inference Language",
+      "titlecase_hyphens": "Title case with hyphens",
+      "lowercase_hyphens": "Lowercase with hyphens",
+      "lowercase_spaces": "Lowercase with spaces",
+      "inference_language_description": "Pick the language for the tags and summaries the AI whips up.",
+      "tag_style_description": "Pick how you want your auto-generated tags to look.",
+      "auto_tagging_description": "Automatically generate tags for your bookmarks using AI.",
+      "camelCase": "camelCase",
+      "auto_summarization": "Auto-summarization"
     },
     "feeds": {
       "rss_subscriptions": "RSS Subscriptions",
@@ -769,7 +816,10 @@
     "filters": "Filters",
     "tags": "Tags",
     "lists": "Lists",
-    "no_suggestions": "No suggestions"
+    "no_suggestions": "No suggestions",
+    "is_broken_link": "Has Broken Link",
+    "is_not_broken_link": "Has Working Link",
+    "feeds": "Feeds"
   },
   "preview": {
     "view_original": "View Original",
@@ -778,14 +828,15 @@
     "tabs": {
       "content": "Content",
       "details": "Details"
-    }
+    },
+    "archive_info": "Archives might not show inline properly if they need Javascript. For the best experience, <1>download it and open it in your browser</1>."
   },
   "toasts": {
     "bookmarks": {
       "deleted": "The bookmark has been deleted!",
       "refetch": "Re-fetch has been enqueued!",
       "full_page_archive": "Full Page Archive creation has been triggered",
-      "preserve_pdf": "PDF preservation has been triggered",
+      "preserve_pdf": "PDF preservation has been triggered, yo",
       "delete_from_list": "The bookmark has been deleted from the list",
       "clipboard_copied": "Link has been added to your clipboard!",
       "updated": "The bookmark has been updated!"
