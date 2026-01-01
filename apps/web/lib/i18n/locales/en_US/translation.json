@@ -211,7 +211,7 @@
         "change": "Change avatar",
         "remove": "Remove avatar",
         "remove_confirm_title": "Remove avatar?",
-        "remove_confirm_description": "This will clear your current profile photo. Kinda like deleting cookies, but for your face.",
+        "remove_confirm_description": "This will clear your current profile photo.",
         "updated": "Avatar updated",
         "removed": "Avatar removed"
       },
@@ -235,10 +235,10 @@
         "font_size": "Font Size",
         "font_family": "Font Family",
         "preview_inline": "(preview)",
-        "tooltip_preview": "Preview changes ain't saved yet",
-        "save_to_all_devices": "All devices, ya hear?",
-        "tooltip_local": "Device settings are different from the global ones",
-        "reset_preview": "Reset preview, mate",
+        "tooltip_preview": "Unsaved preview changes",
+        "save_to_all_devices": "All devices",
+        "tooltip_local": "Device settings differ from global",
+        "reset_preview": "Reset preview",
         "mono": "Monospace",
         "line_height": "Line Height",
         "tooltip_default": "Reading settings",
@@ -247,18 +247,18 @@
         "preview": "Preview",
         "not_set": "Not set",
         "clear_local_overrides": "Clear device settings",
-        "preview_text": "The quick brown fox jumps over the lazy dog. This is how your reader view text will appear, ya dig?",
+        "preview_text": "The quick brown fox jumps over the lazy dog. This is how your reader view text will appear.",
         "local_overrides_cleared": "Device-specific settings have been cleared",
         "local_overrides_description": "This device has reader settings that differ from your global defaults:",
         "clear_defaults": "Clear all defaults",
-        "description": "Configure default text settings for the reader view. These settings sync across all your devices, sweet!",
+        "description": "Configure default text settings for the reader view. These settings sync across all your devices.",
         "defaults_cleared": "Reader defaults have been cleared",
-        "save_hint": "Save settings just for this device or sync 'em across all devices",
+        "save_hint": "Save settings for this device only or sync across all devices",
         "save_as_default": "Save as default",
-        "save_to_device": "This here device",
+        "save_to_device": "This device",
         "sans": "Sans Serif",
-        "tooltip_preview_and_local": "Preview changes ain't saved yet; device settings are different from the global ones",
-        "adjust_hint": "Adjust the settings above to preview them changes"
+        "tooltip_preview_and_local": "Unsaved preview changes; device settings differ from global",
+        "adjust_hint": "Adjust settings above to preview changes"
       }
     },
     "ai": {
@@ -282,8 +282,8 @@
       "titlecase_hyphens": "Title case with hyphens",
       "lowercase_hyphens": "Lowercase with hyphens",
       "lowercase_spaces": "Lowercase with spaces",
-      "inference_language_description": "Pick the language for the tags and summaries the AI whips up.",
-      "tag_style_description": "Pick how you want your auto-generated tags to look.",
+      "inference_language_description": "Choose language for AI-generated tags and summaries.",
+      "tag_style_description": "Choose how your auto-generated tags should be formatted.",
       "auto_tagging_description": "Automatically generate tags for your bookmarks using AI.",
       "camelCase": "camelCase",
       "auto_summarization": "Auto-summarization"
@@ -829,14 +829,14 @@
       "content": "Content",
       "details": "Details"
     },
-    "archive_info": "Archives might not show inline properly if they need Javascript. For the best experience, <1>download it and open it in your browser</1>."
+    "archive_info": "Archives may not render correctly inline if they require Javascript. For best results, <1>download it and open in your browser</1>."
   },
   "toasts": {
     "bookmarks": {
       "deleted": "The bookmark has been deleted!",
       "refetch": "Re-fetch has been enqueued!",
       "full_page_archive": "Full Page Archive creation has been triggered",
-      "preserve_pdf": "PDF preservation has been triggered, yo",
+      "preserve_pdf": "PDF preservation has been triggered",
       "delete_from_list": "The bookmark has been deleted from the list",
       "clipboard_copied": "Link has been added to your clipboard!",
       "updated": "The bookmark has been updated!"
