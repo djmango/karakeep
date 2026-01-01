@@ -11,7 +11,6 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { toast } from "@/components/ui/sonner";
 import { useClientConfig } from "@/lib/clientConfig";
 import useUpload from "@/lib/hooks/upload-file";
 import { useTranslation } from "@/lib/i18n/client";
@@ -31,6 +30,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { toast } from "sonner";
 
 import type {
   ZBookmark,
@@ -74,6 +74,9 @@ interface SubsectionItem {
   items: ActionItem[];
 }
 
+const getBannerSonnerId = (bookmarkId: string) =>
+  `replace-banner-${bookmarkId}`;
+
 type ActionItemType = ActionItem | SubsectionItem;
 
 function isSubsectionItem(item: ActionItemType): item is SubsectionItem {
@@ -111,42 +114,33 @@ export default function BookmarkOptions({ bookmark }: { bookmark: ZBookmark }) {
 
   const bannerFileInputRef = useRef<HTMLInputElement>(null);
 
-  const { mutate: uploadAsset } = useUpload({
+  const { mutate: uploadBannerAsset } = useUpload({
     onError: (e) => {
-      toast({
-        description: e.error,
-        variant: "destructive",
-      });
+      toast.error(e.error, { id: getBannerSonnerId(bookmark.id) });
     },
   });
 
   const { mutate: attachAsset, isPending: isAttaching } =
     useAttachBookmarkAsset({
       onSuccess: () => {
-        toast({
-          description: "Banner has been attached!",
+        toast.success(t("toasts.bookmarks.update_banner"), {
+          id: getBannerSonnerId(bookmark.id),
         });
       },
       onError: (e) => {
-        toast({
-          description: e.message,
-          variant: "destructive",
-        });
+        toast.error(e.message, { id: getBannerSonnerId(bookmark.id) });
       },
     });
 
   const { mutate: replaceAsset, isPending: isReplacing } =
     useReplaceBookmarkAsset({
       onSuccess: () => {
-        toast({
-          description: "Banner has been replaced!",
+        toast.success(t("toasts.bookmarks.update_banner"), {
+          id: getBannerSonnerId(bookmark.id),
         });
       },
       onError: (e) => {
-        toast({
-          description: e.message,
-          variant: "destructive",
-        });
+        toast.error(e.message, { id: getBannerSonnerId(bookmark.id) });
       },
     });
 
@@ -154,53 +148,40 @@ export default function BookmarkOptions({ bookmark }: { bookmark: ZBookmark }) {
   const withinListContext = useBookmarkListContext();
 
   const onError = () => {
-    toast({
-      variant: "destructive",
-      title: t("common.something_went_wrong"),
-    });
+    toast.error(t("common.something_went_wrong"));
   };
 
   const updateBookmarkMutator = useUpdateBookmark({
     onSuccess: () => {
-      toast({
-        description: t("toasts.bookmarks.updated"),
-      });
+      toast.success(t("toasts.bookmarks.updated"));
     },
     onError,
   });
 
   const crawlBookmarkMutator = useRecrawlBookmark({
     onSuccess: () => {
-      toast({
-        description: t("toasts.bookmarks.refetch"),
-      });
+      toast.success(t("toasts.bookmarks.refetch"));
     },
     onError,
   });
 
   const fullPageArchiveBookmarkMutator = useRecrawlBookmark({
     onSuccess: () => {
-      toast({
-        description: t("toasts.bookmarks.full_page_archive"),
-      });
+      toast.success(t("toasts.bookmarks.full_page_archive"));
     },
     onError,
   });
 
   const preservePdfMutator = useRecrawlBookmark({
     onSuccess: () => {
-      toast({
-        description: t("toasts.bookmarks.preserve_pdf"),
-      });
+      toast.success(t("toasts.bookmarks.preserve_pdf"));
     },
     onError,
   });
 
   const removeFromListMutator = useRemoveBookmarkFromList({
     onSuccess: () => {
-      toast({
-        description: t("toasts.bookmarks.delete_from_list"),
-      });
+      toast.success(t("toasts.bookmarks.delete_from_list"));
     },
     onError,
   });
@@ -214,7 +195,10 @@ export default function BookmarkOptions({ bookmark }: { bookmark: ZBookmark }) {
       );
 
       if (existingBanner) {
-        uploadAsset(file, {
+        toast.loading(t("toasts.bookmarks.uploading_banner"), {
+          id: getBannerSonnerId(bookmark.id),
+        });
+        uploadBannerAsset(file, {
           onSuccess: (resp) => {
             replaceAsset({
               bookmarkId: bookmark.id,
@@ -224,7 +208,10 @@ export default function BookmarkOptions({ bookmark }: { bookmark: ZBookmark }) {
           },
         });
       } else {
-        uploadAsset(file, {
+        toast.loading(t("toasts.bookmarks.uploading_banner"), {
+          id: getBannerSonnerId(bookmark.id),
+        });
+        uploadBannerAsset(file, {
           onSuccess: (resp) => {
             attachAsset({
               bookmarkId: bookmark.id,
@@ -303,9 +290,7 @@ export default function BookmarkOptions({ bookmark }: { bookmark: ZBookmark }) {
         navigator.clipboard.writeText(
           (bookmark.content as ZBookmarkedLink).url,
         );
-        toast({
-          description: t("toasts.bookmarks.clipboard_copied"),
-        });
+        toast.success(t("toasts.bookmarks.clipboard_copied"));
       },
     },
     {

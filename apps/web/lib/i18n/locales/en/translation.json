@@ -825,7 +825,9 @@
       "full_page_archive": "Full Page Archive creation has been triggered",
       "preserve_pdf": "PDF preservation has been triggered",
       "delete_from_list": "The bookmark has been deleted from the list",
-      "clipboard_copied": "Link has been added to your clipboard!"
+      "clipboard_copied": "Link has been added to your clipboard!",
+      "update_banner": "Banner has been updated!",
+      "uploading_banner": "Uploading banner..."
     },
     "lists": {
       "created": "List has been created!",
