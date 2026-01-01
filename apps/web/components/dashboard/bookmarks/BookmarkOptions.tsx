@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { ChangeEvent, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -13,11 +13,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "@/components/ui/sonner";
 import { useClientConfig } from "@/lib/clientConfig";
+import useUpload from "@/lib/hooks/upload-file";
 import { useTranslation } from "@/lib/i18n/client";
 import {
   Archive,
+  Download,
   FileDown,
   FileText,
+  ImagePlus,
   Link,
   List,
   ListX,
@@ -34,13 +37,18 @@ import type {
   ZBookmarkedLink,
 } from "@karakeep/shared/types/bookmarks";
 import {
-  useRecrawlBookmark,
-  useUpdateBookmark,
-} from "@karakeep/shared-react/hooks//bookmarks";
-import { useRemoveBookmarkFromList } from "@karakeep/shared-react/hooks//lists";
+  useAttachBookmarkAsset,
+  useReplaceBookmarkAsset,
+} from "@karakeep/shared-react/hooks/assets";
 import { useBookmarkGridContext } from "@karakeep/shared-react/hooks/bookmark-grid-context";
 import { useBookmarkListContext } from "@karakeep/shared-react/hooks/bookmark-list-context";
+import {
+  useRecrawlBookmark,
+  useUpdateBookmark,
+} from "@karakeep/shared-react/hooks/bookmarks";
+import { useRemoveBookmarkFromList } from "@karakeep/shared-react/hooks/lists";
 import { BookmarkTypes } from "@karakeep/shared/types/bookmarks";
+import { getAssetUrl } from "@karakeep/shared/utils/assetUtils";
 
 import { BookmarkedTextEditor } from "./BookmarkedTextEditor";
 import DeleteBookmarkConfirmationDialog from "./DeleteBookmarkConfirmationDialog";
@@ -101,6 +109,47 @@ export default function BookmarkOptions({ bookmark }: { bookmark: ZBookmark }) {
   const [isTextEditorOpen, setTextEditorOpen] = useState(false);
   const [isEditBookmarkDialogOpen, setEditBookmarkDialogOpen] = useState(false);
 
+  const bannerFileInputRef = useRef<HTMLInputElement>(null);
+
+  const { mutate: uploadAsset } = useUpload({
+    onError: (e) => {
+      toast({
+        description: e.error,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const { mutate: attachAsset, isPending: isAttaching } =
+    useAttachBookmarkAsset({
+      onSuccess: () => {
+        toast({
+          description: "Banner has been attached!",
+        });
+      },
+      onError: (e) => {
+        toast({
+          description: e.message,
+          variant: "destructive",
+        });
+      },
+    });
+
+  const { mutate: replaceAsset, isPending: isReplacing } =
+    useReplaceBookmarkAsset({
+      onSuccess: () => {
+        toast({
+          description: "Banner has been replaced!",
+        });
+      },
+      onError: (e) => {
+        toast({
+          description: e.message,
+          variant: "destructive",
+        });
+      },
+    });
+
   const { listId } = useBookmarkGridContext() ?? {};
   const withinListContext = useBookmarkListContext();
 
@@ -155,6 +204,40 @@ export default function BookmarkOptions({ bookmark }: { bookmark: ZBookmark }) {
     },
     onError,
   });
+
+  const handleBannerFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      const existingBanner = bookmark.assets.find(
+        (asset) => asset.assetType === "bannerImage",
+      );
+
+      if (existingBanner) {
+        uploadAsset(file, {
+          onSuccess: (resp) => {
+            replaceAsset({
+              bookmarkId: bookmark.id,
+              oldAssetId: existingBanner.id,
+              newAssetId: resp.assetId,
+            });
+          },
+        });
+      } else {
+        uploadAsset(file, {
+          onSuccess: (resp) => {
+            attachAsset({
+              bookmarkId: bookmark.id,
+              asset: {
+                id: resp.assetId,
+                assetType: "bannerImage",
+              },
+            });
+          },
+        });
+      }
+    }
+  };
 
   // Define action items array
   const actionItems: ActionItemType[] = [
@@ -254,14 +337,6 @@ export default function BookmarkOptions({ bookmark }: { bookmark: ZBookmark }) {
         }),
     },
     {
-      id: "refresh",
-      title: t("actions.refresh"),
-      icon: <RotateCw className="mr-2 size-4" />,
-      visible: isOwner && bookmark.content.type === BookmarkTypes.LINK,
-      disabled: demoMode,
-      onClick: () => crawlBookmarkMutator.mutate({ bookmarkId: bookmark.id }),
-    },
-    {
       id: "offline-copies",
       title: t("actions.offline_copies"),
       icon: <Archive className="mr-2 size-4" />,
@@ -269,7 +344,7 @@ export default function BookmarkOptions({ bookmark }: { bookmark: ZBookmark }) {
       items: [
         {
           id: "download-full-page",
-          title: t("actions.download_full_page_archive"),
+          title: t("actions.preserve_offline_archive"),
           icon: <FileDown className="mr-2 size-4" />,
           visible: true,
           disabled: demoMode,
@@ -292,6 +367,66 @@ export default function BookmarkOptions({ bookmark }: { bookmark: ZBookmark }) {
               storePdf: true,
             });
           },
+        },
+        {
+          id: "download-full-page-archive",
+          title: t("actions.download_full_page_archive_file"),
+          icon: <Download className="mr-2 size-4" />,
+          visible:
+            bookmark.content.type === BookmarkTypes.LINK &&
+            !!(
+              bookmark.content.fullPageArchiveAssetId ||
+              bookmark.content.precrawledArchiveAssetId
+            ),
+          disabled: false,
+          onClick: () => {
+            const link = bookmark.content as ZBookmarkedLink;
+            const archiveAssetId =
+              link.fullPageArchiveAssetId ?? link.precrawledArchiveAssetId;
+            if (archiveAssetId) {
+              window.open(getAssetUrl(archiveAssetId), "_blank");
+            }
+          },
+        },
+        {
+          id: "download-pdf",
+          title: t("actions.download_pdf_file"),
+          icon: <Download className="mr-2 size-4" />,
+          visible: !!(bookmark.content as ZBookmarkedLink).pdfAssetId,
+          disabled: false,
+          onClick: () => {
+            const link = bookmark.content as ZBookmarkedLink;
+            if (link.pdfAssetId) {
+              window.open(getAssetUrl(link.pdfAssetId), "_blank");
+            }
+          },
+        },
+      ],
+    },
+    {
+      id: "more",
+      title: t("actions.more"),
+      icon: <MoreHorizontal className="mr-2 size-4" />,
+      visible: isOwner,
+      items: [
+        {
+          id: "refresh",
+          title: t("actions.refresh"),
+          icon: <RotateCw className="mr-2 size-4" />,
+          visible: bookmark.content.type === BookmarkTypes.LINK,
+          disabled: demoMode,
+          onClick: () =>
+            crawlBookmarkMutator.mutate({ bookmarkId: bookmark.id }),
+        },
+        {
+          id: "replace-banner",
+          title: bookmark.assets.find((a) => a.assetType === "bannerImage")
+            ? t("actions.replace_banner")
+            : t("actions.add_banner"),
+          icon: <ImagePlus className="mr-2 size-4" />,
+          visible: true,
+          disabled: demoMode || isAttaching || isReplacing,
+          onClick: () => bannerFileInputRef.current?.click(),
         },
       ],
     },
@@ -390,6 +525,13 @@ export default function BookmarkOptions({ bookmark }: { bookmark: ZBookmark }) {
           })}
         </DropdownMenuContent>
       </DropdownMenu>
+      <input
+        type="file"
+        ref={bannerFileInputRef}
+        onChange={handleBannerFileChange}
+        className="hidden"
+        accept=".jpg,.jpeg,.png,.webp"
+      />
     </>
   );
 }
