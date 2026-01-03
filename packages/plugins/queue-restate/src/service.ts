@@ -9,7 +9,6 @@ import type {
 import { QueueRetryAfterError } from "@karakeep/shared/queueing";
 import { tryCatch } from "@karakeep/shared/tryCatch";
 
-import { genId } from "./idProvider";
 import { RestateSemaphore } from "./semaphore";
 
 export function buildRestateService<T, R>(
@@ -48,7 +47,7 @@ export function buildRestateService<T, R>(
           groupId?: string;
         },
       ) => {
-        const id = `${await genId(ctx)}`;
+        const id = ctx.rand.uuidv4();
         let payload = data.payload;
         if (opts.validator) {
           const res = opts.validator.safeParse(data.payload);
