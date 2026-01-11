@@ -22,7 +22,7 @@ To see all available configuration options check the [documentation](../configur
 
 To configure the neccessary secrets for the application copy the `.secrets_sample` file to `.secrets` and change the sample secrets to your generated secrets.
 
-> Note: You **should** change the random strings. You can use `openssl rand -base64 36` to generate the random strings. 
+> Note: You **should** change the random strings. You can use `openssl rand -base64 36` to generate the random strings.
 
 ### 3. Setup OpenAI
 
@@ -37,19 +37,7 @@ OPENAI_API_KEY=<key>
 
 Learn more about the costs of using openai [here](../administration/openai).
 
-<details>
-    <summary>[EXPERIMENTAL] If you want to use Ollama (https://ollama.com/) instead for local inference.</summary>
-
-    **Note:** The quality of the tags you'll get will depend on the quality of the model you choose. Running local models is a recent addition and not as battle tested as using openai, so proceed with care (and potentially expect a bunch of inference failures).
-
-    - Make sure ollama is running.
-    - Set the `OLLAMA_BASE_URL` env variable to the address of the ollama API.
-    - Set `INFERENCE_TEXT_MODEL` to the model you want to use for text inference in ollama (for example: `mistral`)
-    - Set `INFERENCE_IMAGE_MODEL` to the model you want to use for image inference in ollama (for example: `llava`)
-    - Make sure that you `ollama pull`-ed the models that you want to use.
-
-
-</details>
+If you want to use a different AI provider (e.g. Ollama for local inference), check out the [different AI providers](../configuration/different-ai-providers) guide.
 
 ### 4. Deploy the service
 
