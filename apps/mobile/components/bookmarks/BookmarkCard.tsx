@@ -16,6 +16,7 @@ import * as Sharing from "expo-sharing";
 import { Text } from "@/components/ui/Text";
 import useAppSettings from "@/lib/settings";
 import { api } from "@/lib/trpc";
+import { buildApiHeaders } from "@/lib/utils";
 import { MenuView } from "@react-native-menu/menu";
 import { Ellipsis, ShareIcon, Star } from "lucide-react-native";
 
@@ -124,9 +125,10 @@ function ActionBar({ bookmark }: { bookmark: ZBookmark }) {
                 assetUrl,
                 fileUri,
                 {
-                  headers: {
-                    Authorization: `Bearer ${settings.apiKey}`,
-                  },
+                  headers: buildApiHeaders(
+                    settings.apiKey,
+                    settings.customHeaders,
+                  ),
                 },
               );
 
@@ -319,9 +321,10 @@ function LinkCard({
           imageUrl.localAsset
             ? {
                 uri: `${settings.address}${imageUrl.url}`,
-                headers: {
-                  Authorization: `Bearer ${settings.apiKey}`,
-                },
+                headers: buildApiHeaders(
+                  settings.apiKey,
+                  settings.customHeaders,
+                ),
               }
             : {
                 uri: imageUrl.url,
