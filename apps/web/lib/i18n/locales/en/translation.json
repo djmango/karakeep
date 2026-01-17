@@ -10,6 +10,7 @@
     "actions": "Actions",
     "created_at": "Created At",
     "updated_at": "Updated At",
+    "last_used": "Last Used",
     "key": "Key",
     "role": "Role",
     "type": "Type",
