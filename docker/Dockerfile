@@ -126,11 +126,11 @@ RUN apt-get update \
 
 ARG TARGETARCH
 RUN case ${TARGETARCH} in \
-        "amd64")  YTDLP_ARCH=x86_64 ;; \
-        "arm64")  YTDLP_ARCH=aarch64 ;; \
+        "amd64")  YTDLP_FILE=yt-dlp_linux ;; \
+        "arm64")  YTDLP_FILE=yt-dlp_linux_aarch64 ;; \
         *) echo "Unsupported arch: ${TARGETARCH}" && exit 1 ;; \
     esac \
-    && curl -fsSL https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux_${YTDLP_ARCH} -o /usr/local/bin/yt-dlp \
+    && curl -fsSL https://github.com/yt-dlp/yt-dlp/releases/latest/download/${YTDLP_FILE} -o /usr/local/bin/yt-dlp \
     && chmod +x /usr/local/bin/yt-dlp
 
 # Copy monolith binary from builder
