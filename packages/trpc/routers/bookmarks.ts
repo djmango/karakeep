@@ -714,10 +714,10 @@ export const bookmarksAppRouter = router({
     )
     .use(ensureBookmarkOwnership)
     .mutation(async ({ input, ctx }) => {
-      // Helper function to fetch tag IDs from a list of tag identifiers
-      const fetchTagIds = async (
+      // Helper function to fetch tag IDs and their names from a list of tag identifiers
+      const fetchTagIdsWithNames = async (
         tagIdentifiers: { tagId?: string; tagName?: string }[],
-      ): Promise<string[]> => {
+      ): Promise<{ id: string; name: string }[]> => {
         const tagIds = tagIdentifiers.flatMap((t) =>
           t.tagId ? [t.tagId] : [],
         );
@@ -729,7 +729,7 @@ export const bookmarksAppRouter = router({
         const [byIds, byNames] = await Promise.all([
           tagIds.length > 0
             ? ctx.db
-                .select({ id: bookmarkTags.id })
+                .select({ id: bookmarkTags.id, name: bookmarkTags.name })
                 .from(bookmarkTags)
                 .where(
                   and(
@@ -740,7 +740,7 @@ export const bookmarksAppRouter = router({
             : Promise.resolve([]),
           tagNames.length > 0
             ? ctx.db
-                .select({ id: bookmarkTags.id })
+                .select({ id: bookmarkTags.id, name: bookmarkTags.name })
                 .from(bookmarkTags)
                 .where(
                   and(
@@ -751,15 +751,25 @@ export const bookmarksAppRouter = router({
             : Promise.resolve([]),
         ]);
 
-        // Union results and deduplicate tag IDs
-        const results = [...byIds, ...byNames];
-        return [...new Set(results.map((t) => t.id))];
+        // Union results and deduplicate by tag ID
+        const seen = new Set<string>();
+        const results: { id: string; name: string }[] = [];
+
+        for (const tag of [...byIds, ...byNames]) {
+          if (!seen.has(tag.id)) {
+            seen.add(tag.id);
+            results.push({ id: tag.id, name: tag.name });
+          }
+        }
+
+        return results;
       };
 
       // Normalize tag names and create new tags outside transaction to reduce transaction duration
       const normalizedAttachTags = input.attach.map((tag) => ({
         tagId: tag.tagId,
         tagName: tag.tagName ? normalizeTagName(tag.tagName) : undefined,
+        attachedBy: tag.attachedBy,
       }));
 
       {
@@ -779,10 +789,30 @@ export const bookmarksAppRouter = router({
       }
 
       // Fetch tag IDs for attachment/detachment now that we know that they all exist
-      const [allIdsToAttach, idsToRemove] = await Promise.all([
-        fetchTagIds(normalizedAttachTags),
-        fetchTagIds(input.detach),
+      const [attachTagsWithNames, detachTagsWithNames] = await Promise.all([
+        fetchTagIdsWithNames(normalizedAttachTags),
+        fetchTagIdsWithNames(input.detach),
       ]);
+
+      // Build the attachedBy map from the fetched results
+      const tagIdToAttachedBy = new Map<string, "ai" | "human">();
+
+      for (const fetchedTag of attachTagsWithNames) {
+        // Find the corresponding input tag
+        const inputTag = normalizedAttachTags.find(
+          (t) =>
+            (t.tagId && t.tagId === fetchedTag.id) ||
+            (t.tagName && t.tagName === fetchedTag.name),
+        );
+
+        if (inputTag) {
+          tagIdToAttachedBy.set(fetchedTag.id, inputTag.attachedBy);
+        }
+      }
+
+      // Extract just the IDs for the transaction
+      const allIdsToAttach = attachTagsWithNames.map((t) => t.id);
+      const idsToRemove = detachTagsWithNames.map((t) => t.id);
 
       const res = await ctx.db.transaction(async (tx) => {
         // Detaches
@@ -805,7 +835,7 @@ export const bookmarksAppRouter = router({
               allIdsToAttach.map((i) => ({
                 tagId: i,
                 bookmarkId: input.bookmarkId,
-                attachedBy: "human" as const,
+                attachedBy: tagIdToAttachedBy.get(i) ?? "human",
               })),
             )
             .onConflictDoNothing();
