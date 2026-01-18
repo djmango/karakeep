@@ -3,4 +3,5 @@
 
 echo "Running db migration script";
 cd /db_migrations;
+export LD_PRELOAD=/usr/local/lib/libjemalloc.so
 exec node index.js;

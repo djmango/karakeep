@@ -2,4 +2,5 @@
 # shellcheck shell=bash
 
 cd /app/apps/web;
+export LD_PRELOAD=/usr/local/lib/libjemalloc.so
 exec node server.js;

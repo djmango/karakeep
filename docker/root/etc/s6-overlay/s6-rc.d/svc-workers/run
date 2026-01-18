@@ -2,4 +2,5 @@
 # shellcheck shell=bash
 
 cd /app/apps/workers;
+export LD_PRELOAD=/usr/local/lib/libjemalloc.so
 exec node dist/index.js
