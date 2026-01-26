@@ -40,12 +40,14 @@ interface ListLink {
   numChildren: number;
   collapsed: boolean;
   isSharedSection?: boolean;
+  numBookmarks?: number;
 }
 
 function traverseTree(
   node: ZBookmarkListTreeNode,
   links: ListLink[],
   showChildrenOf: Record<string, boolean>,
+  listStats?: Map<string, number>,
   parent?: string,
   level = 0,
 ) {
@@ -58,11 +60,19 @@ function traverseTree(
     parent,
     numChildren: node.children?.length ?? 0,
     collapsed: !showChildrenOf[node.item.id],
+    numBookmarks: listStats?.get(node.item.id),
   });
 
   if (node.children && showChildrenOf[node.item.id]) {
     node.children.forEach((child) =>
-      traverseTree(child, links, showChildrenOf, node.item.id, level + 1),
+      traverseTree(
+        child,
+        links,
+        showChildrenOf,
+        listStats,
+        node.item.id,
+        level + 1,
+      ),
     );
   }
 }
@@ -75,6 +85,7 @@ export default function Lists() {
     {},
   );
   const apiUtils = api.useUtils();
+  const { data: listStats } = api.lists.stats.useQuery();
 
   // Check if there are any shared lists
   const hasSharedLists = useMemo(() => {
@@ -106,6 +117,7 @@ export default function Lists() {
 
   const onRefresh = () => {
     apiUtils.lists.list.invalidate();
+    apiUtils.lists.stats.invalidate();
   };
 
   const links: ListLink[] = [
@@ -151,7 +163,14 @@ export default function Lists() {
     if (showChildrenOf["shared-section"]) {
       Object.values(lists.root).forEach((list) => {
         if (list.item.userRole !== "owner") {
-          traverseTree(list, links, showChildrenOf, "shared-section", 1);
+          traverseTree(
+            list,
+            links,
+            showChildrenOf,
+            listStats?.stats,
+            "shared-section",
+            1,
+          );
         }
       });
     }
@@ -160,7 +179,7 @@ export default function Lists() {
   // Add owned lists only
   Object.values(lists.root).forEach((list) => {
     if (list.item.userRole === "owner") {
-      traverseTree(list, links, showChildrenOf);
+      traverseTree(list, links, showChildrenOf, listStats?.stats);
     }
   });
 
@@ -237,7 +256,14 @@ export default function Lists() {
                   <Text className="shrink">
                     {l.item.logo} {l.item.name}
                   </Text>
-                  <ChevronRight />
+                  <View className="flex flex-row items-center">
+                    {l.item.numBookmarks !== undefined && (
+                      <Text className="mr-2 text-xs text-muted-foreground">
+                        {l.item.numBookmarks}
+                      </Text>
+                    )}
+                    <ChevronRight />
+                  </View>
                 </Pressable>
               </Link>
             )}
