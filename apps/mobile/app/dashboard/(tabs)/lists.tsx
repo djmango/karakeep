@@ -177,11 +177,11 @@ export default function Lists() {
           </View>
         }
         contentContainerStyle={{
-          gap: 5,
+          gap: 6,
         }}
         renderItem={(l) => (
           <View
-            className="mx-2 flex flex-row items-center rounded-xl border border-input bg-card px-4 py-2"
+            className="mx-2 flex flex-row items-center rounded-xl bg-card px-4 py-2"
             style={condProps({
               condition: l.item.level > 0,
               props: { marginLeft: l.item.level * 20 },
@@ -234,7 +234,7 @@ export default function Lists() {
                 className="flex-1"
               >
                 <Pressable className="flex flex-row items-center justify-between">
-                  <Text>
+                  <Text className="shrink">
                     {l.item.logo} {l.item.name}
                   </Text>
                   <ChevronRight />

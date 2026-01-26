@@ -88,17 +88,17 @@ export default function Tags() {
           </View>
         }
         contentContainerStyle={{
-          gap: 5,
+          gap: 6,
         }}
         renderItem={(item) => (
-          <View className="mx-2 flex flex-row items-center rounded-xl border border-input bg-card px-4 py-2">
+          <View className="mx-2 flex flex-row items-center rounded-xl bg-card px-4 py-2">
             <Link
               asChild
               key={item.item.id}
               href={item.item.href}
               className="flex-1"
             >
-              <Pressable className="flex flex-row justify-between">
+              <Pressable className="flex flex-row items-center justify-between">
                 <View className="flex-1">
                   <Text className="font-medium">{item.item.name}</Text>
                   <Text className="text-sm text-muted-foreground">
