@@ -228,7 +228,8 @@ export function BookmarkLinkScreenshotPreview({
       <Pressable onPress={() => setImageZoom(true)}>
         <BookmarkAssetImage
           assetId={asset.id}
-          className="h-full w-full object-contain"
+          className="h-full w-full"
+          contentFit="contain"
         />
       </Pressable>
     </View>

@@ -1,7 +1,6 @@
 import {
   ActivityIndicator,
   Alert,
-  Image,
   Platform,
   Pressable,
   ScrollView,
@@ -11,6 +10,7 @@ import {
 import * as Clipboard from "expo-clipboard";
 import * as FileSystem from "expo-file-system/legacy";
 import * as Haptics from "expo-haptics";
+import { Image } from "expo-image";
 import { router, useRouter } from "expo-router";
 import * as Sharing from "expo-sharing";
 import { Text } from "@/components/ui/Text";
@@ -317,30 +317,36 @@ function LinkCard({
   let imageComp;
   if (imageUrl) {
     imageComp = (
-      <Image
-        source={
-          imageUrl.localAsset
-            ? {
-                uri: `${settings.address}${imageUrl.url}`,
-                headers: buildApiHeaders(
-                  settings.apiKey,
-                  settings.customHeaders,
-                ),
-              }
-            : {
-                uri: imageUrl.url,
-              }
-        }
-        className="h-56 min-h-56 w-full object-cover"
-      />
+      <View className="h-56 min-h-56 w-full">
+        <Image
+          source={
+            imageUrl.localAsset
+              ? {
+                  uri: `${settings.address}${imageUrl.url}`,
+                  headers: buildApiHeaders(
+                    settings.apiKey,
+                    settings.customHeaders,
+                  ),
+                }
+              : {
+                  uri: imageUrl.url,
+                }
+          }
+          style={{ width: "100%", height: "100%" }}
+          contentFit="cover"
+        />
+      </View>
     );
   } else {
     imageComp = (
-      <Image
-        // oxlint-disable-next-line no-require-imports
-        source={require("@/assets/blur.jpeg")}
-        className="h-56 w-full rounded-t-lg"
-      />
+      <View className="h-56 w-full overflow-hidden rounded-t-lg">
+        <Image
+          // oxlint-disable-next-line no-require-imports
+          source={require("@/assets/blur.jpeg")}
+          style={{ width: "100%", height: "100%" }}
+          contentFit="cover"
+        />
+      </View>
     );
   }
 
@@ -444,7 +450,7 @@ function AssetCard({
       <Pressable onPress={onOpenBookmark}>
         <BookmarkAssetImage
           assetId={assetImage}
-          className="h-56 min-h-56 w-full object-cover"
+          className="h-56 min-h-56 w-full"
         />
       </Pressable>
       <View className="flex gap-2 p-2">
