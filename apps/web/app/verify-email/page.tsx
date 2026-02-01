@@ -15,6 +15,10 @@ import { useMutation } from "@tanstack/react-query";
 import { CheckCircle, Loader2, XCircle } from "lucide-react";
 
 import { useTRPC } from "@karakeep/shared-react/trpc";
+import {
+  isMobileAppRedirect,
+  validateRedirectUrl,
+} from "@karakeep/shared/utils/redirectUrl";
 
 export default function VerifyEmailPage() {
   const api = useTRPC();
@@ -27,14 +31,26 @@ export default function VerifyEmailPage() {
 
   const token = searchParams.get("token");
   const email = searchParams.get("email");
+  const redirectUrl =
+    validateRedirectUrl(searchParams.get("redirectUrl")) ?? "/";
 
   const verifyEmailMutation = useMutation(
     api.users.verifyEmail.mutationOptions({
       onSuccess: () => {
         setStatus("success");
-        setMessage(
-          "Your email has been successfully verified! You can now sign in.",
-        );
+        if (isMobileAppRedirect(redirectUrl)) {
+          setMessage(
+            "Your email has been successfully verified! Redirecting to the app...",
+          );
+          // Redirect to mobile app after a brief delay
+          setTimeout(() => {
+            window.location.href = redirectUrl;
+          }, 1500);
+        } else {
+          setMessage(
+            "Your email has been successfully verified! You can now sign in.",
+          );
+        }
       },
       onError: (error) => {
         setStatus("error");
@@ -59,6 +75,8 @@ export default function VerifyEmailPage() {
     }),
   );
 
+  const isMobileRedirect = isMobileAppRedirect(redirectUrl);
+
   useEffect(() => {
     if (token && email) {
       verifyEmailMutation.mutate({ token, email });
@@ -70,12 +88,18 @@ export default function VerifyEmailPage() {
 
   const handleResendEmail = () => {
     if (email) {
-      resendEmailMutation.mutate({ email });
+      resendEmailMutation.mutate({ email, redirectUrl });
     }
   };
 
   const handleSignIn = () => {
-    router.push("/signin");
+    if (isMobileRedirect) {
+      window.location.href = redirectUrl;
+    } else if (redirectUrl !== "/") {
+      router.push(`/signin?redirectUrl=${encodeURIComponent(redirectUrl)}`);
+    } else {
+      router.push("/signin");
+    }
   };
 
   return (
@@ -109,7 +133,7 @@ export default function VerifyEmailPage() {
                 </AlertDescription>
               </Alert>
               <Button onClick={handleSignIn} className="w-full">
-                Sign In
+                {isMobileRedirect ? "Open App" : "Sign In"}
               </Button>
             </>
           )}

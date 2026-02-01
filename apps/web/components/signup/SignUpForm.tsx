@@ -35,10 +35,15 @@ import { z } from "zod";
 
 import { useTRPC } from "@karakeep/shared-react/trpc";
 import { zSignUpSchema } from "@karakeep/shared/types/users";
+import { isMobileAppRedirect } from "@karakeep/shared/utils/redirectUrl";
 
 const VERIFY_EMAIL_ERROR = "Please verify your email address before signing in";
 
-export default function SignUpForm() {
+interface SignUpFormProps {
+  redirectUrl: string;
+}
+
+export default function SignUpForm({ redirectUrl }: SignUpFormProps) {
   const api = useTRPC();
   const form = useForm<z.infer<typeof zSignUpSchema>>({
     resolver: zodResolver(zSignUpSchema),
@@ -113,7 +118,10 @@ export default function SignUpForm() {
               }
               form.clearErrors("turnstileToken");
               try {
-                await createUserMutation.mutateAsync(value);
+                await createUserMutation.mutateAsync({
+                  ...value,
+                  redirectUrl,
+                });
               } catch (e) {
                 if (e instanceof TRPCClientError) {
                   setErrorMessage(e.message);
@@ -133,7 +141,7 @@ export default function SignUpForm() {
               if (!resp || !resp.ok || resp.error) {
                 if (resp?.error === VERIFY_EMAIL_ERROR) {
                   router.replace(
-                    `/check-email?email=${encodeURIComponent(value.email.trim())}`,
+                    `/check-email?email=${encodeURIComponent(value.email.trim())}&redirectUrl=${encodeURIComponent(redirectUrl)}`,
                   );
                 } else {
                   setErrorMessage(
@@ -147,7 +155,11 @@ export default function SignUpForm() {
                 }
                 return;
               }
-              router.replace("/");
+              if (isMobileAppRedirect(redirectUrl)) {
+                window.location.href = redirectUrl;
+              } else {
+                router.replace(redirectUrl);
+              }
             })}
             className="space-y-4"
           >
