@@ -9,7 +9,6 @@ import { ActionButton } from "@/components/ui/action-button";
 import { badgeVariants } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { useTRPC } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
 import tailwindConfig from "@/tailwind.config";
 import { useInfiniteQuery } from "@tanstack/react-query";
@@ -18,6 +17,7 @@ import { useInView } from "react-intersection-observer";
 import Masonry from "react-masonry-css";
 import resolveConfig from "tailwindcss/resolveConfig";
 
+import { useTRPC } from "@karakeep/shared-react/trpc";
 import {
   BookmarkTypes,
   ZPublicBookmark,

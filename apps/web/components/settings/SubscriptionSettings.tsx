@@ -3,9 +3,10 @@
 import { useEffect } from "react";
 import { toast } from "@/components/ui/sonner";
 import { useTranslation } from "@/lib/i18n/client";
-import { useTRPC } from "@/lib/trpc";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { CreditCard, Loader2 } from "lucide-react";
+
+import { useTRPC } from "@karakeep/shared-react/trpc";
 
 import { Alert, AlertDescription } from "../ui/alert";
 import { Badge } from "../ui/badge";

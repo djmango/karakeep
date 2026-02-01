@@ -6,10 +6,10 @@ import RuleList from "@/components/dashboard/rules/RuleEngineRuleList";
 import { Button } from "@/components/ui/button";
 import { FullPageSpinner } from "@/components/ui/full-page-spinner";
 import { useTranslation } from "@/lib/i18n/client";
-import { useTRPC } from "@/lib/trpc";
 import { useQuery } from "@tanstack/react-query";
 import { PlusCircle } from "lucide-react";
 
+import { useTRPC } from "@karakeep/shared-react/trpc";
 import { RuleEngineRule } from "@karakeep/shared/types/rules";
 
 export default function RulesSettingsPage() {

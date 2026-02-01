@@ -11,9 +11,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useTRPC } from "@/lib/trpc";
 import { useMutation } from "@tanstack/react-query";
 import { CheckCircle, Loader2, XCircle } from "lucide-react";
+
+import { useTRPC } from "@karakeep/shared-react/trpc";
 
 export default function VerifyEmailPage() {
   const api = useTRPC();

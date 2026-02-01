@@ -1,9 +1,10 @@
 "use client";
 
 import { useTranslation } from "@/lib/i18n/client";
-import { useTRPC } from "@/lib/trpc";
 import { useQuery } from "@tanstack/react-query";
 import { Database, HardDrive } from "lucide-react";
+
+import { useTRPC } from "@karakeep/shared-react/trpc";
 
 import {
   Card,

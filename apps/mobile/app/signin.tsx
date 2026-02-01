@@ -13,9 +13,10 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Text } from "@/components/ui/Text";
 import useAppSettings from "@/lib/settings";
-import { useTRPC } from "@/lib/trpc";
 import { useMutation } from "@tanstack/react-query";
 import { Bug, Edit3 } from "lucide-react-native";
+
+import { useTRPC } from "@karakeep/shared-react/trpc";
 
 enum LoginType {
   Password,

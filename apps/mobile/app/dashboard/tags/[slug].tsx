@@ -4,8 +4,9 @@ import UpdatingBookmarkList from "@/components/bookmarks/UpdatingBookmarkList";
 import FullPageError from "@/components/FullPageError";
 import CustomSafeAreaView from "@/components/ui/CustomSafeAreaView";
 import FullPageSpinner from "@/components/ui/FullPageSpinner";
-import { useTRPC } from "@/lib/trpc";
 import { useQuery } from "@tanstack/react-query";
+
+import { useTRPC } from "@karakeep/shared-react/trpc";
 
 export default function TagView() {
   const { slug } = useLocalSearchParams();

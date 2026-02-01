@@ -1,6 +1,7 @@
 import ReactNativeBlobUtil from "react-native-blob-util";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
+import { useTRPC } from "@karakeep/shared-react/trpc";
 import { BookmarkTypes, ZBookmark } from "@karakeep/shared/types/bookmarks";
 import {
   zUploadErrorSchema,
@@ -8,7 +9,6 @@ import {
 } from "@karakeep/shared/types/uploads";
 
 import type { Settings } from "./settings";
-import { useTRPC } from "./trpc";
 import { buildApiHeaders } from "./utils";
 
 export function useUploadAsset(

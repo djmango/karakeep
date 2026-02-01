@@ -12,11 +12,11 @@ import BottomActions from "@/components/bookmarks/BottomActions";
 import FullPageError from "@/components/FullPageError";
 import FullPageSpinner from "@/components/ui/FullPageSpinner";
 import useAppSettings from "@/lib/settings";
-import { useTRPC } from "@/lib/trpc";
 import { useQuery } from "@tanstack/react-query";
 import { Settings } from "lucide-react-native";
 import { useColorScheme } from "nativewind";
 
+import { useTRPC } from "@karakeep/shared-react/trpc";
 import { BookmarkTypes } from "@karakeep/shared/types/bookmarks";
 
 export default function BookmarkView() {

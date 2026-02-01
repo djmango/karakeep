@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import InfoTooltip from "@/components/ui/info-tooltip";
 import { Input } from "@/components/ui/input";
 import { useTranslation } from "@/lib/i18n/client";
-import { useTRPC } from "@/lib/trpc";
 import { formatBytes } from "@/lib/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
@@ -35,6 +34,7 @@ import {
 import { parseAsString, useQueryState } from "nuqs";
 import { toast } from "sonner";
 
+import { useTRPC } from "@karakeep/shared-react/trpc";
 import { BookmarkTypes } from "@karakeep/shared/types/bookmarks";
 
 export default function BookmarkDebugger() {

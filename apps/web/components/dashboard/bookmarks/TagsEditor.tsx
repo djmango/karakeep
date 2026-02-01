@@ -13,13 +13,13 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useClientConfig } from "@/lib/clientConfig";
-import { useTRPC } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Command as CommandPrimitive } from "cmdk";
 import { Check, Loader2, Plus, Sparkles, X } from "lucide-react";
 
 import type { ZBookmarkTags } from "@karakeep/shared/types/tags";
+import { useTRPC } from "@karakeep/shared-react/trpc";
 
 export function TagsEditor({
   tags: _tags,

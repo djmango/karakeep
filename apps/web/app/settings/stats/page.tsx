@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslation } from "@/lib/i18n/client";
-import { useTRPC } from "@/lib/trpc";
 import { useQuery } from "@tanstack/react-query";
 import {
   Archive,
@@ -33,6 +32,7 @@ import {
 } from "lucide-react";
 import { z } from "zod";
 
+import { useTRPC } from "@karakeep/shared-react/trpc";
 import { zBookmarkSourceSchema } from "@karakeep/shared/types/bookmarks";
 
 type BookmarkSource = z.infer<typeof zBookmarkSourceSchema>;

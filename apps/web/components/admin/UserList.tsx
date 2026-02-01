@@ -13,13 +13,14 @@ import {
 } from "@/components/ui/table";
 import { useSession } from "@/lib/auth/client";
 import { useTranslation } from "@/lib/i18n/client";
-import { useTRPC } from "@/lib/trpc";
 import {
   useMutation,
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query";
 import { Check, KeyRound, Pencil, Trash, UserPlus, X } from "lucide-react";
+
+import { useTRPC } from "@karakeep/shared-react/trpc";
 
 import ActionConfirmingDialog from "../ui/action-confirming-dialog";
 import AddUserDialog from "./AddUserDialog";

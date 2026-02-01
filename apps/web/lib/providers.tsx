@@ -12,10 +12,10 @@ import superjson from "superjson";
 
 import type { ClientConfig } from "@karakeep/shared/config";
 import type { AppRouter } from "@karakeep/trpc/routers/_app";
+import { TRPCProvider } from "@karakeep/shared-react/trpc";
 
 import { ClientConfigCtx } from "./clientConfig";
 import CustomI18nextProvider from "./i18n/provider";
-import { TRPCProvider } from "./trpc";
 
 function makeQueryClient() {
   return new QueryClient({

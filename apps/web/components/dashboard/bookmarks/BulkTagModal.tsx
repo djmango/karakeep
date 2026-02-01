@@ -8,10 +8,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/sonner";
-import { useTRPC } from "@/lib/trpc";
 import { useQueries } from "@tanstack/react-query";
 
 import { useUpdateBookmarkTags } from "@karakeep/shared-react/hooks/bookmarks";
+import { useTRPC } from "@karakeep/shared-react/trpc";
 import { limitConcurrency } from "@karakeep/shared/concurrency";
 import { ZBookmark } from "@karakeep/shared/types/bookmarks";
 

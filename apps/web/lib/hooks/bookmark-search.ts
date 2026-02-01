@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSortOrderStore } from "@/lib/store/useSortOrderStore";
-import { useTRPC } from "@/lib/trpc";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 
+import { useTRPC } from "@karakeep/shared-react/trpc";
 import { parseSearchQuery } from "@karakeep/shared/searchQueryParser";
 
 import { useInSearchPageStore } from "../store/useInSearchPageStore";

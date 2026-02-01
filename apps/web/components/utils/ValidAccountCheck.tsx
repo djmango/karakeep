@@ -2,8 +2,9 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useTRPC } from "@/lib/trpc";
 import { useQuery } from "@tanstack/react-query";
+
+import { useTRPC } from "@karakeep/shared-react/trpc";
 
 /**
  * This component is used to address a confusion when the JWT token exists but the user no longer exists in the database.

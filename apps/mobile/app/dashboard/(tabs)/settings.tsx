@@ -13,8 +13,9 @@ import { Text } from "@/components/ui/Text";
 import { useServerVersion } from "@/lib/hooks";
 import { useSession } from "@/lib/session";
 import useAppSettings from "@/lib/settings";
-import { useTRPC } from "@/lib/trpc";
 import { useQuery } from "@tanstack/react-query";
+
+import { useTRPC } from "@karakeep/shared-react/trpc";
 
 export default function Dashboard() {
   const { logout } = useSession();

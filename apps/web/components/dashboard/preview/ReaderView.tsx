@@ -1,6 +1,5 @@
 import { FullPageSpinner } from "@/components/ui/full-page-spinner";
 import { toast } from "@/components/ui/sonner";
-import { useTRPC } from "@/lib/trpc";
 import { useQuery } from "@tanstack/react-query";
 
 import {
@@ -8,6 +7,7 @@ import {
   useDeleteHighlight,
   useUpdateHighlight,
 } from "@karakeep/shared-react/hooks/highlights";
+import { useTRPC } from "@karakeep/shared-react/trpc";
 import { BookmarkTypes } from "@karakeep/shared/types/bookmarks";
 
 import BookmarkHTMLHighlighter from "./BookmarkHtmlHighlighter";

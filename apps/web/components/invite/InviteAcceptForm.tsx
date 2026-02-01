@@ -22,13 +22,14 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { signIn } from "@/lib/auth/client";
-import { useTRPC } from "@/lib/trpc";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { TRPCClientError } from "@trpc/client";
 import { AlertCircle, Clock, Loader2, Mail, UserPlus } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+
+import { useTRPC } from "@karakeep/shared-react/trpc";
 
 const inviteAcceptSchema = z
   .object({

@@ -5,7 +5,6 @@ import Link from "next/link";
 import { ActionButton } from "@/components/ui/action-button";
 import { Input } from "@/components/ui/input";
 import useRelativeTime from "@/lib/hooks/relative-time";
-import { useTRPC } from "@/lib/trpc";
 import { Separator } from "@radix-ui/react-dropdown-menu";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
@@ -15,6 +14,7 @@ import { useTranslation } from "react-i18next";
 import { useInView } from "react-intersection-observer";
 
 import { useDebounce } from "@karakeep/shared-react/hooks/use-debounce";
+import { useTRPC } from "@karakeep/shared-react/trpc";
 import {
   ZGetAllHighlightsResponse,
   ZHighlight,

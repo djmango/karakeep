@@ -1,7 +1,7 @@
-import { useTRPC } from "@/lib/trpc";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 
 import type { ZGetBookmarksRequest } from "@karakeep/shared/types/bookmarks";
+import { useTRPC } from "@karakeep/shared-react/trpc";
 import { BookmarkTypes } from "@karakeep/shared/types/bookmarks";
 
 import FullPageError from "../FullPageError";

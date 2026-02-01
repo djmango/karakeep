@@ -1,7 +1,8 @@
 "use client";
 
-import { useTRPC } from "@/lib/trpc";
 import { useQuery } from "@tanstack/react-query";
+
+import { useTRPC } from "@karakeep/shared-react/trpc";
 
 export function InvitationNotificationBadge() {
   const api = useTRPC();

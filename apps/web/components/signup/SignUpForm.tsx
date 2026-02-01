@@ -25,7 +25,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { signIn } from "@/lib/auth/client";
 import { useClientConfig } from "@/lib/clientConfig";
-import { useTRPC } from "@/lib/trpc";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Turnstile } from "@marsidev/react-turnstile";
 import { useMutation } from "@tanstack/react-query";
@@ -34,6 +33,7 @@ import { AlertCircle, UserX } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
+import { useTRPC } from "@karakeep/shared-react/trpc";
 import { zSignUpSchema } from "@karakeep/shared/types/users";
 
 const VERIFY_EMAIL_ERROR = "Please verify your email address before signing in";

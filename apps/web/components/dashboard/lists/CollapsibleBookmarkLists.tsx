@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { FullPageSpinner } from "@/components/ui/full-page-spinner";
-import { useTRPC } from "@/lib/trpc";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
 import { useBookmarkLists } from "@karakeep/shared-react/hooks/lists";
+import { useTRPC } from "@karakeep/shared-react/trpc";
 import { ZBookmarkList } from "@karakeep/shared/types/lists";
 import { ZBookmarkListTreeNode } from "@karakeep/shared/utils/listUtils";
 

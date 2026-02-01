@@ -5,10 +5,11 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { useTranslation } from "@/lib/i18n/client";
-import { useTRPC } from "@/lib/trpc";
 import { Separator } from "@radix-ui/react-dropdown-menu";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronsDownUp } from "lucide-react";
+
+import { useTRPC } from "@karakeep/shared-react/trpc";
 
 import HighlightCard from "../highlights/HighlightCard";
 

@@ -7,7 +7,6 @@ import CustomSafeAreaView from "@/components/ui/CustomSafeAreaView";
 import FullPageSpinner from "@/components/ui/FullPageSpinner";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { Text } from "@/components/ui/Text";
-import { useTRPC } from "@/lib/trpc";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   keepPreviousData,
@@ -17,6 +16,7 @@ import {
 
 import { useSearchHistory } from "@karakeep/shared-react/hooks/search-history";
 import { useDebounce } from "@karakeep/shared-react/hooks/use-debounce";
+import { useTRPC } from "@karakeep/shared-react/trpc";
 
 const MAX_DISPLAY_SUGGESTIONS = 5;
 

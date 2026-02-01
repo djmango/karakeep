@@ -7,10 +7,11 @@ import {
   DialogOverlay,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useTRPC } from "@/lib/trpc";
 import * as VisuallyHidden from "@radix-ui/react-visually-hidden";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, X } from "lucide-react";
+
+import { useTRPC } from "@karakeep/shared-react/trpc";
 
 import { ShareButton } from "./ShareButton";
 import { WrappedContent } from "./WrappedContent";

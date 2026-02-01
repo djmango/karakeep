@@ -2,9 +2,10 @@
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { useTRPC } from "@/lib/trpc";
 import { useQuery } from "@tanstack/react-query";
 import { AlertCircle } from "lucide-react";
+
+import { useTRPC } from "@karakeep/shared-react/trpc";
 
 import { AdminCard } from "./AdminCard";
 

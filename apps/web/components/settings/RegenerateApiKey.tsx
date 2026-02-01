@@ -16,9 +16,10 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/sonner";
 import { useTranslation } from "@/lib/i18n/client";
-import { useTRPC } from "@/lib/trpc";
 import { useMutation } from "@tanstack/react-query";
 import { RefreshCcw } from "lucide-react";
+
+import { useTRPC } from "@karakeep/shared-react/trpc";
 
 import ApiKeySuccess from "./ApiKeySuccess";
 

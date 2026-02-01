@@ -3,7 +3,6 @@
 import { useEffect } from "react";
 import UploadDropzone from "@/components/dashboard/UploadDropzone";
 import { useSortOrderStore } from "@/lib/store/useSortOrderStore";
-import { useTRPC } from "@/lib/trpc";
 import { useInfiniteQuery } from "@tanstack/react-query";
 
 import type {
@@ -11,6 +10,7 @@ import type {
   ZGetBookmarksResponse,
 } from "@karakeep/shared/types/bookmarks";
 import { BookmarkGridContextProvider } from "@karakeep/shared-react/hooks/bookmark-grid-context";
+import { useTRPC } from "@karakeep/shared-react/trpc";
 
 import BookmarksGrid from "./BookmarksGrid";
 

@@ -2,7 +2,6 @@ import type translation from "@/lib/i18n/locales/en/translation.json";
 import type { TFunction } from "i18next";
 import type { LucideIcon } from "lucide-react";
 import { useCallback, useMemo } from "react";
-import { useTRPC } from "@/lib/trpc";
 import { useQuery } from "@tanstack/react-query";
 import {
   History,
@@ -15,6 +14,7 @@ import {
 import { useBookmarkLists } from "@karakeep/shared-react/hooks/lists";
 import { useTagAutocomplete } from "@karakeep/shared-react/hooks/tags";
 import { useDebounce } from "@karakeep/shared-react/hooks/use-debounce";
+import { useTRPC } from "@karakeep/shared-react/trpc";
 
 const MAX_DISPLAY_SUGGESTIONS = 5;
 

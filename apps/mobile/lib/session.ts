@@ -1,8 +1,9 @@
 import { useCallback } from "react";
 import { useMutation } from "@tanstack/react-query";
 
+import { useTRPC } from "@karakeep/shared-react/trpc";
+
 import useAppSettings from "./settings";
-import { useTRPC } from "./trpc";
 
 export function useSession() {
   const { settings, setSettings } = useAppSettings();

@@ -11,7 +11,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useTRPC } from "@/lib/trpc";
 import {
   useMutation,
   useQueryClient,
@@ -19,6 +18,8 @@ import {
 } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { Mail, MailX, UserPlus } from "lucide-react";
+
+import { useTRPC } from "@karakeep/shared-react/trpc";
 
 import ActionConfirmingDialog from "../ui/action-confirming-dialog";
 import { AdminCard } from "./AdminCard";

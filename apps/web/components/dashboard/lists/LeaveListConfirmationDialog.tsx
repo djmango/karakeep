@@ -4,10 +4,10 @@ import { ActionButton } from "@/components/ui/action-button";
 import ActionConfirmingDialog from "@/components/ui/action-confirming-dialog";
 import { toast } from "@/components/ui/sonner";
 import { useTranslation } from "@/lib/i18n/client";
-import { useTRPC } from "@/lib/trpc";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import type { ZBookmarkList } from "@karakeep/shared/types/lists";
+import { useTRPC } from "@karakeep/shared-react/trpc";
 
 export default function LeaveListConfirmationDialog({
   list,

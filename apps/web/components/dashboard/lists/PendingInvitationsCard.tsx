@@ -10,9 +10,10 @@ import {
 } from "@/components/ui/card";
 import { toast } from "@/components/ui/sonner";
 import { useTranslation } from "@/lib/i18n/client";
-import { useTRPC } from "@/lib/trpc";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Loader2, Mail, X } from "lucide-react";
+
+import { useTRPC } from "@karakeep/shared-react/trpc";
 
 interface Invitation {
   id: string;

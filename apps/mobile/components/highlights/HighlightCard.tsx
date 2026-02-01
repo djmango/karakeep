@@ -2,7 +2,6 @@ import { ActivityIndicator, Alert, Pressable, View } from "react-native";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 import { Text } from "@/components/ui/Text";
-import { useTRPC } from "@/lib/trpc";
 import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -10,6 +9,7 @@ import { ExternalLink, Trash2 } from "lucide-react-native";
 
 import type { ZHighlight } from "@karakeep/shared/types/highlights";
 import { useDeleteHighlight } from "@karakeep/shared-react/hooks/highlights";
+import { useTRPC } from "@karakeep/shared-react/trpc";
 
 import { useToast } from "../ui/Toast";
 

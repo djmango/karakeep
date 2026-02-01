@@ -16,12 +16,12 @@ import {
 } from "@/components/ui/table";
 import { ASSET_TYPE_TO_ICON } from "@/lib/attachments";
 import { useTranslation } from "@/lib/i18n/client";
-import { useTRPC } from "@/lib/trpc";
 import { formatBytes } from "@/lib/utils";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { ExternalLink, Trash2 } from "lucide-react";
 
 import { useDetachBookmarkAsset } from "@karakeep/shared-react/hooks/assets";
+import { useTRPC } from "@karakeep/shared-react/trpc";
 import { getAssetUrl } from "@karakeep/shared/utils/assetUtils";
 import {
   humanFriendlyNameForAssertType,

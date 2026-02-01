@@ -13,7 +13,6 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/sonner";
 import { useTranslation } from "@/lib/i18n/client";
-import { useTRPC } from "@/lib/trpc";
 import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
 import {
   Activity,
@@ -30,6 +29,8 @@ import {
   Video,
   Webhook,
 } from "lucide-react";
+
+import { useTRPC } from "@karakeep/shared-react/trpc";
 
 import { Button } from "../ui/button";
 import { AdminCard } from "./AdminCard";

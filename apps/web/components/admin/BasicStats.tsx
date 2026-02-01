@@ -3,8 +3,9 @@
 import { AdminCard } from "@/components/admin/AdminCard";
 import { useClientConfig } from "@/lib/clientConfig";
 import { useTranslation } from "@/lib/i18n/client";
-import { useTRPC } from "@/lib/trpc";
 import { useQuery } from "@tanstack/react-query";
+
+import { useTRPC } from "@karakeep/shared-react/trpc";
 
 const REPO_LATEST_RELEASE_API =
   "https://api.github.com/repos/karakeep-app/karakeep/releases/latest";

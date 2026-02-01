@@ -1,10 +1,10 @@
 import React from "react";
 import { ActionButton, ActionButtonProps } from "@/components/ui/action-button";
 import { toast } from "@/components/ui/sonner";
-import { useTRPC } from "@/lib/trpc";
 import { useQuery } from "@tanstack/react-query";
 
 import { useUpdateBookmark } from "@karakeep/shared-react/hooks/bookmarks";
+import { useTRPC } from "@karakeep/shared-react/trpc";
 
 interface ArchiveBookmarkButtonProps
   extends Omit<ActionButtonProps, "loading" | "disabled"> {
