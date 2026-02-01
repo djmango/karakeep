@@ -7,8 +7,6 @@ import { Input } from "@/components/ui/input";
 import useRelativeTime from "@/lib/hooks/relative-time";
 import { Separator } from "@radix-ui/react-dropdown-menu";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime";
 import { Dot, LinkIcon, Search, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useInView } from "react-intersection-observer";
@@ -21,8 +19,6 @@ import {
 } from "@karakeep/shared/types/highlights";
 
 import HighlightCard from "./HighlightCard";
-
-dayjs.extend(relativeTime);
 
 function Highlight({ highlight }: { highlight: ZHighlight }) {
   const { fromNow, localCreatedAt } = useRelativeTime(highlight.createdAt);

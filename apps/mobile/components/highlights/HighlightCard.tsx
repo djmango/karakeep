@@ -3,8 +3,7 @@ import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 import { Text } from "@/components/ui/Text";
 import { useQuery } from "@tanstack/react-query";
-import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime";
+import { formatDistanceToNow } from "date-fns";
 import { ExternalLink, Trash2 } from "lucide-react-native";
 
 import type { ZHighlight } from "@karakeep/shared/types/highlights";
@@ -12,8 +11,6 @@ import { useDeleteHighlight } from "@karakeep/shared-react/hooks/highlights";
 import { useTRPC } from "@karakeep/shared-react/trpc";
 
 import { useToast } from "../ui/Toast";
-
-dayjs.extend(relativeTime);
 
 // Color map for highlights (mapped to Tailwind CSS classes used in NativeWind)
 const HIGHLIGHT_COLOR_MAP = {
@@ -108,7 +105,7 @@ export default function HighlightCard({
         <View className="flex flex-row items-center justify-between">
           <View className="flex flex-row items-center gap-2">
             <Text className="text-xs text-muted-foreground">
-              {dayjs(highlight.createdAt).fromNow()}
+              {formatDistanceToNow(highlight.createdAt, { addSuffix: true })}
             </Text>
             {bookmark && (
               <>
