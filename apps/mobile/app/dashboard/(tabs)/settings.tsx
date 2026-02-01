@@ -46,7 +46,7 @@ export default function Dashboard() {
   }
 
   return (
-    <CustomSafeAreaView>
+    <CustomSafeAreaView edges={["top"]}>
       <UserProfileHeader
         image={data?.image}
         name={data?.name}

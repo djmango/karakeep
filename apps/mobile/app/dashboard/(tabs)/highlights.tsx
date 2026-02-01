@@ -42,7 +42,7 @@ export default function Highlights() {
   };
 
   return (
-    <CustomSafeAreaView>
+    <CustomSafeAreaView edges={["top"]}>
       <HighlightList
         highlights={data.pages.flatMap((p) => p.highlights)}
         header={

@@ -75,7 +75,7 @@ export default function Tags() {
   };
 
   return (
-    <CustomSafeAreaView>
+    <CustomSafeAreaView edges={["top"]}>
       <FlatList
         className="h-full"
         ListHeaderComponent={

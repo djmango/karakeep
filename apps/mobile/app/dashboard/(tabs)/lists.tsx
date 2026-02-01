@@ -186,7 +186,7 @@ export default function Lists() {
   });
 
   return (
-    <CustomSafeAreaView>
+    <CustomSafeAreaView edges={["top"]}>
       <FlatList
         className="h-full"
         ListHeaderComponent={
