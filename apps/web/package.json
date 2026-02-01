@@ -108,6 +108,7 @@
     "@karakeep/prettier-config": "workspace:^0.1.0",
     "@karakeep/tailwind-config": "workspace:^0.1.0",
     "@karakeep/tsconfig": "workspace:^0.1.0",
+    "@next/bundle-analyzer": "15.3.8",
     "@types/csv-parse": "^1.2.5",
     "@types/emoji-mart": "^3.0.14",
     "@types/react": "^19.1.6",
