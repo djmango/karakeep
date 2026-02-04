@@ -1,3 +1,4 @@
+import { TRPCError } from "@trpc/server";
 import {
   and,
   count,
@@ -10,7 +11,6 @@ import {
   or,
 } from "drizzle-orm";
 import { Counter, Gauge, Histogram } from "prom-client";
-import { TRPCError } from "@trpc/server";
 import { buildImpersonatingTRPCClient } from "trpc";
 
 import { db } from "@karakeep/db";
