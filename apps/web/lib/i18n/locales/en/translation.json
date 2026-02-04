@@ -416,11 +416,12 @@
       "created_at": "Created {{time}}",
       "progress": "Progress",
       "status": {
+        "staging": "Staging",
         "pending": "Pending",
-        "in_progress": "In progress",
+        "running": "Running",
+        "paused": "Paused",
         "completed": "Completed",
-        "failed": "Failed",
-        "processing": "Processing"
+        "failed": "Failed"
       },
       "badges": {
         "pending": "{{count}} pending",
@@ -432,7 +433,9 @@
       "view_list": "View List",
       "delete_dialog_title": "Delete Import Session",
       "delete_dialog_description": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone. The bookmarks themselves will not be deleted.",
-      "delete_session": "Delete Session"
+      "delete_session": "Delete Session",
+      "pause_session": "Pause",
+      "resume_session": "Resume"
     },
     "backups": {
       "backups": "Backups",

@@ -46,7 +46,11 @@ export function useImportSessionStats(importSessionId: string) {
         importSessionId,
       },
       {
-        refetchInterval: 5000, // Refetch every 5 seconds to show progress
+        refetchInterval: (q) =>
+          !q.state.data ||
+          !["completed", "failed"].includes(q.state.data.status)
+            ? 5000
+            : false, // Refetch every 5 seconds to show progress
         enabled: !!importSessionId,
       },
     ),
@@ -71,6 +75,56 @@ export function useDeleteImportSession() {
       onError: (error) => {
         toast({
           description: error.message || "Failed to delete import session",
+          variant: "destructive",
+        });
+      },
+    }),
+  );
+}
+
+export function usePauseImportSession() {
+  const api = useTRPC();
+  const queryClient = useQueryClient();
+
+  return useMutation(
+    api.importSessions.pauseImportSession.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries(
+          api.importSessions.listImportSessions.pathFilter(),
+        );
+        toast({
+          description: "Import session paused",
+          variant: "default",
+        });
+      },
+      onError: (error) => {
+        toast({
+          description: error.message || "Failed to pause import session",
+          variant: "destructive",
+        });
+      },
+    }),
+  );
+}
+
+export function useResumeImportSession() {
+  const api = useTRPC();
+  const queryClient = useQueryClient();
+
+  return useMutation(
+    api.importSessions.resumeImportSession.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries(
+          api.importSessions.listImportSessions.pathFilter(),
+        );
+        toast({
+          description: "Import session resumed",
+          variant: "default",
+        });
+      },
+      onError: (error) => {
+        toast({
+          description: error.message || "Failed to resume import session",
           variant: "destructive",
         });
       },

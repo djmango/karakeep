@@ -28,6 +28,7 @@ import { AssetPreprocessingWorker } from "./workers/assetPreprocessingWorker";
 import { BackupSchedulingWorker, BackupWorker } from "./workers/backupWorker";
 import { CrawlerWorker } from "./workers/crawlerWorker";
 import { FeedRefreshingWorker, FeedWorker } from "./workers/feedWorker";
+import { ImportWorker } from "./workers/importWorker";
 import { OpenAiWorker } from "./workers/inference/inferenceWorker";
 import { RuleEngineWorker } from "./workers/ruleEngineWorker";
 import { SearchIndexingWorker } from "./workers/searchWorker";
@@ -77,7 +78,7 @@ const workerBuilders = {
   },
 } as const;
 
-type WorkerName = keyof typeof workerBuilders;
+type WorkerName = keyof typeof workerBuilders | "import";
 const enabledWorkers = new Set(serverConfig.workers.enabledWorkers);
 const disabledWorkers = new Set(serverConfig.workers.disabledWorkers);
 
@@ -118,10 +119,19 @@ async function main() {
     BackupSchedulingWorker.start();
   }
 
+  // Start import polling worker
+  let importWorker: ImportWorker | null = null;
+  let importWorkerPromise: Promise<void> | null = null;
+  if (isWorkerEnabled("import")) {
+    importWorker = new ImportWorker();
+    importWorkerPromise = importWorker.start();
+  }
+
   await Promise.any([
     Promise.all([
       ...workers.map(({ worker }) => worker.run()),
       httpServer.serve(),
+      ...(importWorkerPromise ? [importWorkerPromise] : []),
     ]),
     shutdownPromise,
   ]);
@@ -135,6 +145,9 @@ async function main() {
   }
   if (workers.some((w) => w.name === "backup")) {
     BackupSchedulingWorker.stop();
+  }
+  if (importWorker) {
+    importWorker.stop();
   }
   for (const { worker } of workers) {
     worker.stop();
