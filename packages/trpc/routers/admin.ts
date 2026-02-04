@@ -662,9 +662,15 @@ export const adminAppRouter = router({
         });
       }
 
-      await LinkCrawlerQueue.enqueue({
-        bookmarkId: input.bookmarkId,
-      });
+      await LinkCrawlerQueue.enqueue(
+        {
+          bookmarkId: input.bookmarkId,
+        },
+        {
+          priority: 50,
+          groupId: "admin",
+        },
+      );
     }),
   adminReindexBookmark: adminProcedure
     .input(z.object({ bookmarkId: z.string() }))
@@ -681,7 +687,10 @@ export const adminAppRouter = router({
         });
       }
 
-      await triggerSearchReindex(input.bookmarkId);
+      await triggerSearchReindex(input.bookmarkId, {
+        priority: 50,
+        groupId: "admin",
+      });
     }),
   adminRetagBookmark: adminProcedure
     .input(z.object({ bookmarkId: z.string() }))
@@ -698,10 +707,16 @@ export const adminAppRouter = router({
         });
       }
 
-      await OpenAIQueue.enqueue({
-        bookmarkId: input.bookmarkId,
-        type: "tag",
-      });
+      await OpenAIQueue.enqueue(
+        {
+          bookmarkId: input.bookmarkId,
+          type: "tag",
+        },
+        {
+          priority: 50,
+          groupId: "admin",
+        },
+      );
     }),
   adminResummarizeBookmark: adminProcedure
     .input(z.object({ bookmarkId: z.string() }))
@@ -725,9 +740,15 @@ export const adminAppRouter = router({
         });
       }
 
-      await OpenAIQueue.enqueue({
-        bookmarkId: input.bookmarkId,
-        type: "summarize",
-      });
+      await OpenAIQueue.enqueue(
+        {
+          bookmarkId: input.bookmarkId,
+          type: "summarize",
+        },
+        {
+          priority: 50,
+          groupId: "admin",
+        },
+      );
     }),
 });
