@@ -478,6 +478,8 @@ export class ImportWorker {
       .select({
         id: importStagingBookmarks.id,
         importSessionId: importStagingBookmarks.importSessionId,
+        crawlStatus: bookmarkLinks.crawlStatus,
+        taggingStatus: bookmarks.taggingStatus,
       })
       .from(importStagingBookmarks)
       .leftJoin(
@@ -511,29 +513,59 @@ export class ImportWorker {
       return 0;
     }
 
+    const succeededItems = completedItems.filter(
+      (i) => i.crawlStatus !== "failure" && i.taggingStatus !== "failure",
+    );
+    const failedItems = completedItems.filter(
+      (i) => i.crawlStatus === "failure" || i.taggingStatus === "failure",
+    );
+
     logger.debug(
-      `[import] ${completedItems.length} item(s) finished downstream processing, marking as completed`,
+      `[import] ${completedItems.length} item(s) finished downstream processing (${succeededItems.length} succeeded, ${failedItems.length} failed)`,
     );
 
-    // Mark them as completed
-    await db
-      .update(importStagingBookmarks)
-      .set({
-        status: "completed",
-        completedAt: new Date(),
-      })
-      .where(
-        inArray(
-          importStagingBookmarks.id,
-          completedItems.map((i) => i.id),
-        ),
+    // Mark succeeded items as completed
+    if (succeededItems.length > 0) {
+      await db
+        .update(importStagingBookmarks)
+        .set({
+          status: "completed",
+          completedAt: new Date(),
+        })
+        .where(
+          inArray(
+            importStagingBookmarks.id,
+            succeededItems.map((i) => i.id),
+          ),
+        );
+
+      importStagingProcessedCounter.inc(
+        { result: "accepted" },
+        succeededItems.length,
       );
+    }
 
-    // Increment counter for completed items
-    importStagingProcessedCounter.inc(
-      { result: "accepted" },
-      completedItems.length,
-    );
+    // Mark failed items as failed
+    if (failedItems.length > 0) {
+      for (const item of failedItems) {
+        const reason =
+          item.crawlStatus === "failure" ? "Crawl failed" : "Tagging failed";
+        await db
+          .update(importStagingBookmarks)
+          .set({
+            status: "failed",
+            result: "rejected",
+            resultReason: reason,
+            completedAt: new Date(),
+          })
+          .where(eq(importStagingBookmarks.id, item.id));
+      }
+
+      importStagingProcessedCounter.inc(
+        { result: "rejected" },
+        failedItems.length,
+      );
+    }
 
     // Check if any sessions are now complete
     const sessionIds = [
