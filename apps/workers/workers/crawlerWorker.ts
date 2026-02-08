@@ -59,7 +59,6 @@ import {
 import {
   AssetPreprocessingQueue,
   getTracer,
-  LinkCrawlerQueue,
   OpenAIQueue,
   QuotaService,
   setSpanAttributes,
@@ -84,8 +83,10 @@ import serverConfig from "@karakeep/shared/config";
 import logger from "@karakeep/shared/logger";
 import {
   DequeuedJob,
+  DequeuedJobError,
   EnqueueOptions,
   getQueueClient,
+  Queue,
   QueueRetryAfterError,
 } from "@karakeep/shared/queueing";
 import { getRateLimitClient } from "@karakeep/shared/ratelimiting";
@@ -302,42 +303,54 @@ async function launchBrowser() {
 }
 
 export class CrawlerWorker {
-  static async build() {
-    chromium.use(StealthPlugin());
-    if (serverConfig.crawler.enableAdblocker) {
-      logger.info("[crawler] Loading adblocker ...");
-      const globalBlockerResult = await tryCatch(
-        PlaywrightBlocker.fromPrebuiltFull(fetchWithProxy, {
-          path: path.join(os.tmpdir(), "karakeep_adblocker.bin"),
-          read: fs.readFile,
-          write: fs.writeFile,
-        }),
-      );
-      if (globalBlockerResult.error) {
-        logger.error(
-          `[crawler] Failed to load adblocker. Will not be blocking ads: ${globalBlockerResult.error}`,
-        );
-      } else {
-        globalBlocker = globalBlockerResult.data;
-      }
+  private static initPromise: Promise<void> | null = null;
+
+  private static ensureInitialized() {
+    if (!CrawlerWorker.initPromise) {
+      CrawlerWorker.initPromise = (async () => {
+        chromium.use(StealthPlugin());
+        if (serverConfig.crawler.enableAdblocker) {
+          logger.info("[crawler] Loading adblocker ...");
+          const globalBlockerResult = await tryCatch(
+            PlaywrightBlocker.fromPrebuiltFull(fetchWithProxy, {
+              path: path.join(os.tmpdir(), "karakeep_adblocker.bin"),
+              read: fs.readFile,
+              write: fs.writeFile,
+            }),
+          );
+          if (globalBlockerResult.error) {
+            logger.error(
+              `[crawler] Failed to load adblocker. Will not be blocking ads: ${globalBlockerResult.error}`,
+            );
+          } else {
+            globalBlocker = globalBlockerResult.data;
+          }
+        }
+        if (!serverConfig.crawler.browserConnectOnDemand) {
+          await launchBrowser();
+        } else {
+          logger.info(
+            "[Crawler] Browser connect on demand is enabled, won't proactively start the browser instance",
+          );
+        }
+        await loadCookiesFromFile();
+      })();
     }
-    if (!serverConfig.crawler.browserConnectOnDemand) {
-      await launchBrowser();
-    } else {
-      logger.info(
-        "[Crawler] Browser connect on demand is enabled, won't proactively start the browser instance",
-      );
-    }
+    return CrawlerWorker.initPromise;
+  }
+
+  static async build(queue: Queue<ZCrawlLinkRequest>) {
+    await CrawlerWorker.ensureInitialized();
 
     logger.info("Starting crawler worker ...");
-    const worker = (await getQueueClient())!.createRunner<
+    const worker = (await getQueueClient()).createRunner<
       ZCrawlLinkRequest,
       CrawlerRunResult
     >(
-      LinkCrawlerQueue,
+      queue,
       {
         run: withWorkerTracing("crawlerWorker.run", runCrawler),
-        onComplete: async (job) => {
+        onComplete: async (job: DequeuedJob<ZCrawlLinkRequest>) => {
           workerStatsCounter.labels("crawler", "completed").inc();
           const jobId = job.id;
           logger.info(`[Crawler][${jobId}] Completed successfully`);
@@ -351,7 +364,7 @@ export class CrawlerWorker {
               .where(eq(bookmarkLinks.id, bookmarkId));
           }
         },
-        onError: async (job) => {
+        onError: async (job: DequeuedJobError<ZCrawlLinkRequest>) => {
           workerStatsCounter.labels("crawler", "failed").inc();
           if (job.numRetriesLeft == 0) {
             workerStatsCounter.labels("crawler", "failed_permanent").inc();
@@ -401,8 +414,6 @@ export class CrawlerWorker {
         concurrency: serverConfig.crawler.numWorkers,
       },
     );
-
-    await loadCookiesFromFile();
 
     return worker;
   }

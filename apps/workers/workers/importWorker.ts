@@ -20,7 +20,7 @@ import {
   importSessions,
   importStagingBookmarks,
 } from "@karakeep/db/schema";
-import { LinkCrawlerQueue, OpenAIQueue } from "@karakeep/shared-server";
+import { LowPriorityCrawlerQueue, OpenAIQueue } from "@karakeep/shared-server";
 import logger, { throttledLogger } from "@karakeep/shared/logger";
 import { BookmarkTypes } from "@karakeep/shared/types/bookmarks";
 
@@ -635,7 +635,7 @@ export class ImportWorker {
             ),
           ),
         ),
-      LinkCrawlerQueue.stats(),
+      LowPriorityCrawlerQueue.stats(),
       OpenAIQueue.stats(),
     ]);
 

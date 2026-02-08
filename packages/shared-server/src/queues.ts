@@ -96,6 +96,18 @@ export const LinkCrawlerQueue = createDeferredQueue<ZCrawlLinkRequest>(
   },
 );
 
+// Separate queue for low priority link crawling (e.g. imports)
+// This prevents low priority crawling from impacting the parallelism of the main queue
+export const LowPriorityCrawlerQueue = createDeferredQueue<ZCrawlLinkRequest>(
+  "low_priority_crawler_queue",
+  {
+    defaultJobArgs: {
+      numRetries: 5,
+    },
+    keepFailedJobs: false,
+  },
+);
+
 // Inference Worker
 export const zOpenAIRequestSchema = z.object({
   bookmarkId: z.string(),

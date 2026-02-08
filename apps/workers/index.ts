@@ -10,6 +10,7 @@ import {
   initTracing,
   LinkCrawlerQueue,
   loadAllPlugins,
+  LowPriorityCrawlerQueue,
   OpenAIQueue,
   prepareQueue,
   RuleEngineQueue,
@@ -38,7 +39,11 @@ import { WebhookWorker } from "./workers/webhookWorker";
 const workerBuilders = {
   crawler: async () => {
     await LinkCrawlerQueue.ensureInit();
-    return CrawlerWorker.build();
+    return CrawlerWorker.build(LinkCrawlerQueue);
+  },
+  lowPriorityCrawler: async () => {
+    await LowPriorityCrawlerQueue.ensureInit();
+    return CrawlerWorker.build(LowPriorityCrawlerQueue);
   },
   inference: async () => {
     await OpenAIQueue.ensureInit();

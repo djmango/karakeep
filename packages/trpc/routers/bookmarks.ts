@@ -19,6 +19,7 @@ import {
 import {
   AssetPreprocessingQueue,
   LinkCrawlerQueue,
+  LowPriorityCrawlerQueue,
   OpenAIQueue,
   QueuePriority,
   QuotaService,
@@ -282,7 +283,12 @@ export const bookmarksAppRouter = router({
       switch (bookmark.content.type) {
         case BookmarkTypes.LINK: {
           // The crawling job triggers openai when it's done
-          await LinkCrawlerQueue.enqueue(
+          // Use a separate queue for low priority crawling to avoid impacting main queue parallelism
+          const crawlerQueue =
+            input.crawlPriority === "low"
+              ? LowPriorityCrawlerQueue
+              : LinkCrawlerQueue;
+          await crawlerQueue.enqueue(
             {
               bookmarkId: bookmark.id,
             },
