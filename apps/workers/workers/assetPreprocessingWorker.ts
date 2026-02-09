@@ -21,11 +21,7 @@ import {
   StorageQuotaError,
   triggerSearchReindex,
 } from "@karakeep/shared-server";
-import {
-  newAssetId,
-  readAsset,
-  saveAsset,
-} from "@karakeep/shared-server/assetdb";
+import { newAssetId, readAsset, saveAsset } from "@karakeep/shared/assetdb";
 import serverConfig from "@karakeep/shared/config";
 import { InferenceClientFactory } from "@karakeep/shared/inference";
 import logger from "@karakeep/shared/logger";

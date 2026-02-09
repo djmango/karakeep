@@ -11,12 +11,12 @@ import {
   PutObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
-import glob from "glob";
+import { Glob } from "glob";
 import { z } from "zod";
 
-import serverConfig from "@karakeep/shared/config";
-import logger from "@karakeep/shared/logger";
-import { QuotaApproved } from "@karakeep/shared/storageQuota";
+import serverConfig from "./config";
+import logger from "./logger";
+import { QuotaApproved } from "./storageQuota";
 
 const ROOT_PATH = serverConfig.assetsDir;
 
@@ -283,30 +283,18 @@ class LocalFileSystemAssetStore implements AssetStore {
   }
 
   async *getAllAssets() {
-    const files = await new Promise<string[]>((resolve, reject) => {
-      glob(
-        "*/*/asset.bin",
-        {
-          cwd: this.rootPath,
-          nodir: true,
-        },
-        (err, matches) => {
-          if (err) {
-            reject(err);
-            return;
-          }
-          resolve(matches);
-        },
-      );
+    const g = new Glob(`/**/**/asset.bin`, {
+      maxDepth: 3,
+      root: this.rootPath,
+      cwd: this.rootPath,
+      absolute: false,
     });
-
-    for (const file of files) {
+    for await (const file of g) {
       const [userId, assetId] = file.split("/").slice(0, 2);
       const [size, metadata] = await Promise.all([
         this.getAssetSize({ userId, assetId }),
         this.readAssetMetadata({ userId, assetId }),
       ]);
-
       yield {
         userId,
         assetId,
@@ -617,7 +605,7 @@ export { LocalFileSystemAssetStore, S3AssetStore };
  * Example usage of S3AssetStore:
  *
  * import { S3Client } from "@aws-sdk/client-s3";
- * import { S3AssetStore } from "@karakeep/shared-server/assetdb";
+ * import { S3AssetStore } from "@karakeep/shared/assetdb";
  *
  * const s3Client = new S3Client({
  *   region: "us-east-1",

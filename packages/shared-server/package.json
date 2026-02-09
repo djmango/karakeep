@@ -5,7 +5,6 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.842.0",
     "@karakeep/db": "workspace:^0.1.0",
     "@karakeep/plugins": "workspace:^0.1.0",
     "@karakeep/shared": "workspace:^0.1.0",
@@ -14,9 +13,7 @@
     "@opentelemetry/resources": "^2.2.0",
     "@opentelemetry/sdk-trace-base": "^2.2.0",
     "@opentelemetry/sdk-trace-node": "^2.2.0",
-    "@opentelemetry/semantic-conventions": "^1.38.0",
-    "glob": "^11.0.0",
-    "zod": "^3.24.2"
+    "@opentelemetry/semantic-conventions": "^1.38.0"
   },
   "devDependencies": {
     "@karakeep/prettier-config": "workspace:^0.1.0",
@@ -32,8 +29,7 @@
   },
   "main": "index.ts",
   "exports": {
-    ".": "./index.ts",
-    "./assetdb": "./assetdb.ts"
+    ".": "./index.ts"
   },
   "prettier": "@karakeep/prettier-config"
 }
