@@ -372,6 +372,7 @@ const useListSuggestions = (
     }
 
     const lists = listResults?.data ?? [];
+    const seenListNames = new Set<string>();
 
     return lists
       .filter((list) => {
@@ -379,6 +380,15 @@ const useListSuggestions = (
           return true;
         }
         return list.name.toLowerCase().includes(normalizedListSearchTerm);
+      })
+      .filter((list) => {
+        const normalizedListName = list.name.trim().toLowerCase();
+        if (seenListNames.has(normalizedListName)) {
+          return false;
+        }
+
+        seenListNames.add(normalizedListName);
+        return true;
       })
       .slice(0, MAX_DISPLAY_SUGGESTIONS)
       .map((list) => {
@@ -450,6 +460,7 @@ const useHistorySuggestions = (
 ): HistorySuggestionItem[] => {
   const historyItems = useMemo<HistorySuggestionItem[]>(() => {
     const trimmedValue = value.trim();
+    const seenTerms = new Set<string>();
     const results =
       trimmedValue.length === 0
         ? history
@@ -457,16 +468,27 @@ const useHistorySuggestions = (
             item.toLowerCase().includes(trimmedValue.toLowerCase()),
           );
 
-    return results.slice(0, MAX_DISPLAY_SUGGESTIONS).map(
-      (term) =>
-        ({
-          type: "history" as const,
-          id: `history-${term}`,
-          term,
-          label: term,
-          Icon: History,
-        }) satisfies HistorySuggestionItem,
-    );
+    return results
+      .filter((term) => {
+        const normalizedTerm = term.trim().toLowerCase();
+        if (seenTerms.has(normalizedTerm)) {
+          return false;
+        }
+
+        seenTerms.add(normalizedTerm);
+        return true;
+      })
+      .slice(0, MAX_DISPLAY_SUGGESTIONS)
+      .map(
+        (term) =>
+          ({
+            type: "history" as const,
+            id: `history-${term}`,
+            term,
+            label: term,
+            Icon: History,
+          }) satisfies HistorySuggestionItem,
+      );
   }, [history, value]);
 
   return historyItems;
