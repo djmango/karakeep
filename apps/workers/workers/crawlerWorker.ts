@@ -78,7 +78,7 @@ import {
   saveAssetFromFile,
   silentDeleteAsset,
   SUPPORTED_UPLOAD_ASSET_TYPES,
-} from "@karakeep/shared/assetdb";
+} from "@karakeep/shared-server/assetdb";
 import serverConfig from "@karakeep/shared/config";
 import logger from "@karakeep/shared/logger";
 import {
