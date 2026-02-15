@@ -203,9 +203,6 @@ describe("Subscription Routes", () => {
         metadata: {
           userId: user.id,
         },
-        automatic_tax: {
-          enabled: true,
-        },
         customer_update: {
           address: "auto",
         },
