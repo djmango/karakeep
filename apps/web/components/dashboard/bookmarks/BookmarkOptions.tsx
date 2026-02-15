@@ -34,6 +34,7 @@ import { toast } from "sonner";
 
 import type {
   ZBookmark,
+  ZBookmarkedAsset,
   ZBookmarkedLink,
 } from "@karakeep/shared/types/bookmarks";
 import {
@@ -402,6 +403,17 @@ export default function BookmarkOptions({ bookmark }: { bookmark: ZBookmark }) {
           disabled: demoMode,
           onClick: () =>
             crawlBookmarkMutator.mutate({ bookmarkId: bookmark.id }),
+        },
+        {
+          id: "download-asset",
+          title: t("actions.download"),
+          icon: <Download className="mr-2 size-4" />,
+          visible: bookmark.content.type === BookmarkTypes.ASSET,
+          disabled: false,
+          onClick: () => {
+            const asset = bookmark.content as ZBookmarkedAsset;
+            window.open(getAssetUrl(asset.assetId), "_blank");
+          },
         },
         {
           id: "replace-banner",
