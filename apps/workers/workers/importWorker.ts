@@ -22,7 +22,10 @@ import {
 } from "@karakeep/db/schema";
 import { LowPriorityCrawlerQueue, OpenAIQueue } from "@karakeep/shared-server";
 import logger, { throttledLogger } from "@karakeep/shared/logger";
-import { BookmarkTypes } from "@karakeep/shared/types/bookmarks";
+import {
+  BookmarkTypes,
+  MAX_BOOKMARK_TITLE_LENGTH,
+} from "@karakeep/shared/types/bookmarks";
 
 import { registry } from "../metrics";
 
@@ -371,8 +374,12 @@ export class ImportWorker {
         typeof caller.bookmarks.createBookmark
       >[0];
 
+      const normalizedTitle = staged.title
+        ?.trim()
+        .substring(0, MAX_BOOKMARK_TITLE_LENGTH);
+
       const baseRequest = {
-        title: staged.title ?? undefined,
+        title: normalizedTitle || undefined,
         note: staged.note ?? undefined,
         createdAt: staged.sourceAddedAt ?? undefined,
         crawlPriority: "low" as const,
