@@ -123,6 +123,13 @@ function normalizeContentType(header: string | null): string | null {
   return header.split(";", 1)[0]!.trim().toLowerCase();
 }
 
+function shouldRetryCrawlStatusCode(statusCode: number | null): boolean {
+  if (statusCode === null) {
+    return false;
+  }
+  return statusCode === 403 || statusCode === 429 || statusCode >= 500;
+}
+
 interface Cookie {
   name: string;
   value: string;
@@ -297,7 +304,9 @@ export class CrawlerWorker {
     >(
       queue,
       {
-        run: withWorkerTracing("crawlerWorker.run", runCrawler),
+        run: withWorkerTracing("crawlerWorker.run", (job) =>
+          runCrawler(job, queue.opts.defaultJobArgs.numRetries),
+        ),
         onComplete: async (job: DequeuedJob<ZCrawlLinkRequest>) => {
           workerStatsCounter.labels("crawler", "completed").inc();
           const jobId = job.id;
@@ -1363,6 +1372,7 @@ async function crawlAndParseUrl(
   precrawledArchiveAssetId: string | undefined,
   archiveFullPage: boolean,
   forceStorePdf: boolean,
+  numRetriesLeft: number,
   abortSignal: AbortSignal,
 ) {
   return await withSpan(
@@ -1429,6 +1439,17 @@ async function crawlAndParseUrl(
         setSpanAttributes({
           "crawler.statusCode": statusCode,
         });
+      }
+
+      if (shouldRetryCrawlStatusCode(statusCode)) {
+        if (numRetriesLeft > 0) {
+          throw new Error(
+            `[Crawler][${jobId}] Received status code ${statusCode}. Will retry crawl. Retries left: ${numRetriesLeft}`,
+          );
+        }
+        logger.info(
+          `[Crawler][${jobId}] Received status code ${statusCode} on latest retry attempt. Proceeding without retry.`,
+        );
       }
 
       const { metadata: meta, readableContent: parsedReadableContent } =
@@ -1691,8 +1712,10 @@ async function checkDomainRateLimit(url: string, jobId: string): Promise<void> {
 
 async function runCrawler(
   job: DequeuedJob<ZCrawlLinkRequest>,
+  maxRetries: number,
 ): Promise<CrawlerRunResult> {
   const jobId = `${job.id}:${job.runNumber}`;
+  const numRetriesLeft = Math.max(maxRetries - job.runNumber, 0);
 
   const request = zCrawlLinkRequestSchema.safeParse(job.data);
   if (!request.success) {
@@ -1764,6 +1787,7 @@ async function runCrawler(
       precrawledArchiveAssetId,
       archiveFullPage,
       storePdf ?? false,
+      numRetriesLeft,
       job.abortSignal,
     );
 
