@@ -814,9 +814,10 @@ export const bookmarksAppRouter = router({
       const idsToRemove = detachTagsWithNames.map((t) => t.id);
 
       const res = await ctx.db.transaction(async (tx) => {
+        let numChanges = 0;
         // Detaches
         if (idsToRemove.length > 0) {
-          await tx
+          const res = await tx
             .delete(tagsOnBookmarks)
             .where(
               and(
@@ -824,11 +825,12 @@ export const bookmarksAppRouter = router({
                 inArray(tagsOnBookmarks.tagId, idsToRemove),
               ),
             );
+          numChanges += res.changes;
         }
 
         // Attach tags
         if (allIdsToAttach.length > 0) {
-          await tx
+          const res = await tx
             .insert(tagsOnBookmarks)
             .values(
               allIdsToAttach.map((i) => ({
@@ -838,44 +840,50 @@ export const bookmarksAppRouter = router({
               })),
             )
             .onConflictDoNothing();
+          numChanges += res.changes;
         }
 
         // Update bookmark modified timestamp
-        await tx
-          .update(bookmarks)
-          .set({ modifiedAt: new Date() })
-          .where(
-            and(
-              eq(bookmarks.id, input.bookmarkId),
-              eq(bookmarks.userId, ctx.user.id),
-            ),
-          );
+        if (numChanges > 0) {
+          await tx
+            .update(bookmarks)
+            .set({ modifiedAt: new Date() })
+            .where(
+              and(
+                eq(bookmarks.id, input.bookmarkId),
+                eq(bookmarks.userId, ctx.user.id),
+              ),
+            );
+        }
 
         return {
           bookmarkId: input.bookmarkId,
           attached: allIdsToAttach,
           detached: idsToRemove,
+          numChanges,
         };
       });
 
-      await Promise.allSettled([
-        triggerRuleEngineOnEvent(input.bookmarkId, [
-          ...res.detached.map((t) => ({
-            type: "tagRemoved" as const,
-            tagId: t,
-          })),
-          ...res.attached.map((t) => ({
-            type: "tagAdded" as const,
-            tagId: t,
-          })),
-        ]),
-        triggerSearchReindex(input.bookmarkId, {
-          groupId: ctx.user.id,
-        }),
-        triggerWebhook(input.bookmarkId, "edited", ctx.user.id, {
-          groupId: ctx.user.id,
-        }),
-      ]);
+      if (res.numChanges > 0) {
+        await Promise.allSettled([
+          triggerRuleEngineOnEvent(input.bookmarkId, [
+            ...res.detached.map((t) => ({
+              type: "tagRemoved" as const,
+              tagId: t,
+            })),
+            ...res.attached.map((t) => ({
+              type: "tagAdded" as const,
+              tagId: t,
+            })),
+          ]),
+          triggerSearchReindex(input.bookmarkId, {
+            groupId: ctx.user.id,
+          }),
+          triggerWebhook(input.bookmarkId, "edited", ctx.user.id, {
+            groupId: ctx.user.id,
+          }),
+        ]);
+      }
       return res;
     }),
   getBrokenLinks: authedProcedure
