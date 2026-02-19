@@ -1,4 +1,5 @@
 import { useLayoutEffect } from "react";
+import { Platform } from "react-native";
 import { useNavigation } from "expo-router";
 import UpdatingBookmarkList from "@/components/bookmarks/UpdatingBookmarkList";
 import CustomSafeAreaView from "@/components/ui/CustomSafeAreaView";
@@ -8,7 +9,9 @@ export default function Archive() {
   useLayoutEffect(() => {
     navigator.setOptions({
       headerTitle: "🗄️ Archive",
-      headerLargeTitle: true,
+      ...Platform.select({
+        ios: { headerLargeTitle: true },
+      }),
     });
   }, [navigator]);
   return (

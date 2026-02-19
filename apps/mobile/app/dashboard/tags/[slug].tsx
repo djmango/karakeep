@@ -1,4 +1,4 @@
-import { View } from "react-native";
+import { Platform, View } from "react-native";
 import { Stack, useLocalSearchParams } from "expo-router";
 import UpdatingBookmarkList from "@/components/bookmarks/UpdatingBookmarkList";
 import FullPageError from "@/components/FullPageError";
@@ -27,8 +27,9 @@ export default function TagView() {
         options={{
           headerTitle: tag?.name ?? "",
           headerBackTitle: "Back",
-          headerTransparent: true,
-          headerLargeTitle: true,
+          ...Platform.select({
+            ios: { headerTransparent: true, headerLargeTitle: true },
+          }),
         }}
       />
       {error ? (

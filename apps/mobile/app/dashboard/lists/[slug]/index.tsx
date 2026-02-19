@@ -30,7 +30,9 @@ export default function ListView() {
         options={{
           headerTitle: list ? `${list.icon} ${list.name}` : "",
           headerBackTitle: "Back",
-          headerLargeTitle: true,
+          ...Platform.select({
+            ios: { headerLargeTitle: true },
+          }),
           headerRight: () => (
             <ListActionsMenu listId={slug} role={list?.userRole ?? "viewer"} />
           ),

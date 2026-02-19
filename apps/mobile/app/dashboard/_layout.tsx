@@ -42,7 +42,9 @@ export default function Dashboard() {
       contentClassName="bg-gray-100 dark:bg-background"
       headerClassName="dark:text-white"
       screenOptions={{
-        headerTransparent: true,
+        ...Platform.select({
+          ios: { headerTransparent: true },
+        }),
       }}
     >
       <Stack.Screen
@@ -54,7 +56,9 @@ export default function Dashboard() {
         options={{
           headerTitle: "",
           headerBackTitle: "Back",
-          headerTransparent: true,
+          ...Platform.select({
+            ios: { headerTransparent: true },
+          }),
         }}
       />
       <Stack.Screen
@@ -62,7 +66,9 @@ export default function Dashboard() {
         options={{
           headerTitle: "",
           headerBackTitle: "Back",
-          headerTransparent: true,
+          ...Platform.select({
+            ios: { headerTransparent: true },
+          }),
         }}
       />
       <Stack.Screen
@@ -108,8 +114,10 @@ export default function Dashboard() {
         options={{
           headerTitle: "New List",
           headerBackTitle: "Back",
-          headerTransparent: true,
           presentation: "modal",
+          ...Platform.select({
+            ios: { headerTransparent: true },
+          }),
         }}
       />
       <Stack.Screen
@@ -117,8 +125,10 @@ export default function Dashboard() {
         options={{
           headerTitle: "Edit List",
           headerBackTitle: "Back",
-          headerTransparent: true,
           presentation: "modal",
+          ...Platform.select({
+            ios: { headerTransparent: true },
+          }),
         }}
       />
       <Stack.Screen
@@ -126,7 +136,9 @@ export default function Dashboard() {
         options={{
           headerTitle: "",
           headerBackTitle: "Back",
-          headerTransparent: true,
+          ...Platform.select({
+            ios: { headerTransparent: true },
+          }),
         }}
       />
       <Stack.Screen
@@ -134,10 +146,12 @@ export default function Dashboard() {
         options={{
           headerTitle: "",
           headerBackTitle: "",
-          headerTransparent: true,
           headerShown: false,
           animation: "fade_from_bottom",
           animationDuration: 100,
+          ...Platform.select({
+            ios: { headerTransparent: true },
+          }),
         }}
       />
       <Stack.Screen
