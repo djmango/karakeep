@@ -1,4 +1,10 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
 import { cn } from "@/lib/utils";
 import { PopoverAnchor } from "@radix-ui/react-popover";
 import { Check, Trash2 } from "lucide-react";
@@ -140,17 +146,27 @@ interface HTMLHighlighterProps {
   onDeleteHighlight?: (highlight: Highlight) => void;
 }
 
-function BookmarkHTMLHighlighter({
-  htmlContent,
-  className,
-  style,
-  highlights = [],
-  readOnly = false,
-  onHighlight,
-  onUpdateHighlight,
-  onDeleteHighlight,
-}: HTMLHighlighterProps) {
+const BookmarkHTMLHighlighter = forwardRef<
+  HTMLDivElement,
+  HTMLHighlighterProps
+>(function BookmarkHTMLHighlighter(
+  {
+    htmlContent,
+    className,
+    style,
+    highlights = [],
+    readOnly = false,
+    onHighlight,
+    onUpdateHighlight,
+    onDeleteHighlight,
+  },
+  ref,
+) {
   const contentRef = useRef<HTMLDivElement>(null);
+
+  // Expose the content div ref to parent components
+  useImperativeHandle(ref, () => contentRef.current!, []);
+
   const [menuPosition, setMenuPosition] = useState<{
     x: number;
     y: number;
@@ -409,6 +425,6 @@ function BookmarkHTMLHighlighter({
       />
     </div>
   );
-}
+});
 
 export default BookmarkHTMLHighlighter;
