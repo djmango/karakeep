@@ -22,6 +22,7 @@ export default function CustomSafeAreaView({
 
   return (
     <SafeAreaView
+      edges={edges}
       style={{
         flex: 1,
         backgroundColor: colors.background,

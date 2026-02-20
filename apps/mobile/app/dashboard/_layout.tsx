@@ -43,8 +43,15 @@ export default function Dashboard() {
       headerClassName="dark:text-white"
       screenOptions={{
         ...Platform.select({
-          ios: { headerTransparent: true },
+          ios: {
+            headerTransparent: true,
+            headerBlurEffect: "systemMaterial",
+            headerLargeTitle: true,
+            headerLargeTitleShadowVisible: false,
+            headerLargeStyle: { backgroundColor: "transparent" },
+          },
         }),
+        headerShadowVisible: false,
       }}
     >
       <Stack.Screen
@@ -54,11 +61,8 @@ export default function Dashboard() {
       <Stack.Screen
         name="favourites"
         options={{
-          headerTitle: "",
+          headerTitle: "⭐️ Favourites",
           headerBackTitle: "Back",
-          ...Platform.select({
-            ios: { headerTransparent: true },
-          }),
         }}
       />
       <Stack.Screen
@@ -66,9 +70,7 @@ export default function Dashboard() {
         options={{
           headerTitle: "",
           headerBackTitle: "Back",
-          ...Platform.select({
-            ios: { headerTransparent: true },
-          }),
+          headerLargeTitle: false,
         }}
       />
       <Stack.Screen
@@ -77,6 +79,7 @@ export default function Dashboard() {
           headerTitle: "New Bookmark",
           headerBackTitle: "Back",
           headerTransparent: false,
+          headerLargeTitle: false,
           presentation: "formSheet",
           sheetGrabberVisible: true,
           sheetAllowedDetents: [0.35, 0.7],
@@ -87,6 +90,7 @@ export default function Dashboard() {
         options={{
           headerTitle: "Manage Tags",
           headerTransparent: false,
+          headerLargeTitle: false,
           presentation: "formSheet",
           sheetGrabberVisible: true,
         }}
@@ -96,6 +100,7 @@ export default function Dashboard() {
         options={{
           headerTitle: "Manage Lists",
           headerTransparent: false,
+          headerLargeTitle: false,
           presentation: "formSheet",
           sheetGrabberVisible: true,
         }}
@@ -105,6 +110,7 @@ export default function Dashboard() {
         options={{
           headerTitle: "Info",
           headerTransparent: false,
+          headerLargeTitle: false,
           presentation: "formSheet",
           sheetGrabberVisible: true,
         }}
@@ -114,10 +120,8 @@ export default function Dashboard() {
         options={{
           headerTitle: "New List",
           headerBackTitle: "Back",
+          headerLargeTitle: false,
           presentation: "modal",
-          ...Platform.select({
-            ios: { headerTransparent: true },
-          }),
         }}
       />
       <Stack.Screen
@@ -125,20 +129,15 @@ export default function Dashboard() {
         options={{
           headerTitle: "Edit List",
           headerBackTitle: "Back",
+          headerLargeTitle: false,
           presentation: "modal",
-          ...Platform.select({
-            ios: { headerTransparent: true },
-          }),
         }}
       />
       <Stack.Screen
         name="archive"
         options={{
-          headerTitle: "",
+          headerTitle: "🗄️ Archive",
           headerBackTitle: "Back",
-          ...Platform.select({
-            ios: { headerTransparent: true },
-          }),
         }}
       />
       <Stack.Screen
@@ -149,9 +148,6 @@ export default function Dashboard() {
           headerShown: false,
           animation: "fade_from_bottom",
           animationDuration: 100,
-          ...Platform.select({
-            ios: { headerTransparent: true },
-          }),
         }}
       />
       <Stack.Screen
@@ -160,6 +156,7 @@ export default function Dashboard() {
           title: "Theme",
           headerTitle: "Theme",
           headerBackTitle: "Back",
+          headerLargeTitle: false,
         }}
       />
       <Stack.Screen
@@ -168,6 +165,7 @@ export default function Dashboard() {
           title: "Bookmark View Mode",
           headerTitle: "Bookmark View Mode",
           headerBackTitle: "Back",
+          headerLargeTitle: false,
         }}
       />
       <Stack.Screen
@@ -176,6 +174,7 @@ export default function Dashboard() {
           title: "Reader Settings",
           headerTitle: "Reader Settings",
           headerBackTitle: "Back",
+          headerLargeTitle: false,
         }}
       />
     </StyledStack>
