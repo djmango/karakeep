@@ -544,6 +544,14 @@ async function crawlPage(
               await globalBlocker.enableBlockingInPage(nextPage);
             }
 
+            // Auto-dismiss JavaScript dialogs (alert, confirm, prompt)
+            // to prevent pages from hanging during crawl.
+            nextPage.on("dialog", (dialog) => {
+              dialog.dismiss().catch(() => {
+                // Ignore errors — the dialog may have already been closed.
+              });
+            });
+
             // Block audio/video resources and disallowed sub-requests
             await nextPage.route("**/*", async (route) => {
               if (abortSignal.aborted) {
