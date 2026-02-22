@@ -457,7 +457,7 @@ export function FeedRow({ feed }: { feed: ZFeed }) {
             </ActionButton>
           )}
         >
-          <Button variant="destructive" disabled={isDeleting}>
+          <Button variant="ghostDestructive" disabled={isDeleting}>
             <Trash2 className="size-4" />
           </Button>
         </ActionConfirmingDialog>

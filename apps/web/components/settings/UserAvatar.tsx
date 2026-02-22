@@ -78,7 +78,7 @@ export default function UserAvatar() {
             <UserAvatarImage
               image={image}
               name={t("settings.info.avatar.title")}
-              fallback={<User className="h-7 w-7 text-muted-foreground" />}
+              fallback={<User className="h-7 w-7" />}
               className="h-full w-full"
             />
           </div>

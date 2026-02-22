@@ -115,13 +115,12 @@ export default function BrokenLinksPage() {
                       {t("actions.recrawl")}
                     </ActionButton>
                     <ActionButton
-                      variant="destructive"
+                      variant="ghostDestructive"
                       onClick={() => deleteBookmark({ bookmarkId: b.id })}
                       loading={isDeleting}
                       className="flex items-center gap-2"
                     >
                       <Trash2 className="size-4" />
-                      {t("actions.delete")}
                     </ActionButton>
                   </TableCell>
                 </TableRow>

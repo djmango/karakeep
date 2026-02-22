@@ -321,7 +321,7 @@ function BackupRow({ backup }: { backup: z.infer<typeof zBackupSchema> }) {
             </ActionButton>
           )}
         >
-          <Button variant="ghost" disabled={isDeleting}>
+          <Button variant="ghostDestructive" disabled={isDeleting}>
             <Trash2 className="size-4" />
           </Button>
         </ActionConfirmingDialog>

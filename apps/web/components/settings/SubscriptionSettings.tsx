@@ -186,7 +186,8 @@ export default function SubscriptionSettings() {
                     <Button
                       onClick={() => createCheckoutSession.mutate()}
                       disabled={isLoading}
-                      className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+                      size="lg"
+                      className="shadow-md transition-all hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
                     >
                       {isLoading && (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
