@@ -301,9 +301,9 @@
       "auto_summarization": "Auto-summarization",
       "no_preference": "No preference",
       "curated_tags": "Curated Tags",
-      "curated_tags_description": "You can optionally make the AI only use tags from this list for tagging. If you don't select any tags here, the AI will come up with tags on its own.",
+      "curated_tags_description": "Optionally restrict AI tagging to only use tags from this list. When no tags are selected, the AI generates tags freely.",
       "curated_tags_updated": "Curated tags updated successfully!",
-      "curated_tags_update_failed": "Uh oh, failed to update curated tags."
+      "curated_tags_update_failed": "Failed to update curated tags"
     },
     "feeds": {
       "rss_subscriptions": "RSS Subscriptions",
@@ -343,7 +343,7 @@
       "export_links_and_notes": "Export Links and Notes",
       "imported_bookmarks": "Imported Bookmarks",
       "import_bookmarks_from_mymind_export": "Import Bookmarks from mymind export",
-      "import_bookmarks_from_instapaper_export": "Import Bookmarks from Instapaper export."
+      "import_bookmarks_from_instapaper_export": "Import Bookmarks from Instapaper export"
     },
     "api_keys": {
       "api_keys": "API Keys",
@@ -529,29 +529,29 @@
       "delete_session": "Delete Session",
       "pause_session": "Pause",
       "resume_session": "Resume",
-      "view_details": "Check It Out",
+      "view_details": "View Details",
       "detail": {
-        "page_title": "Import Session Deets",
-        "back_to_import": "Back to Importing",
-        "filter_all": "All of 'Em",
-        "filter_accepted": "Yup",
-        "filter_rejected": "Nope",
-        "filter_duplicates": "Twinsies!",
-        "filter_pending": "Hang Tight",
-        "table_title": "Name / URL",
-        "table_type": "Kind",
-        "table_result": "What Happened",
-        "table_reason": "Why Though?",
+        "page_title": "Import Session Details",
+        "back_to_import": "Back to Import",
+        "filter_all": "All",
+        "filter_accepted": "Accepted",
+        "filter_rejected": "Rejected",
+        "filter_duplicates": "Duplicates",
+        "filter_pending": "Pending",
+        "table_title": "Title / URL",
+        "table_type": "Type",
+        "table_result": "Result",
+        "table_reason": "Reason",
         "table_bookmark": "Bookmark",
-        "result_accepted": "Yup",
-        "result_rejected": "Nope",
-        "result_skipped_duplicate": "Same As",
-        "result_pending": "Hang Tight",
-        "result_processing": "Gettin' It Done",
-        "no_results": "Nothing to see here.",
+        "result_accepted": "Accepted",
+        "result_rejected": "Rejected",
+        "result_skipped_duplicate": "Duplicate",
+        "result_pending": "Pending",
+        "result_processing": "Processing",
+        "no_results": "No results found for this filter.",
         "view_bookmark": "View Bookmark",
         "load_more": "Load More",
-        "no_title": "No Title"
+        "no_title": "No title"
       }
     },
     "backups": {
@@ -694,9 +694,9 @@
         "clean_assets": "Clean Dangling Assets & Re-sync Metadata",
         "migrate_large_link_html_content": "Move Large Inline HTML Content to Assets",
         "reprocess_assets_fix_mode": "Reprocess Unprocessed Assets",
-        "recrawl_pending_links_only": "Recrawl only the links that are pending",
-        "regenerate_ai_tags_for_pending_bookmarks_only": "Only regenerate AI tags for bookmarks that are pending",
-        "regenerate_ai_summaries_for_pending_bookmarks_only": "Only regenerate AI summaries for bookmarks that are pending"
+        "recrawl_pending_links_only": "Recrawl Pending Links Only",
+        "regenerate_ai_tags_for_pending_bookmarks_only": "Regenerate AI Tags for Pending Bookmarks Only",
+        "regenerate_ai_summaries_for_pending_bookmarks_only": "Regenerate AI Summaries for Pending Bookmarks Only"
       }
     },
     "actions": {
@@ -925,11 +925,11 @@
     },
     "archive_info": "Archives may not render correctly inline if they require Javascript. For best results, <1>download it and open in your browser</1>.",
     "fetch_error_title": "Content Unavailable",
-    "fetch_error_description": "We couldn't grab the content for this link. The page might be protected, need authentication, or be temporarily down.",
-    "crawling_in_progress": "Gettin' the page content…",
-    "continue_reading": "Continue where you left off, dude!",
+    "fetch_error_description": "We couldn't fetch the content for this link. The page may be protected, require authentication, or be temporarily unavailable.",
+    "crawling_in_progress": "Fetching page content…",
+    "continue_reading": "Continue where you left off",
     "continue_reading_percent": "Continue where you left off ({{percent}}%)",
-    "continue_button": "Continue, man"
+    "continue_button": "Continue"
   },
   "toasts": {
     "bookmarks": {
