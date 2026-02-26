@@ -1,5 +1,6 @@
 import { Platform } from "react-native";
 import * as Haptics from "expo-haptics";
+import { useMenuIconColors } from "@/lib/useMenuIconColors";
 import { MenuView } from "@react-native-menu/menu";
 import { ChevronDown } from "lucide-react-native";
 
@@ -51,6 +52,7 @@ export default function BookmarkLinkTypeSelector({
   bookmark,
 }: BookmarkLinkTypeSelectorProps) {
   const availableTypes = getAvailableViewTypes(bookmark);
+  const { menuIconColor } = useMenuIconColors();
 
   const viewActions = [
     {
@@ -58,7 +60,10 @@ export default function BookmarkLinkTypeSelector({
       title: "Reader View",
       state: type === "reader" ? ("on" as const) : undefined,
       image: Platform.select({
-        ios: "doc.plaintext",
+        ios: "doc.text",
+      }),
+      imageColor: Platform.select({
+        ios: menuIconColor,
       }),
     },
     {
@@ -66,7 +71,10 @@ export default function BookmarkLinkTypeSelector({
       title: "Browser",
       state: type === "browser" ? ("on" as const) : undefined,
       image: Platform.select({
-        ios: "globe",
+        ios: "safari",
+      }),
+      imageColor: Platform.select({
+        ios: menuIconColor,
       }),
     },
     {
@@ -74,7 +82,10 @@ export default function BookmarkLinkTypeSelector({
       title: "Screenshot",
       state: type === "screenshot" ? ("on" as const) : undefined,
       image: Platform.select({
-        ios: "camera.viewfinder",
+        ios: "camera",
+      }),
+      imageColor: Platform.select({
+        ios: menuIconColor,
       }),
     },
     {
@@ -82,7 +93,10 @@ export default function BookmarkLinkTypeSelector({
       title: "Archived Page",
       state: type === "archive" ? ("on" as const) : undefined,
       image: Platform.select({
-        ios: "archivebox",
+        ios: "tray.full",
+      }),
+      imageColor: Platform.select({
+        ios: menuIconColor,
       }),
     },
     {
@@ -90,7 +104,10 @@ export default function BookmarkLinkTypeSelector({
       title: "PDF",
       state: type === "pdf" ? ("on" as const) : undefined,
       image: Platform.select({
-        ios: "doc.fill",
+        ios: "doc",
+      }),
+      imageColor: Platform.select({
+        ios: menuIconColor,
       }),
     },
   ];

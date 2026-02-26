@@ -5,6 +5,7 @@ import UpdatingBookmarkList from "@/components/bookmarks/UpdatingBookmarkList";
 import FullPageError from "@/components/FullPageError";
 import FullPageSpinner from "@/components/ui/FullPageSpinner";
 import { useArchiveFilter } from "@/lib/hooks";
+import { useMenuIconColors } from "@/lib/useMenuIconColors";
 import { MenuView } from "@react-native-menu/menu";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Ellipsis } from "lucide-react-native";
@@ -60,6 +61,7 @@ function ListActionsMenu({
   role: ZBookmarkList["userRole"];
 }) {
   const api = useTRPC();
+  const { menuIconColor, destructiveMenuIconColor } = useMenuIconColors();
   const { mutate: deleteList } = useMutation(
     api.lists.delete.mutationOptions({
       onSuccess: () => {
@@ -119,11 +121,14 @@ function ListActionsMenu({
             hidden: role !== "owner",
           },
           image: Platform.select({
-            ios: "pencil",
+            ios: "square.and.pencil",
+          }),
+          imageColor: Platform.select({
+            ios: menuIconColor,
           }),
         },
         {
-          id: "delete",
+          id: "delete_list",
           title: "Delete List",
           attributes: {
             destructive: true,
@@ -131,6 +136,9 @@ function ListActionsMenu({
           },
           image: Platform.select({
             ios: "trash",
+          }),
+          imageColor: Platform.select({
+            ios: destructiveMenuIconColor,
           }),
         },
         {
@@ -141,12 +149,15 @@ function ListActionsMenu({
             hidden: role === "owner",
           },
           image: Platform.select({
-            ios: "rectangle.portrait.and.arrow.right",
+            ios: "arrowshape.turn.up.left",
+          }),
+          imageColor: Platform.select({
+            ios: destructiveMenuIconColor,
           }),
         },
       ]}
       onPressAction={({ nativeEvent }) => {
-        if (nativeEvent.event === "delete") {
+        if (nativeEvent.event === "delete_list") {
           handleDelete();
         } else if (nativeEvent.event === "leave") {
           handleLeave();
