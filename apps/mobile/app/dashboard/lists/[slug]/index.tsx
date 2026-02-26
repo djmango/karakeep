@@ -1,4 +1,4 @@
-import { Alert, Platform } from "react-native";
+import { Alert, Platform, View } from "react-native";
 import * as Haptics from "expo-haptics";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import UpdatingBookmarkList from "@/components/bookmarks/UpdatingBookmarkList";
@@ -167,7 +167,9 @@ function ListActionsMenu({
       }}
       shouldOpenOnLongPress={false}
     >
-      <Ellipsis onPress={() => Haptics.selectionAsync()} color="gray" />
+      <View className="my-auto px-4">
+        <Ellipsis onPress={() => Haptics.selectionAsync()} color="gray" />
+      </View>
     </MenuView>
   );
 }
