@@ -3,7 +3,6 @@ import { useEffect } from "react";
 import { AppState, Platform } from "react-native";
 import { useRouter } from "expo-router";
 import { Stack } from "expo-router/stack";
-import { StyledStack } from "@/components/navigation/stack";
 import { useIsLoggedIn } from "@/lib/session";
 import { focusManager } from "@tanstack/react-query";
 
@@ -30,9 +29,7 @@ export default function Dashboard() {
   }, []);
 
   return (
-    <StyledStack
-      contentClassName="bg-gray-100 dark:bg-background"
-      headerClassName="dark:text-white"
+    <Stack
       screenOptions={{
         ...Platform.select({
           ios: {
@@ -41,6 +38,11 @@ export default function Dashboard() {
             headerLargeTitle: true,
             headerLargeTitleShadowVisible: false,
             headerLargeStyle: { backgroundColor: "transparent" },
+          },
+          android: {
+            headerStyle: {
+              backgroundColor: "transparent",
+            },
           },
         }),
         headerShadowVisible: false,
@@ -190,6 +192,6 @@ export default function Dashboard() {
           headerBackTitle: "Back",
         }}
       />
-    </StyledStack>
+    </Stack>
   );
 }

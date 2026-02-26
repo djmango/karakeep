@@ -13,6 +13,11 @@ export default function Layout() {
             headerLargeTitleShadowVisible: false,
             headerLargeStyle: { backgroundColor: "transparent" },
           },
+          android: {
+            headerStyle: {
+              backgroundColor: "transparent",
+            },
+          },
         }),
         headerShadowVisible: false,
       }}
