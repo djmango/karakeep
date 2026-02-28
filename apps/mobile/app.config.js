@@ -35,7 +35,7 @@ export default {
           NSAllowsArbitraryLoads: true,
         },
       },
-      buildNumber: "35",
+      buildNumber: "36",
     },
     android: {
       adaptiveIcon: {
@@ -54,7 +54,7 @@ export default {
         },
       },
       package: "app.hoarder.hoardermobile",
-      versionCode: 35,
+      versionCode: 36,
     },
     plugins: [
       "./plugins/trust-local-certs.js",
