@@ -762,7 +762,7 @@
           {
             "schema": {
               "type": "boolean",
-              "default": true,
+              "default": false,
               "description": "If set to true, the bookmark's full content (HTML, text, etc.) will be included in the response. Set to false for lighter responses when only metadata is needed."
             },
             "required": false,
@@ -1053,7 +1053,7 @@
           {
             "schema": {
               "type": "boolean",
-              "default": true,
+              "default": false,
               "description": "If set to true, the bookmark's full content (HTML, text, etc.) will be included in the response. Set to false for lighter responses when only metadata is needed."
             },
             "required": false,
@@ -1167,7 +1167,7 @@
           {
             "schema": {
               "type": "boolean",
-              "default": true,
+              "default": false,
               "description": "If set to true, the bookmark's full content (HTML, text, etc.) will be included in the response. Set to false for lighter responses when only metadata is needed."
             },
             "required": false,
@@ -2518,7 +2518,7 @@
           {
             "schema": {
               "type": "boolean",
-              "default": true,
+              "default": false,
               "description": "If set to true, the bookmark's full content (HTML, text, etc.) will be included in the response. Set to false for lighter responses when only metadata is needed."
             },
             "required": false,
@@ -3072,7 +3072,7 @@
           {
             "schema": {
               "type": "boolean",
-              "default": true,
+              "default": false,
               "description": "If set to true, the bookmark's full content (HTML, text, etc.) will be included in the response. Set to false for lighter responses when only metadata is needed."
             },
             "required": false,

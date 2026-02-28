@@ -42,7 +42,7 @@ export const PaginationSchema = z
 export const IncludeContentSearchParamSchema = z.object({
   includeContent: z
     .boolean()
-    .default(true)
+    .default(false)
     .describe(
       "If set to true, the bookmark's full content (HTML, text, etc.) will be included in the response. " +
         "Set to false for lighter responses when only metadata is needed.",
