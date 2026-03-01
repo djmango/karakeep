@@ -287,8 +287,6 @@ async function startBrowserInstance() {
       `[Crawler] Connecting to existing browser websocket address: ${redactUrlCredentials(serverConfig.crawler.browserWebSocketUrl)}`,
     );
     return await chromium.connect(serverConfig.crawler.browserWebSocketUrl, {
-      // Important: using slowMo to ensure stability with remote browser
-      slowMo: 100,
       timeout: 5000,
     });
   } else if (serverConfig.crawler.browserWebUrl) {
@@ -304,8 +302,6 @@ async function startBrowserInstance() {
     );
 
     return await chromium.connectOverCDP(webUrl.toString(), {
-      // Important: using slowMo to ensure stability with remote browser
-      slowMo: 100,
       timeout: 5000,
     });
   } else {
