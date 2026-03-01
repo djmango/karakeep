@@ -127,7 +127,7 @@ export class RedisRateLimiter implements RateLimitClient {
 
   async disconnect() {
     if (this.redis.isOpen) {
-      await this.redis.quit();
+      await this.redis.close();
     }
   }
 }
@@ -150,14 +150,32 @@ export class RedisRateLimitProvider implements PluginProvider<RateLimitClient> {
   private createRedisClient(): RedisClientType {
     return createClient({
       url: this.options.url,
+      disableOfflineQueue: true,
       socket: {
         reconnectStrategy: () => 3_000,
       },
     });
   }
 
+  private setupLifecycleHandlers(redis: RedisClientType): void {
+    redis.on("ready", () => {
+      this.nextRetryAt = 0;
+    });
+
+    // "end" fires when the client is permanently closed
+    redis.on("end", () => {
+      this.client = null;
+      this.nextRetryAt = Date.now() + RedisRateLimitProvider.RETRY_BACKOFF_MS;
+    });
+
+    redis.on("error", (error) => {
+      console.error("Redis rate limiter client error:", error);
+    });
+  }
+
   private async initializeClient(): Promise<RedisRateLimiter | null> {
     const redis = this.createRedisClient();
+    this.setupLifecycleHandlers(redis);
 
     try {
       // Test connection
@@ -169,7 +187,7 @@ export class RedisRateLimitProvider implements PluginProvider<RateLimitClient> {
       return new RedisRateLimiter(redis);
     } catch (error) {
       this.nextRetryAt = Date.now() + RedisRateLimitProvider.RETRY_BACKOFF_MS;
-      redis.disconnect();
+      redis.destroy();
       console.error("Failed to connect to Redis for rate limiting:", error);
       return null;
     }
