@@ -46,12 +46,7 @@ function AISummary({
     <div className="w-full p-1">
       {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
       <div
-        className={`
-          relative overflow-hidden rounded-lg p-4
-          transition-all duration-300 ease-in-out
-          ${isExpanded ? "h-auto" : "cursor-pointer"}
-          bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 p-[2px]
-        `}
+        className={`relative overflow-hidden rounded-lg p-4 transition-all duration-300 ease-in-out ${isExpanded ? "h-auto" : "cursor-pointer"} bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 p-[2px]`}
         onClick={() => !isExpanded && setIsExpanded(true)}
       >
         <div className="h-full rounded-lg bg-accent p-2">
