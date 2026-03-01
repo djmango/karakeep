@@ -1,4 +1,5 @@
-import Redis from "ioredis";
+import type { RedisClientType } from "redis";
+import { createClient } from "redis";
 
 import type {
   RateLimitClient,
@@ -10,9 +11,9 @@ import { PluginProvider } from "@karakeep/shared/plugins";
 const KEY_PREFIX = "ratelimit:v1";
 
 export class RedisRateLimiter implements RateLimitClient {
-  private redis: Redis;
+  private redis: RedisClientType;
 
-  constructor(redis: Redis) {
+  constructor(redis: RedisClientType) {
     this.redis = redis;
   }
 
@@ -66,17 +67,20 @@ export class RedisRateLimiter implements RateLimitClient {
         end
       `;
 
-      const result = (await this.redis.eval(
-        luaScript,
-        2,
-        rateLimitKey,
-        rateLimitSequenceKey,
-        now.toString(),
-        config.windowMs.toString(),
-        config.maxRequests.toString(),
-      )) as [number, number];
+      const result = await this.redis.eval(luaScript, {
+        keys: [rateLimitKey, rateLimitSequenceKey],
+        arguments: [
+          now.toString(),
+          config.windowMs.toString(),
+          config.maxRequests.toString(),
+        ],
+      });
 
-      const [allowed, resetInSeconds] = result;
+      if (!Array.isArray(result) || result.length < 2) {
+        throw new Error("Unexpected Redis eval result");
+      }
+
+      const [allowed, resetInSeconds] = result.map((value) => Number(value));
 
       if (allowed === 1) {
         return { allowed: true };
@@ -97,7 +101,7 @@ export class RedisRateLimiter implements RateLimitClient {
     const rateLimitKey = `${KEY_PREFIX}:${config.name}:${key}`;
     const rateLimitSequenceKey = `${rateLimitKey}:seq`;
     try {
-      await this.redis.del(rateLimitKey, rateLimitSequenceKey);
+      await this.redis.del([rateLimitKey, rateLimitSequenceKey]);
     } catch (error) {
       console.error("Redis rate limit reset error:", error);
     }
@@ -107,16 +111,13 @@ export class RedisRateLimiter implements RateLimitClient {
     try {
       let cursor = "0";
       do {
-        const [nextCursor, keys] = await this.redis.scan(
-          cursor,
-          "MATCH",
-          `${KEY_PREFIX}:*`,
-          "COUNT",
-          100,
-        );
+        const { cursor: nextCursor, keys } = await this.redis.scan(cursor, {
+          MATCH: `${KEY_PREFIX}:*`,
+          COUNT: 100,
+        });
         cursor = nextCursor;
         if (keys.length > 0) {
-          await this.redis.del(...keys);
+          await this.redis.del(keys);
         }
       } while (cursor !== "0");
     } catch (error) {
@@ -125,7 +126,9 @@ export class RedisRateLimiter implements RateLimitClient {
   }
 
   async disconnect() {
-    await this.redis.quit();
+    if (this.redis.isOpen) {
+      await this.redis.quit();
+    }
   }
 }
 
@@ -144,11 +147,12 @@ export class RedisRateLimitProvider implements PluginProvider<RateLimitClient> {
     this.options = options;
   }
 
-  private createRedisClient(): Redis {
-    return new Redis(this.options.url, {
-      lazyConnect: true,
-      maxRetriesPerRequest: 0,
-      retryStrategy: () => 3_000,
+  private createRedisClient(): RedisClientType {
+    return createClient({
+      url: this.options.url,
+      socket: {
+        reconnectStrategy: () => 3_000,
+      },
     });
   }
 
