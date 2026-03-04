@@ -21,6 +21,8 @@ import {
   CalendarDays,
   ExternalLink,
   Globe,
+  PanelRightClose,
+  PanelRightOpen,
   User,
 } from "lucide-react";
 
@@ -128,6 +130,7 @@ export default function BookmarkPreview({
   const api = useTRPC();
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<string>("content");
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { data: session } = useSession();
 
   const { data: bookmark } = useQuery(
@@ -227,13 +230,25 @@ export default function BookmarkPreview({
     <>
       {/* Render original layout for wide screens */}
       <div className="hidden h-full flex-col overflow-hidden bg-background lg:flex">
-        <div className="grid min-h-0 flex-1 grid-cols-3">
-          <div className="col-span-2 h-full w-full overflow-auto px-4 py-4">
+        <div className="flex min-h-0 flex-1">
+          <div className="relative h-full flex-1 overflow-auto px-4 py-4">
+            <button
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              className="absolute right-4 top-4 z-10 rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+            >
+              {sidebarCollapsed ? (
+                <PanelRightOpen size={20} />
+              ) : (
+                <PanelRightClose size={20} />
+              )}
+            </button>
             {contentSection}
           </div>
-          <div className="flex flex-col gap-3 overflow-auto border-l bg-muted/40 p-5">
-            {detailsSection}
-          </div>
+          {!sidebarCollapsed && (
+            <div className="flex w-1/3 flex-col gap-3 overflow-auto border-l bg-muted/40 p-5">
+              {detailsSection}
+            </div>
+          )}
         </div>
       </div>
       {/* Render tabbed layout for narrow/vertical screens */}
