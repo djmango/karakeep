@@ -108,6 +108,14 @@ export default {
         },
       ],
       "expo-web-browser",
+      [
+        "@sentry/react-native/expo",
+        {
+          url: "https://sentry.io/",
+          project: "react-native",
+          organization: "localhost-labs-ltd",
+        },
+      ],
     ],
     extra: {
       router: {
