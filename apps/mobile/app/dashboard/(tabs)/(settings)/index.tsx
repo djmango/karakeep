@@ -155,9 +155,13 @@ export default function Settings() {
                 <ActivityIndicator size="small" />
               ) : (
                 <Text className="mr-1 text-muted-foreground" numberOfLines={1}>
-                  {settings.defaultBookmarkView === "reader"
-                    ? "Reader"
-                    : "Browser"}
+                  {
+                    {
+                      reader: "Reader",
+                      browser: "Browser",
+                      externalBrowser: "External Browser",
+                    }[settings.defaultBookmarkView]
+                  }
                 </Text>
               )}
               <ChevronRight />
