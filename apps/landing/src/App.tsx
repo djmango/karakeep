@@ -5,15 +5,19 @@ import Privacy from "@/src/Privacy";
 import Terms from "@/src/Terms";
 import { BrowserRouter, Route, Routes } from "react-router";
 
+import Layout from "./components/Layout";
+
 import "@karakeep/tailwind-config/globals.css";
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Homepage />} />
-        <Route path="/apps" element={<Apps />} />
-        <Route path="/pricing" element={<Pricing />} />
+        <Route element={<Layout />}>
+          <Route path="/" element={<Homepage />} />
+          <Route path="/apps" element={<Apps />} />
+          <Route path="/pricing" element={<Pricing />} />
+        </Route>
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />
       </Routes>

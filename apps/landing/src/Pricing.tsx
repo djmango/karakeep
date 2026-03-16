@@ -2,8 +2,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Check, ExternalLink } from "lucide-react";
 
-import { CLOUD_SIGNUP_LINK, DOCS_LINK, GITHUB_LINK } from "./constants";
-import NavBar from "./Navbar";
+import { CLOUD_SIGNUP_LINK, GITHUB_LINK } from "./constants";
 import SEO from "./SEO";
 
 const CONTACT_EMAIL = "mailto:support@karakeep.app";
@@ -81,12 +80,7 @@ const pricingTiers = [
 function PricingHeader() {
   return (
     <div className="text-center">
-      <h1 className="text-4xl font-bold sm:text-6xl">
-        Simple{" "}
-        <span className="bg-gradient-to-r from-purple-600 to-red-600 bg-clip-text text-transparent">
-          Pricing
-        </span>
-      </h1>
+      <h1 className="text-4xl font-bold sm:text-6xl">Simple Pricing</h1>
       <p className="mt-4 text-lg text-gray-600">
         Choose the plan that works best for you
       </p>
@@ -165,15 +159,9 @@ function PricingCards() {
   );
 
   return (
-    <div className="mx-auto mt-16 max-w-6xl px-6">
-      {/* First 3 tiers */}
-      <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-        {pricingTiers.slice(0, 3).map(renderCard)}
-      </div>
-
-      {/* Corporate tier - centered below */}
-      <div className="mt-8 flex justify-center">
-        <div className="w-full md:max-w-sm">{renderCard(pricingTiers[3])}</div>
+    <div className="mx-auto mt-16 px-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+        {pricingTiers.map(renderCard)}
       </div>
     </div>
   );
@@ -218,56 +206,21 @@ function FAQ() {
   );
 }
 
-function Footer() {
-  const currentYear = new Date().getFullYear();
-
-  return (
-    <div className="mt-24 flex items-center justify-between bg-gray-100 px-10 py-6 text-sm">
-      <div>
-        © 2024-{currentYear}{" "}
-        <a href="https://localhostlabs.co.uk" target="_blank" rel="noreferrer">
-          Localhost Labs Ltd
-        </a>
-      </div>
-      <div className="flex items-center gap-6">
-        <a
-          href={DOCS_LINK}
-          target="_blank"
-          className="flex justify-center gap-2 text-center"
-          rel="noreferrer"
-        >
-          Docs
-        </a>
-        <a
-          href={GITHUB_LINK}
-          target="_blank"
-          className="flex justify-center gap-2 text-center"
-          rel="noreferrer"
-        >
-          GitHub
-        </a>
-      </div>
-    </div>
-  );
-}
-
 export default function Pricing() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <>
       <SEO
         title="Pricing"
         description="Simple, transparent pricing for Karakeep. Free plan available. Pro plan at $4/month with AI tagging, full-text search, and 50GB storage. Self-hosted option is free forever."
         path="/pricing"
       />
       <div className="container mx-auto">
-        <NavBar />
         <div className="py-16">
           <PricingHeader />
           <PricingCards />
           <FAQ />
         </div>
       </div>
-      <Footer />
-    </div>
+    </>
   );
 }
