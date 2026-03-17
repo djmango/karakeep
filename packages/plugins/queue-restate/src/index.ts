@@ -13,6 +13,7 @@ import type {
 } from "@karakeep/shared/queueing";
 import logger from "@karakeep/shared/logger";
 
+import { AdminClient } from "./admin";
 import { envConfig } from "./env";
 import { idProvider } from "./idProvider";
 import { semaphore } from "./semaphore";
@@ -22,6 +23,7 @@ class RestateQueueWrapper<T> implements Queue<T> {
   constructor(
     private readonly _name: string,
     private readonly client: restateClient.Ingress,
+    private readonly adminClient: AdminClient,
     public readonly opts: QueueOptions,
   ) {}
 
@@ -73,15 +75,10 @@ class RestateQueueWrapper<T> implements Queue<T> {
     running: number;
     failed: number;
   }> {
-    const semaphoreId = `queue:${this.name()}`;
-    const client = this.client.objectClient<typeof semaphore>(
-      { name: "Semaphore" },
-      semaphoreId,
-    );
-    const res = await client.queueSize();
+    const res = await this.adminClient.getStats(this.name());
     return {
-      pending: res.pending,
-      pending_retry: 0,
+      pending: res.pending + res.ready,
+      pending_retry: res["backing-off"] + res.paused + res.suspended,
       running: res.running,
       failed: 0,
     };
@@ -126,6 +123,7 @@ class RestateRunnerWrapper<T> implements Runner<T> {
 
 class RestateQueueClient implements QueueClient {
   private client: restateClient.Ingress;
+  private adminClient: AdminClient;
   private queues = new Map<string, RestateQueueWrapper<unknown>>();
   private services = new Map<string, RestateRunnerWrapper<unknown>>();
 
@@ -133,6 +131,7 @@ class RestateQueueClient implements QueueClient {
     this.client = restateClient.connect({
       url: envConfig.RESTATE_INGRESS_ADDR,
     });
+    this.adminClient = new AdminClient(envConfig.RESTATE_ADMIN_ADDR);
   }
 
   async prepare(): Promise<void> {
@@ -176,7 +175,12 @@ class RestateQueueClient implements QueueClient {
     if (this.queues.has(name)) {
       throw new Error(`Queue ${name} already exists`);
     }
-    const wrapper = new RestateQueueWrapper<T>(name, this.client, opts);
+    const wrapper = new RestateQueueWrapper<T>(
+      name,
+      this.client,
+      this.adminClient,
+      opts,
+    );
     this.queues.set(name, wrapper);
     return wrapper;
   }
