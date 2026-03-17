@@ -6,8 +6,10 @@ import { assets, bookmarks, users } from "@karakeep/db/schema";
 import {
   AdminMaintenanceQueue,
   AssetPreprocessingQueue,
+  BackupQueue,
   FeedQueue,
   LinkCrawlerQueue,
+  LowPriorityCrawlerQueue,
   OpenAIQueue,
   RuleEngineQueue,
   SearchIndexingQueue,
@@ -23,6 +25,8 @@ const queuePendingJobsGauge = new Gauge({
   async collect() {
     const queues = [
       { name: "link_crawler", queue: LinkCrawlerQueue },
+      { name: "low_priority_crawler", queue: LowPriorityCrawlerQueue },
+      { name: "backup", queue: BackupQueue },
       { name: "openai", queue: OpenAIQueue },
       { name: "search_indexing", queue: SearchIndexingQueue },
       { name: "admin_maintenance", queue: AdminMaintenanceQueue },
