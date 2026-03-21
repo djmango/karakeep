@@ -142,6 +142,13 @@ async function shouldUseLowPriorityQueues(
 
 export const bookmarksAppRouter = router({
   createBookmark: authedProcedure
+    .use(
+      createRateLimitMiddleware({
+        name: "bookmarks.createBookmark",
+        windowMs: 60 * 1000,
+        maxRequests: 30,
+      }),
+    )
     .input(zNewBookmarkRequestSchema)
     .output(
       zBookmarkSchema.merge(
