@@ -10,7 +10,7 @@ import { tryCatch } from "@karakeep/shared/tryCatch";
 
 import type { RunnerJobData, RunnerResult, SerializedError } from "./types";
 import { runnerServiceName } from "./runner";
-import { RestateSemaphore } from "./semaphore";
+import { ReenqueueRequested, RestateSemaphore } from "./semaphore";
 
 export function buildDispatcherService<T, R>(
   queue: Queue<T>,
@@ -94,11 +94,23 @@ export function buildDispatcherService<T, R>(
           await logDebug(
             `Dispatcher attempt ${runNumber} for queue ${queue.name()} job ${id} (priority=${priority}, groupId=${data.groupId ?? "none"})`,
           );
-          const leaseId = await semaphore.acquire(
-            priority,
-            data.groupId,
-            data.queuedIdempotencyKey,
+          const acquireResult = await tryCatch(
+            semaphore.acquire(
+              priority,
+              data.groupId,
+              data.queuedIdempotencyKey,
+            ),
           );
+          if (acquireResult.error) {
+            if (acquireResult.error instanceof ReenqueueRequested) {
+              await logDebug(
+                `Dispatcher re-enqueue requested for queue ${queue.name()} job ${id}`,
+              );
+              continue;
+            }
+            throw acquireResult.error;
+          }
+          const leaseId = acquireResult.data;
           if (!leaseId) {
             // Idempotency key already exists, skip
             await logDebug(
