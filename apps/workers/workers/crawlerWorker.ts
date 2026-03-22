@@ -51,7 +51,6 @@ import {
   QuotaService,
   setSpanAttributes,
   triggerSearchReindex,
-  triggerWebhook,
   VideoWorkerQueue,
   withSpan,
   zCrawlLinkRequestSchema,
@@ -80,6 +79,7 @@ import {
 import { getRateLimitClient } from "@karakeep/shared/ratelimiting";
 import { tryCatch } from "@karakeep/shared/tryCatch";
 import { BookmarkTypes } from "@karakeep/shared/types/bookmarks";
+import { WebhooksService } from "@karakeep/trpc/models/webhooks.service";
 
 import type {
   ParseSubprocessError,
@@ -2161,7 +2161,15 @@ async function runCrawler(
     }
 
     // Trigger a webhook
-    await triggerWebhook(bookmarkId, "crawled", undefined, enqueueOpts);
+    {
+      const webhookService = new WebhooksService(db);
+      await webhookService.triggerWebhook(
+        bookmarkId,
+        "crawled",
+        userId,
+        enqueueOpts,
+      );
+    }
 
     // Do the archival as a separate last step as it has the potential for failure
     await archivalLogic();

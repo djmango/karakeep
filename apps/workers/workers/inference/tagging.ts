@@ -21,7 +21,6 @@ import {
   setSpanAttributes,
   triggerRuleEngineOnEvent,
   triggerSearchReindex,
-  triggerWebhook,
 } from "@karakeep/shared-server";
 import { ASSET_TYPES, readAsset } from "@karakeep/shared/assetdb";
 import serverConfig from "@karakeep/shared/config";
@@ -30,6 +29,7 @@ import { buildImagePrompt } from "@karakeep/shared/prompts";
 import { buildTextPrompt } from "@karakeep/shared/prompts.server";
 import { DequeuedJob, EnqueueOptions } from "@karakeep/shared/queueing";
 import { Bookmark } from "@karakeep/trpc/models/bookmarks";
+import { WebhooksService } from "@karakeep/trpc/models/webhooks.service";
 
 const openAIResponseSchema = z.object({
   tags: z.array(z.string()),
@@ -582,7 +582,15 @@ export async function runTagging(
   };
 
   // Trigger a webhook
-  await triggerWebhook(bookmarkId, "ai tagged", undefined, enqueueOpts);
+  {
+    const webhookService = new WebhooksService(db);
+    await webhookService.triggerWebhook(
+      bookmarkId,
+      "ai tagged",
+      bookmark.userId,
+      enqueueOpts,
+    );
+  }
 
   // Update the search index
   await triggerSearchReindex(bookmarkId, enqueueOpts);

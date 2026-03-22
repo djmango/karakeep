@@ -26,7 +26,6 @@ import {
   QuotaService,
   triggerRuleEngineOnEvent,
   triggerSearchReindex,
-  triggerWebhook,
 } from "@karakeep/shared-server";
 import { SUPPORTED_BOOKMARK_ASSET_TYPES } from "@karakeep/shared/assetdb";
 import serverConfig from "@karakeep/shared/config";
@@ -56,6 +55,7 @@ import { authedProcedure, createRateLimitMiddleware, router } from "../index";
 import { getBookmarkIdsFromMatcher } from "../lib/search";
 import { Asset } from "../models/assets";
 import { BareBookmark, Bookmark } from "../models/bookmarks";
+import { WebhooksService } from "../models/webhooks.service";
 
 export const ensureBookmarkOwnership = experimental_trpcMiddleware<{
   ctx: AuthedContext;
@@ -373,10 +373,10 @@ export const bookmarksAppRouter = router({
           enqueueOpts,
         ),
         triggerSearchReindex(bookmark.id, enqueueOpts),
-        triggerWebhook(
+        new WebhooksService(ctx.db).triggerWebhook(
           bookmark.id,
           "created",
-          /* userId */ undefined,
+          bookmark.userId,
           enqueueOpts,
         ),
       ]);
@@ -538,9 +538,14 @@ export const bookmarksAppRouter = router({
         triggerSearchReindex(input.bookmarkId, {
           groupId: ctx.user.id,
         }),
-        triggerWebhook(input.bookmarkId, "edited", ctx.user.id, {
-          groupId: ctx.user.id,
-        }),
+        new WebhooksService(ctx.db).triggerWebhook(
+          input.bookmarkId,
+          "edited",
+          updatedBookmark.userId,
+          {
+            groupId: ctx.user.id,
+          },
+        ),
       ]);
 
       return updatedBookmark;
@@ -584,9 +589,14 @@ export const bookmarksAppRouter = router({
         triggerSearchReindex(input.bookmarkId, {
           groupId: ctx.user.id,
         }),
-        triggerWebhook(input.bookmarkId, "edited", ctx.user.id, {
-          groupId: ctx.user.id,
-        }),
+        new WebhooksService(ctx.db).triggerWebhook(
+          input.bookmarkId,
+          "edited",
+          ctx.bookmark.userId,
+          {
+            groupId: ctx.user.id,
+          },
+        ),
       ]);
     }),
 
@@ -1032,9 +1042,14 @@ export const bookmarksAppRouter = router({
           triggerSearchReindex(input.bookmarkId, {
             groupId: ctx.user.id,
           }),
-          triggerWebhook(input.bookmarkId, "edited", ctx.user.id, {
-            groupId: ctx.user.id,
-          }),
+          new WebhooksService(ctx.db).triggerWebhook(
+            input.bookmarkId,
+            "edited",
+            ctx.bookmark.userId,
+            {
+              groupId: ctx.user.id,
+            },
+          ),
         ]);
       }
       return res;
@@ -1182,9 +1197,14 @@ Author: ${bookmark.author ?? ""}
         triggerSearchReindex(input.bookmarkId, {
           groupId: ctx.user.id,
         }),
-        triggerWebhook(input.bookmarkId, "edited", ctx.user.id, {
-          groupId: ctx.user.id,
-        }),
+        new WebhooksService(ctx.db).triggerWebhook(
+          input.bookmarkId,
+          "edited",
+          ctx.bookmark.userId,
+          {
+            groupId: ctx.user.id,
+          },
+        ),
       ]);
 
       return {

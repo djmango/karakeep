@@ -12,6 +12,8 @@ import {
 import type { Actor, Authorized } from "../lib/actor";
 import { actorUserId, assertOwnership, authorize } from "../lib/actor";
 import { WebhooksRepo } from "./webhooks.repo";
+import { WebhookQueue, ZWebhookRequest } from "@karakeep/shared-server";
+import { EnqueueOptions } from "@karakeep/shared/queueing";
 
 type Webhook = typeof webhooksTable.$inferSelect;
 
@@ -70,5 +72,25 @@ export class WebhooksService {
     if (!deleted) {
       throw new TRPCError({ code: "NOT_FOUND" });
     }
+  }
+
+  async triggerWebhook(
+    bookmarkId: string,
+    operation: ZWebhookRequest["operation"],
+    userId: string,
+    opts?: EnqueueOptions,
+  ) {
+    const count = await this.repo.countByUser(userId);
+    if (count === 0) {
+      return;
+    }
+    await WebhookQueue.enqueue(
+      {
+        bookmarkId,
+        userId,
+        operation,
+      },
+      opts,
+    );
   }
 }

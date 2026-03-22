@@ -29,7 +29,6 @@ vi.mock("@karakeep/shared-server", async (original) => {
     },
     triggerRuleEngineOnEvent: vi.fn(),
     triggerSearchReindex: vi.fn(),
-    triggerWebhook: vi.fn(),
   };
 });
 
