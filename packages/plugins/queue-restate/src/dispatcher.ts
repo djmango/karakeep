@@ -156,7 +156,13 @@ export function buildDispatcherService<T, R>(
                     res.error instanceof Error ? res.error.name : "RPCError",
                   message: errorMessage,
                   stack:
-                    res.error instanceof Error ? res.error.stack : undefined,
+                    res.error instanceof Error
+                      ? // TerminalError stacks can be non determinstic
+                        // https://github.com/restatedev/sdk-typescript/issues/656
+                        res.error instanceof restate.TerminalError
+                        ? undefined
+                        : res.error.stack
+                      : undefined,
                 },
               }),
             );
