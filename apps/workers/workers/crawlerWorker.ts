@@ -1406,6 +1406,20 @@ async function archiveWebpage(
     },
     async () => {
       logger.info(`[Crawler][${jobId}] Will attempt to archive page ...`);
+
+      {
+        // Archival is a heavy operation, so we need to check if the user is within reasonable quota before proceeding
+        const { error: quotaError } = await tryCatch(
+          QuotaService.checkStorageQuota(db, userId, /* estimated size */ 1024),
+        );
+        if (quotaError) {
+          logger.warn(
+            `[Crawler][${jobId}] Skipping archival as the user has exceeded their quota: ${quotaError.message}`,
+          );
+          return null;
+        }
+      }
+
       const assetId = newAssetId();
       const assetPath = path.join(os.tmpdir(), assetId);
 
