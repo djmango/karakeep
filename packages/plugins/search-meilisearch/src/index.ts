@@ -105,6 +105,21 @@ class BatchingDocumentQueue {
           batch.push(this.pendingOperations.shift()!);
         }
 
+        let reason: string;
+        if (batch.length >= this.batchSize) {
+          reason = "batch size limit reached";
+        } else if (
+          this.pendingOperations.length > 0 &&
+          this.pendingOperations[0].type !== currentType
+        ) {
+          reason = "operation type changed";
+        } else {
+          reason = "no more pending operations";
+        }
+        console.log(
+          `[meilisearch] Flushing ${currentType} batch: size=${batch.length}, remaining=${this.pendingOperations.length}, reason="${reason}"`,
+        );
+
         if (currentType === "add") {
           await this.flushAddBatch(
             batch as Extract<PendingOperation, { type: "add" }>[],
