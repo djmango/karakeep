@@ -14,6 +14,7 @@ import serverConfig from "@karakeep/shared/config";
 import { PluginProvider } from "@karakeep/shared/plugins";
 
 import { envConfig } from "./env";
+import logger from "@karakeep/shared/logger";
 
 function filterToMeiliSearchFilter(filter: FilterQuery): string {
   switch (filter.type) {
@@ -116,7 +117,7 @@ class BatchingDocumentQueue {
         } else {
           reason = "no more pending operations";
         }
-        console.log(
+        logger.debug(
           `[meilisearch] Flushing ${currentType} batch: size=${batch.length}, remaining=${this.pendingOperations.length}, reason="${reason}"`,
         );
 
