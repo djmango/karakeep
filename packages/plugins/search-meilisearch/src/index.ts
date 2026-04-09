@@ -267,6 +267,7 @@ class MeiliSearchIndexClient implements SearchIndexClient {
       sort: options.sort?.map((s) => `${s.field}:${s.order}`),
       attributesToRetrieve: ["id"],
       showRankingScore: true,
+      matchingStrategy: "all",
     });
 
     return {
