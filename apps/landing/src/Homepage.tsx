@@ -19,7 +19,6 @@ import {
 } from "lucide-react";
 
 import FeaturesGrid from "./components/FeaturesGrid";
-import Hero from "./components/Hero";
 import OpenSource from "./components/OpenSource";
 import Platforms from "./components/Platforms";
 import readerViewScreenshot from "/screenshots/reader-view.webp?url";
@@ -164,7 +163,6 @@ const _showcases = [
 export default function Homepage() {
   return (
     <>
-      <Hero />
       <FeaturesGrid features={featuresList} />
       <Platforms />
       <OpenSource />

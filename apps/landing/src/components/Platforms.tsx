@@ -63,6 +63,7 @@ export default function Platforms() {
                 src={platform.badge}
                 alt={platform.name}
                 className="h-14 w-auto rounded-lg"
+                loading="lazy"
               />
             </a>
           ))}

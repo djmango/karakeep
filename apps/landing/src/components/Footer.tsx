@@ -29,7 +29,7 @@ export default function Footer() {
         <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
-            <img src={Logo} alt="Karakeep" className="w-32" />
+            <img src={Logo} alt="Karakeep" className="w-32" loading="lazy" />
             <p className="mt-3 text-sm text-gray-500">
               The Bookmark Everything App. Save, organize, and rediscover your
               content.
