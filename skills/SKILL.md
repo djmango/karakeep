@@ -1,7 +1,8 @@
 ---
 name: karakeep
 description: how to use karakeep (the bookmark manager) and interact with it programmatically
-metadata: bookmarks
+metadata:
+  tags: bookmarks, bookmark manager, 2nd brain, productivity
 ---
 
 # Karakeep
