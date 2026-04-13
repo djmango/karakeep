@@ -527,6 +527,45 @@ describe("parseKarakeepBookmarkFile", () => {
   });
 });
 
+describe("parseInstapaperBookmarkFile", () => {
+  it("maps Archive folder to archived flag, Unread to no paths, and custom folders to paths", () => {
+    const csv = [
+      "URL,Title,Selection,Folder,Timestamp,Tags",
+      "https://archived.example,Archived Article,,Archive,1700000000,[]",
+      "https://unread.example,Unread Article,,Unread,1700000001,[]",
+      "https://custom.example,Custom Article,,Reading List,1700000002,[]",
+    ].join("\n");
+
+    const result = parseImportFile("instapaper", csv);
+
+    expect(result.bookmarks).toHaveLength(3);
+
+    // Archive folder -> archived: true, no paths
+    expect(result.bookmarks[0]).toMatchObject({
+      title: "Archived Article",
+      content: { type: "link", url: "https://archived.example" },
+      archived: true,
+      paths: [],
+    });
+
+    // Unread folder -> not archived, no paths
+    expect(result.bookmarks[1]).toMatchObject({
+      title: "Unread Article",
+      content: { type: "link", url: "https://unread.example" },
+      archived: false,
+      paths: [],
+    });
+
+    // Custom folder -> not archived, folder as single-element path
+    expect(result.bookmarks[2]).toMatchObject({
+      title: "Custom Article",
+      content: { type: "link", url: "https://custom.example" },
+      archived: false,
+      paths: [["Reading List"]],
+    });
+  });
+});
+
 describe("parsePocketBookmarkFile", () => {
   it("sets archived true for items with status archive", () => {
     const csv = `title,url,time_added,tags,status\nTest,https://example.com,1234567890,,archive`;

@@ -446,7 +446,7 @@ function parseInstapaperBookmarkFile(textContent: string): ParsedBookmark[] {
     );
   }
 
-  return parsed.data.map((record) => {
+  return parsed.data.map((record): ParsedBookmark => {
     let content: ParsedBookmark["content"];
     if (record.URL && record.URL.trim().length > 0) {
       content = { type: BookmarkTypes.LINK as const, url: record.URL.trim() };
@@ -469,12 +469,26 @@ function parseInstapaperBookmarkFile(textContent: string): ParsedBookmark[] {
       tags = [];
     }
 
+    let archived = false;
+    const paths = [];
+    if (record.Folder === "Archive") {
+      archived = true;
+    } else if (record.Folder === "Unread") {
+      // This maps to home feed in instapaper, do nothing.
+    } else {
+      // Instapaper "Starred" should map to favorites in karakeep, but
+      // apparently instapaper export only includes on folder per bookmark
+      // so for now, we'll treat the "Starred" as a normal folder.
+      paths.push([record.Folder]);
+    }
+
     return {
       title: record.Title || "",
       content,
       addDate,
       tags,
-      paths: [], // TODO
+      paths,
+      archived,
     };
   });
 }
