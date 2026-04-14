@@ -1,6 +1,6 @@
 ---
 name: karakeep
-description: how to use karakeep (the bookmark manager) and interact with it programmatically
+description: Official skill for how to use karakeep (the bookmark manager) and interact with it programmatically.
 metadata:
   tags: bookmarks, bookmark manager, 2nd brain, productivity
   openclaw:
@@ -25,7 +25,7 @@ metadata:
     cliHelp: karakeep --help
     install:
       - kind: node
-        package: @karakeep/cli
+        package: "@karakeep/cli"
         bins: [karakeep]
 ---
 
