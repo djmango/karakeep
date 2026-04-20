@@ -9,11 +9,15 @@ import {
 } from "@karakeep/shared/types/bookmarks";
 
 import { NEW_BOOKMARK_REQUEST_KEY_NAME } from "./background/protocol";
-import Spinner from "./Spinner";
 import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
 import { Textarea } from "./components/ui/textarea";
+import Spinner from "./Spinner";
 import usePluginSettings from "./utils/settings";
+import {
+  capturePageWithSingleFile,
+  uploadSingleFileAsset,
+} from "./utils/singlefile";
 import { useTRPC } from "./utils/trpc";
 import { MessageType } from "./utils/type";
 import { isHttpUrl } from "./utils/url";
@@ -22,9 +26,16 @@ export default function SavePage() {
   const api = useTRPC();
   const { settings, isPending: isSettingsLoaded } = usePluginSettings();
   const [error, setError] = useState<string | undefined>(undefined);
+  const [isCapturing, setIsCapturing] = useState(false);
   const [pendingBookmark, setPendingBookmark] =
     useState<ZNewBookmarkRequest | null>(null);
   const [hasCheckedRequest, setHasCheckedRequest] = useState(false);
+  const [currentTabId, setCurrentTabId] = useState<number | undefined>(
+    undefined,
+  );
+  const [currentTabUrl, setCurrentTabUrl] = useState<string | undefined>(
+    undefined,
+  );
 
   const {
     data,
@@ -67,14 +78,17 @@ export default function SavePage() {
     }
 
     async function loadBookmarkRequest() {
+      const [currentTab] = await chrome.tabs.query({
+        active: true,
+        lastFocusedWindow: true,
+      });
+      setCurrentTabId(currentTab?.id);
+      setCurrentTabUrl(currentTab?.url);
+
       let newBookmarkRequest =
         await getNewBookmarkRequestFromBackgroundScriptIfAny();
       if (!newBookmarkRequest) {
-        const [currentTab] = await chrome.tabs.query({
-          active: true,
-          lastFocusedWindow: true,
-        });
-        if (!currentTab.url) {
+        if (!currentTab?.url) {
           setError("Current tab has no URL to bookmark.");
           setHasCheckedRequest(true);
           return;
@@ -104,38 +118,82 @@ export default function SavePage() {
     loadBookmarkRequest();
   }, [isSettingsLoaded]);
 
+  const saveBookmark = async (bookmark: ZNewBookmarkRequest) => {
+    let finalBookmark = bookmark;
+    // Only crawl when the bookmark target matches the active tab — context-menu
+    // saves (link/src URL) may create a bookmark for a different URL, in which
+    // case capturing the current page would attach the wrong archive.
+    if (
+      settings.useSingleFile &&
+      currentTabId !== undefined &&
+      bookmark.type === BookmarkTypes.LINK &&
+      !bookmark.precrawledArchiveId &&
+      currentTabUrl !== undefined &&
+      bookmark.url === currentTabUrl
+    ) {
+      try {
+        setIsCapturing(true);
+        const html = await capturePageWithSingleFile(currentTabId, {
+          includeImages: settings.singleFileIncludeImages,
+        });
+        const precrawledArchiveId = await uploadSingleFileAsset(
+          html,
+          bookmark.title ?? undefined,
+        );
+        finalBookmark = { ...bookmark, precrawledArchiveId };
+      } catch (e) {
+        // Client-side crawling is best-effort — fall back to a plain bookmark
+        // so users can still save links on pages where capture is blocked.
+        console.warn("Client-side crawl failed, saving without archive:", e);
+      } finally {
+        setIsCapturing(false);
+      }
+    }
+    createBookmark({
+      ...finalBookmark,
+      source: finalBookmark.source || "extension",
+    });
+  };
+
   // Auto-save when settings are loaded and we have a pending bookmark
   useEffect(() => {
     if (
       hasCheckedRequest &&
       pendingBookmark &&
       settings.autoSave &&
-      status === "idle"
+      status === "idle" &&
+      !isCapturing &&
+      !error
     ) {
-      createBookmark({
-        ...pendingBookmark,
-        source: pendingBookmark.source || "extension",
-      });
+      saveBookmark(pendingBookmark);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     hasCheckedRequest,
     pendingBookmark,
     settings.autoSave,
     status,
-    createBookmark,
+    isCapturing,
+    error,
   ]);
 
   const handleManualSave = () => {
     if (pendingBookmark) {
-      createBookmark({
-        ...pendingBookmark,
-        source: pendingBookmark.source || "extension",
-      });
+      saveBookmark(pendingBookmark);
     }
   };
 
   if (error) {
     return <div className="text-red-500">{error}</div>;
+  }
+
+  if (isCapturing) {
+    return (
+      <div className="flex justify-between text-lg">
+        <span>Capturing Page </span>
+        <Spinner />
+      </div>
+    );
   }
 
   switch (status) {
