@@ -78,7 +78,7 @@ export class User {
       try {
         await sendVerificationEmail(
           input.email,
-          input.name,
+          user.name,
           token,
           input.redirectUrl,
         );
