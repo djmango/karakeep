@@ -1,5 +1,6 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 
+import { TRPCError } from "@trpc/server";
 import { context } from "@opentelemetry/api";
 import { logs } from "@opentelemetry/api-logs";
 import { OTLPLogExporter } from "@opentelemetry/exporter-logs-otlp-http";
@@ -23,6 +24,7 @@ interface LogEventContext {
   name: string;
   fields: Map<string, unknown>;
   startTime: number;
+  error?: unknown;
 }
 
 type EventLogFields<T extends EventLogType> = Omit<
@@ -123,10 +125,11 @@ export async function withEventLog<T, F extends EventLog["event.name"]>(
       const result = await fn();
       return result;
     } catch (e) {
-      error = e;
+      event.error = e;
       throw e;
     } finally {
       const durationSeconds = (Date.now() - event.startTime) / 1000;
+      error = event.error;
       const hasError = error !== undefined;
 
       const record: Record<string, unknown> = {
@@ -136,12 +139,18 @@ export async function withEventLog<T, F extends EventLog["event.name"]>(
       };
 
       if (hasError) {
-        record["exception.type"] =
-          error instanceof Error ? error.constructor.name : "Error";
-        record["exception.message"] =
-          error instanceof Error ? error.message : String(error);
-        if (error instanceof Error && error.stack) {
-          record["exception.stacktrace"] = error.stack;
+        if (error instanceof Error) {
+          record["exception.type"] = error.constructor.name;
+          record["exception.message"] = error.message;
+          if (error.stack) {
+            record["exception.stacktrace"] = error.stack;
+          }
+          if (error instanceof TRPCError) {
+            record["trpc.error_code"] = error.code;
+          }
+        } else {
+          record["exception.type"] = typeof error;
+          record["exception.message"] = String(error);
         }
       }
 
@@ -157,18 +166,26 @@ export async function withEventLog<T, F extends EventLog["event.name"]>(
   });
 }
 
-export function logEvent(event: EventLog): void {
+export function logEvent(event: EventLog): void;
+export function logEvent<F extends EventLogType>(
+  name: F,
+  fields: EventLogFields<F>,
+): void;
+export function logEvent(
+  ...args: [EventLog] | [EventLogType, Record<string, unknown>]
+): void {
   if (!winstonLogger) {
     return;
   }
+
+  const record: Record<string, unknown> =
+    args.length === 1 ? { ...args[0] } : { "event.name": args[0], ...args[1] };
 
   // Emit within the active OTel context so the transport can
   // correlate with the current trace/span automatically.
   const activeCtx = context.active();
   context.with(activeCtx, () => {
-    winstonLogger!.log("info", {
-      ...event,
-    });
+    winstonLogger!.log("info", record);
   });
 }
 
@@ -180,5 +197,12 @@ export function addLogFields<T extends EventLogType>(
     for (const [key, value] of Object.entries(fields)) {
       event.fields.set(key, value);
     }
+  }
+}
+
+export function recordEventLogFailure(error: unknown): void {
+  const event = eventStorage.getStore();
+  if (event) {
+    event.error = error;
   }
 }
