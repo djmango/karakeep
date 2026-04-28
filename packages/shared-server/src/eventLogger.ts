@@ -27,26 +27,44 @@ interface LogEventContext {
   error?: unknown;
 }
 
+interface EventLoggerState {
+  eventStorage: AsyncLocalStorage<LogEventContext>;
+  winstonLogger: winston.Logger | null;
+  loggerProvider: LoggerProvider | null;
+  isInitialized: boolean;
+}
+
+declare global {
+  // Next.js can bundle this module into multiple server chunks. Keeping the
+  // initialized logger state on globalThis lets instrumentation and routes share
+  // the same logger instance.
+  // eslint-disable-next-line no-var
+  var __karakeepEventLogger: EventLoggerState | undefined;
+}
+
 type EventLogFields<T extends EventLogType> = Omit<
   Extract<EventLog, { ["event.name"]: T }>,
   "event.name"
 >;
 
-const eventStorage = new AsyncLocalStorage<LogEventContext>();
-
-let winstonLogger: winston.Logger | null = null;
-let loggerProvider: LoggerProvider | null = null;
-let isInitialized = false;
+const eventLoggerState =
+  globalThis.__karakeepEventLogger ??
+  (globalThis.__karakeepEventLogger = {
+    eventStorage: new AsyncLocalStorage<LogEventContext>(),
+    winstonLogger: null,
+    loggerProvider: null,
+    isInitialized: false,
+  });
 
 export function initEventLogger(serviceSuffix?: string): void {
-  if (isInitialized) {
+  if (eventLoggerState.isInitialized) {
     appLogger.debug("Event logger already initialized, skipping");
     return;
   }
 
   if (!serverConfig.eventLogs.enabled) {
     appLogger.info("Event logging is disabled");
-    isInitialized = true;
+    eventLoggerState.isInitialized = true;
     return;
   }
 
@@ -70,13 +88,13 @@ export function initEventLogger(serviceSuffix?: string): void {
 
     const logExporter = new OTLPLogExporter({ url: endpoint });
 
-    loggerProvider = new LoggerProvider({
+    eventLoggerState.loggerProvider = new LoggerProvider({
       resource,
       processors: [new BatchLogRecordProcessor(logExporter)],
     });
 
     // Register globally so OpenTelemetryTransportV3 can pick it up
-    logs.setGlobalLoggerProvider(loggerProvider);
+    logs.setGlobalLoggerProvider(eventLoggerState.loggerProvider);
 
     // if OTEL is enabled, let's only log to OTEL
     transport = new OpenTelemetryTransportV3();
@@ -84,7 +102,7 @@ export function initEventLogger(serviceSuffix?: string): void {
     appLogger.info(`Event logs OTLP exporter configured: ${endpoint}`);
   }
 
-  winstonLogger = winston.createLogger({
+  eventLoggerState.winstonLogger = winston.createLogger({
     level: "info",
     format: winston.format.combine(
       winston.format.timestamp(),
@@ -93,13 +111,14 @@ export function initEventLogger(serviceSuffix?: string): void {
     transports: [transport],
   });
 
-  isInitialized = true;
+  eventLoggerState.isInitialized = true;
   appLogger.info("Event logger initialized successfully");
 }
 
 export async function shutdownEventLogger(): Promise<void> {
-  if (loggerProvider) {
-    await loggerProvider.shutdown();
+  if (eventLoggerState.loggerProvider) {
+    await eventLoggerState.loggerProvider.shutdown();
+    eventLoggerState.loggerProvider = null;
     appLogger.info("Event logger shut down");
   }
 }
@@ -109,7 +128,7 @@ export async function withEventLog<T, F extends EventLog["event.name"]>(
   fn: () => Promise<T>,
   fields?: EventLogFields<F>,
 ): Promise<T> {
-  if (!winstonLogger) {
+  if (!eventLoggerState.winstonLogger) {
     return fn();
   }
 
@@ -119,7 +138,7 @@ export async function withEventLog<T, F extends EventLog["event.name"]>(
     startTime: Date.now(),
   };
 
-  return eventStorage.run(event, async () => {
+  return eventLoggerState.eventStorage.run(event, async () => {
     let error: unknown;
     try {
       const result = await fn();
@@ -158,7 +177,7 @@ export async function withEventLog<T, F extends EventLog["event.name"]>(
       // correlate with the current trace/span automatically.
       const activeCtx = context.active();
       context.with(activeCtx, () => {
-        winstonLogger!.log(hasError ? "error" : "info", {
+        eventLoggerState.winstonLogger!.log(hasError ? "error" : "info", {
           ...record,
         });
       });
@@ -174,7 +193,7 @@ export function logEvent<F extends EventLogType>(
 export function logEvent(
   ...args: [EventLog] | [EventLogType, Record<string, unknown>]
 ): void {
-  if (!winstonLogger) {
+  if (!eventLoggerState.winstonLogger) {
     return;
   }
 
@@ -185,14 +204,14 @@ export function logEvent(
   // correlate with the current trace/span automatically.
   const activeCtx = context.active();
   context.with(activeCtx, () => {
-    winstonLogger!.log("info", record);
+    eventLoggerState.winstonLogger!.log("info", record);
   });
 }
 
 export function addLogFields<T extends EventLogType>(
   fields: Partial<EventLogFields<T>>,
 ): void {
-  const event = eventStorage.getStore();
+  const event = eventLoggerState.eventStorage.getStore();
   if (event) {
     for (const [key, value] of Object.entries(fields)) {
       event.fields.set(key, value);
@@ -201,7 +220,7 @@ export function addLogFields<T extends EventLogType>(
 }
 
 export function recordEventLogFailure(error: unknown): void {
-  const event = eventStorage.getStore();
+  const event = eventLoggerState.eventStorage.getStore();
   if (event) {
     event.error = error;
   }
