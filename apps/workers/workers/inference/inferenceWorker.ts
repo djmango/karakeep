@@ -99,9 +99,17 @@ async function runOpenAI(job: DequeuedJob<ZOpenAIRequest>) {
   }
 
   const { bookmarkId } = request.data;
+  const bookmark = await db.query.bookmarks.findFirst({
+    where: eq(bookmarks.id, bookmarkId),
+    columns: {
+      userId: true,
+    },
+  });
+
   addLogFields<"inferenceWorker.run">({
     "bookmark.id": bookmarkId,
     "inference.type": request.data.type,
+    ...(bookmark ? { "user.id": bookmark.userId } : {}),
   });
   switch (request.data.type) {
     case "summarize":

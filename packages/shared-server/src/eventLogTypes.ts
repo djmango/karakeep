@@ -25,6 +25,15 @@ type EventLogInternal =
       "inference.tagging.num_generated_tags"?: number;
     }
   | {
+      ["event.name"]: "bookmark.summarize";
+      "bookmark.id"?: string;
+      "inference.model"?: string;
+      "inference.total_tokens"?: number;
+      "inference.prompt.custom_count"?: number;
+      "inference.prompt.size"?: number;
+      "inference.summary.size"?: number;
+    }
+  | {
       ["event.name"]: "feedWorker.run";
       "feed.id"?: string;
       "feed.url"?: string;

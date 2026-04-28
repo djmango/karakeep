@@ -1226,8 +1226,13 @@ export const bookmarksAppRouter = router({
         summary: z.string(),
       }),
     )
+    .use(createEventLogMiddleware("bookmark.summarize"))
     .use(ensureBookmarkOwnership)
     .mutation(async ({ input, ctx }) => {
+      addLogFields<"bookmark.summarize">({
+        "bookmark.id": input.bookmarkId,
+      });
+
       const inferenceClient = InferenceClientFactory.build();
       if (!inferenceClient) {
         throw new TRPCError({
@@ -1269,6 +1274,10 @@ Author: ${bookmark.author ?? ""}
         },
       });
 
+      addLogFields<"bookmark.summarize">({
+        "inference.prompt.custom_count": prompts.length,
+      });
+
       const userSettings = await ctx.db.query.users.findFirst({
         where: eq(users.id, ctx.user.id),
         columns: {
@@ -1283,6 +1292,10 @@ Author: ${bookmark.author ?? ""}
         serverConfig.inference.contextLength,
       );
 
+      addLogFields<"bookmark.summarize">({
+        "inference.prompt.size": Buffer.byteLength(summaryPrompt, "utf8"),
+      });
+
       const summary = await inferenceClient.inferFromText(summaryPrompt, {
         schema: null,
       });
@@ -1293,6 +1306,12 @@ Author: ${bookmark.author ?? ""}
           message: "Failed to summarize bookmark",
         });
       }
+
+      addLogFields<"bookmark.summarize">({
+        "inference.summary.size": Buffer.byteLength(summary.response, "utf8"),
+        "inference.total_tokens": summary.totalTokens,
+      });
+
       await ctx.db
         .update(bookmarks)
         .set({
