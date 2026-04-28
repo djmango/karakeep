@@ -151,12 +151,14 @@ type EventLogInternal =
   | { ["event.name"]: "subscription.portal_opened" }
   | {
       ["event.name"]: "subscription.synced";
-      "subscription.tier": string;
+      "stripe.customer_id"?: string;
+      "subscription.tier"?: string;
       "subscription.status"?: string;
       "subscription.prev_tier"?: string;
       "subscription.prev_status"?: string;
+      "subscription.sync_skipped_reason"?: "unknown_customer";
       "subscription.cancel_at_period_end"?: boolean;
-      "subscription.transition":
+      "subscription.transition"?:
         | "upgrade"
         | "downgrade"
         | "renewed"
@@ -167,6 +169,7 @@ type EventLogInternal =
   | {
       ["event.name"]: "subscription.webhook_received";
       "stripe.event_type": string;
+      "stripe.customer_id"?: string;
     };
 
 interface CommonEventLogFields {

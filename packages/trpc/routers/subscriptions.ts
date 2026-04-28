@@ -95,6 +95,10 @@ function computeSubscriptionTransition(
 
 async function syncStripeDataToDatabase(customerId: string, db: Context["db"]) {
   return withEventLog("subscription.synced", async () => {
+    addLogFields<"subscription.synced">({
+      "stripe.customer_id": customerId,
+    });
+
     if (!stripe) {
       throw new Error("Stripe is not configured");
     }
@@ -108,13 +112,13 @@ async function syncStripeDataToDatabase(customerId: string, db: Context["db"]) {
       existingSubscription?.cancelAtPeriodEnd ?? false;
 
     if (!existingSubscription) {
-      console.error(
-        `ERROR: No subscription found for customer with this ID ${customerId}`,
+      console.warn(
+        `Ignoring Stripe webhook for unknown customer ID ${customerId}`,
       );
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "No subscription found for customer with this ID",
+      addLogFields<"subscription.synced">({
+        "subscription.sync_skipped_reason": "unknown_customer",
       });
+      return;
     }
 
     addLogFields<"subscription.synced">({
@@ -263,6 +267,10 @@ async function processEvent(event: Stripe.Event, db: Context["db"]) {
       `[STRIPE HOOK] Customer ID isn't string. Event type: ${event.type}`,
     );
   }
+
+  addLogFields<"subscription.webhook_received">({
+    "stripe.customer_id": customerId,
+  });
 
   return await syncStripeDataToDatabase(customerId, db);
 }
