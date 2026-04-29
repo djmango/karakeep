@@ -4,7 +4,7 @@ import { tabScreenOptions } from "@/lib/tabScreenOptions";
 export default function Layout() {
   return (
     <Stack screenOptions={tabScreenOptions}>
-      <Stack.Screen name="index" options={{ title: "Highlights" }} />
+      <Stack.Screen name="index" options={{ title: "Search" }} />
     </Stack>
   );
 }
