@@ -76,7 +76,7 @@ function computeSubscriptionTransition(
   const wasPaid = prev.tier === "paid";
   const isPaid = next.tier === "paid";
   if (!wasPaid && isPaid) {
-    return "upgrade";
+    return prev.status === "past_due" ? "renewed" : "upgrade";
   }
   if (wasPaid && !isPaid) {
     return "downgrade";
