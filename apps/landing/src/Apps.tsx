@@ -4,6 +4,7 @@ import firefoxIcon from "/firefox-icon.svg?url";
 import googlePlayIcon from "/google-play-icon.svg?url";
 import obsidianIcon from "/obsidian-icon.svg?url";
 import raycastIcon from "/raycast-icon.svg?url";
+import safariIcon from "/safari-icon.svg?url";
 
 interface Listing {
   name: string;
@@ -39,6 +40,12 @@ const browserExtensions: Listing[] = [
     description: "Save pages directly from Firefox.",
     url: "https://addons.mozilla.org/en-US/firefox/addon/karakeep/",
     badge: firefoxIcon,
+  },
+  {
+    name: "Safari Extension",
+    description: "Save pages directly from Safari on macOS.",
+    url: "https://apps.apple.com/gb/app/karakeep-app/id6479258022?platform=mac",
+    badge: safariIcon,
   },
 ];
 
