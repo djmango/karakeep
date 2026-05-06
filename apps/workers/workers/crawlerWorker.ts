@@ -670,7 +670,7 @@ async function crawlPage(
               }
 
               // Continue with other requests
-              await route.continue();
+              await route.fallback();
             });
 
             // On abort, immediately stop intercepting requests so that
