@@ -329,7 +329,7 @@
         },
         "limited_scopes": {
           "label": "Eingeschränkte Berechtigungen",
-          "description": "Wählen Sie dieressourcentypen aus, auf die dieser Schlüssel zugreifen kann."
+          "description": "Wählen Sie die Ressourcentypen aus, auf die dieser Schlüssel zugreifen kann."
         }
       }
     },
@@ -559,7 +559,7 @@
         "no_title": "Kein Titel"
       },
       "finalize_dialog_title": "Import-Sitzung abschließen",
-      "finalize_dialog_description": "Die Warteschlange „{{name}}“ für die Hintergrundverarbeitung vormerken? Die bereitgestellten Lesezeichen werden importiert.",
+      "finalize_dialog_description": "„{{name}}“ zur Hintergrundverarbeitung in die Warteschlange stellen? Die vorbereiteten Lesezeichen werden importiert.",
       "finalize_staging": "Abschließen"
     },
     "backups": {

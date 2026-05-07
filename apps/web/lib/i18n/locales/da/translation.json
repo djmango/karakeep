@@ -507,7 +507,7 @@
         "no_title": "Ingen titel"
       },
       "finalize_dialog_title": "Færdiggør importsession",
-      "finalize_dialog_description": "Sæt \"{{name}}\" i kø til baggrundsbehandling? Trinopdelte bogmærker vil begynde at blive importeret.",
+      "finalize_dialog_description": "Sæt \"{{name}}\" i kø til baggrundsbehandling? De klargjorte bogmærker vil begynde at blive importeret.",
       "finalize_staging": "Færdiggør"
     },
     "backups": {

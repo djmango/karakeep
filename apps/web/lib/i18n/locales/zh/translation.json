@@ -1104,14 +1104,14 @@
     "image_fit_contain": "包含（适应）"
   },
   "version": {
-    "new_release_available": "有新的版本说明啦",
+    "new_release_available": "有新的版本说明",
     "whats_new_title": "v{{version}} 最近更新",
-    "release_notes_description": "这是从 GitHub 版本说明里搞来的最新更新。",
-    "loading_release_notes": "加载版本说明中……",
-    "unable_to_load_release_notes": "现在没法加载版本说明。稍后再试试呗。",
-    "no_release_notes": "这个版本没发布版本说明。",
-    "release_notes_synced": "版本说明是从 GitHub 同步过来的。",
-    "view_on_github": "在 GitHub 上瞅瞅"
+    "release_notes_description": "以下是从 GitHub 发布说明中获取的最新更新。",
+    "loading_release_notes": "正在加载版本说明...",
+    "unable_to_load_release_notes": "目前无法加载版本说明。请稍后重试。",
+    "no_release_notes": "此版本没有发布版本说明。",
+    "release_notes_synced": "版本说明已从 GitHub 同步。",
+    "view_on_github": "在 GitHub 上查看"
   },
   "wrapped": {
     "title": "你的 {{year}} 年终报告",

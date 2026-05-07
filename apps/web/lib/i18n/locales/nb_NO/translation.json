@@ -722,7 +722,7 @@
         "no_title": "Ingen tittel"
       },
       "finalize_dialog_title": "Fullfør importøkt",
-      "finalize_dialog_description": "Legge «{{name}}» i kø for bakgrunnsbehandling? Klargjorte bokmerker vil begynne å importere.",
+      "finalize_dialog_description": "Legge «{{name}}» i kø for bakgrunnsbehandling? Klargjorte bokmerker vil begynne å importeres.",
       "finalize_staging": "Fullfør"
     },
     "backups": {

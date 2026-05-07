@@ -553,7 +553,7 @@
         "no_title": "Gan teideal"
       },
       "finalize_dialog_title": "Seisiún Iompórtála a Thabhairt chun Críche",
-      "finalize_dialog_description": "Ar mhaith leat \"{{name}}\" a chur sa scuaine le haghaidh próiseáil chúlra? Tosófar ar leabharmharcanna atá deisithe a iompórtáil.",
+      "finalize_dialog_description": "Ar mhaith leat \"{{name}}\" a chur sa scuaine le haghaidh próiseáil chúlra? Tosófar ar leabharmharcanna atá ullmhaithe a iompórtáil.",
       "finalize_staging": "Tabhair chun críche"
     },
     "backups": {

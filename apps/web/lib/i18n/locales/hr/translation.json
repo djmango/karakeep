@@ -672,7 +672,7 @@
         "no_title": "Bez naslova"
       },
       "finalize_dialog_title": "Dovrši sesiju uvoza",
-      "finalize_dialog_description": "Staviti „{{name}}“ u red čekanja za pozadinsku obradu? Zabilježene oznake počet će se uvoziti.",
+      "finalize_dialog_description": "Staviti „{{name}}“ u red čekanja za pozadinsku obradu? Pripremljene oznake počet će se uvoziti.",
       "finalize_staging": "Dovrši"
     },
     "backups": {

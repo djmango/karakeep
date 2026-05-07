@@ -559,7 +559,7 @@
         "no_title": "Geen titel"
       },
       "finalize_dialog_title": "Import-sessie afronden",
-      "finalize_dialog_description": "Wachtrij \"{{name}}\" voor verwerking op de achtergrond? Opgeslagen bladwijzers zullen worden geïmporteerd.",
+      "finalize_dialog_description": "Zet \"{{name}}\" in de wachtrij voor verwerking op de achtergrond? Voorbereide bladwijzers worden geïmporteerd.",
       "finalize_staging": "Afronden"
     },
     "backups": {

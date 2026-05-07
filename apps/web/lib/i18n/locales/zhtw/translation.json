@@ -877,7 +877,7 @@
     "privacy": {
       "public": "公開",
       "shared": "已共用",
-      "private": "私用"
+      "private": "私人"
     }
   },
   "tags": {
@@ -1104,13 +1104,13 @@
     "image_fit_contain": "包含（符合）"
   },
   "version": {
-    "new_release_available": "有新的版本更新說明啦",
+    "new_release_available": "有新的版本更新說明",
     "whats_new_title": "v{{version}} 最新消息",
-    "release_notes_description": "以下是從 GitHub 版本更新說明抓取的最新更新。",
+    "release_notes_description": "以下是從 GitHub 版本更新說明取得的最新更新。",
     "loading_release_notes": "載入版本更新說明中…",
-    "unable_to_load_release_notes": "現在沒辦法載入版本更新說明啦。晚點再試試看。",
-    "no_release_notes": "這個版本沒有發佈版本更新說明。",
-    "release_notes_synced": "版本更新說明是從 GitHub 同步更新的。",
+    "unable_to_load_release_notes": "目前無法載入版本更新說明。請稍後再試。",
+    "no_release_notes": "此版本沒有發佈版本更新說明。",
+    "release_notes_synced": "版本更新說明已從 GitHub 同步。",
     "view_on_github": "在 GitHub 上檢視"
   },
   "wrapped": {
