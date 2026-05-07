@@ -196,7 +196,7 @@ const TagPickerPage = () => {
         contentInsetAdjustmentBehavior="automatic"
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ padding: 16, gap: 20, paddingBottom: 40 }}
-        className="bg-background"
+        className="flex-1 bg-background"
       >
         {filteredOptimisticTags.length > 0 && (
           <GroupedSection header="Attached">

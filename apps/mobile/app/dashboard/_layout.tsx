@@ -94,6 +94,7 @@ export default function Dashboard() {
             default: "modal" as const,
           }),
           sheetGrabberVisible: true,
+          sheetExpandsWhenScrolledToEdge: false,
         }}
       />
       <Stack.Screen
@@ -107,6 +108,7 @@ export default function Dashboard() {
             default: "modal" as const,
           }),
           sheetGrabberVisible: true,
+          sheetExpandsWhenScrolledToEdge: false,
         }}
       />
       <Stack.Screen
