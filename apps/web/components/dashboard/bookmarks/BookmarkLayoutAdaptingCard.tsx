@@ -2,7 +2,7 @@
 
 import type { BookmarksLayoutTypes } from "@/lib/userLocalSettings/types";
 import type { ReactNode } from "react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSession } from "@/lib/auth/client";
@@ -116,15 +116,13 @@ function OwnerIndicator({ bookmark }: { bookmark: ZBookmark }) {
 }
 
 function MultiBookmarkSelector({ bookmark }: { bookmark: ZBookmark }) {
-  const { selectedBookmarks, isBulkEditEnabled } = useBulkActionsStore();
+  const isSelected = useBulkActionsStore((s) =>
+    s.isBookmarkSelected(bookmark.id),
+  );
+  const isBulkEditEnabled = useBulkActionsStore((s) => s.isBulkEditEnabled);
   const toggleBookmark = useBulkActionsStore((state) => state.toggleBookmark);
-  const [isSelected, setIsSelected] = useState(false);
   const { theme } = useTheme();
   const { data: session } = useSession();
-
-  useEffect(() => {
-    setIsSelected(selectedBookmarks.some((item) => item.id === bookmark.id));
-  }, [selectedBookmarks]);
 
   // Don't show selector for non-owned bookmarks or when bulk edit is disabled
   const isOwner = session?.user?.id === bookmark.userId;
@@ -153,7 +151,7 @@ function MultiBookmarkSelector({ bookmark }: { bookmark: ZBookmark }) {
         },
         theme === "dark" ? "bg-white" : "bg-black",
       )}
-      onClick={() => toggleBookmark(bookmark)}
+      onClick={() => toggleBookmark(bookmark.id)}
     >
       <div className="absolute right-2 top-2 z-50 opacity-100">
         <div
