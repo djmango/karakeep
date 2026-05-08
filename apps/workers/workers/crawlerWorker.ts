@@ -596,6 +596,7 @@ async function crawlPage(
             userAgent:
               "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
             proxy: proxyConfig,
+            serviceWorkers: "block",
           }),
       );
 
@@ -641,6 +642,25 @@ async function crawlPage(
                     // Ignore errors — the request may have been canceled.
                   });
               };
+              cdpSession.on("Fetch.authRequired", async (event) => {
+                const authChallengeResponse =
+                  event.authChallenge.source === "Proxy" &&
+                  (proxyConfig?.username || proxyConfig?.password)
+                    ? {
+                        response: "ProvideCredentials" as const,
+                        username: proxyConfig.username ?? "",
+                        password: proxyConfig.password ?? "",
+                      }
+                    : { response: "Default" as const };
+                await cdpSession
+                  ?.send("Fetch.continueWithAuth", {
+                    requestId: event.requestId,
+                    authChallengeResponse,
+                  })
+                  .catch(() => {
+                    // Ignore errors — the request may have been canceled.
+                  });
+              });
               cdpSession.on("Fetch.requestPaused", async (event) => {
                 try {
                   const status = event.responseStatusCode;
@@ -690,7 +710,11 @@ async function crawlPage(
                 }
               });
               await cdpSession.send("Fetch.enable", {
-                patterns: [{ urlPattern: "*", requestStage: "Response" }],
+                handleAuthRequests: true,
+                patterns: [
+                  { urlPattern: "*", requestStage: "Request" },
+                  { urlPattern: "*", requestStage: "Response" },
+                ],
               });
             } catch (e) {
               logger.warn(
