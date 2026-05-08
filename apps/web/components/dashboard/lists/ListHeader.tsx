@@ -3,15 +3,9 @@
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { UserAvatar } from "@/components/ui/user-avatar";
 import { useTranslation } from "@/lib/i18n/client";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { Globe, Lock, MoreHorizontal, Sparkles, Users } from "lucide-react";
+import { MoreHorizontal, Sparkles } from "lucide-react";
 
 import { useTRPC } from "@karakeep/shared-react/trpc";
 import { parseSearchQuery } from "@karakeep/shared/searchQueryParser";
@@ -19,6 +13,10 @@ import { ZBookmarkList } from "@karakeep/shared/types/lists";
 
 import QueryExplainerTooltip from "../search/QueryExplainerTooltip";
 import { ListOptions } from "./ListOptions";
+import {
+  ListCollaboratorsIcons,
+  ListPrivacyLabel,
+} from "./ListHeaderComponents";
 
 export default function ListHeader({
   initialData,
@@ -35,18 +33,6 @@ export default function ListHeader({
       },
       {
         initialData,
-      },
-    ),
-  );
-
-  const { data: collaboratorsData } = useQuery(
-    api.lists.getCollaborators.queryOptions(
-      {
-        listId: initialData.id,
-      },
-      {
-        refetchOnWindowFocus: false,
-        enabled: list.hasCollaborators,
       },
     ),
   );
@@ -72,13 +58,6 @@ export default function ListHeader({
     }
   }
 
-  const privacy = list.public
-    ? { Icon: Globe, label: t("lists.privacy.public") }
-    : list.hasCollaborators
-      ? { Icon: Users, label: t("lists.privacy.shared") }
-      : { Icon: Lock, label: t("lists.privacy.private") };
-  const PrivacyIcon = privacy.Icon;
-
   return (
     <div className="flex items-start justify-between gap-4">
       <div className="flex min-w-0 flex-1 items-start gap-4">
@@ -99,10 +78,7 @@ export default function ListHeader({
                 <span aria-hidden>·</span>
               </>
             )}
-            <span className="flex items-center gap-1">
-              <PrivacyIcon className="size-3.5" />
-              {privacy.label}
-            </span>
+            <ListPrivacyLabel list={list} />
             {parsedQuery && (
               <>
                 <span aria-hidden>·</span>
@@ -120,42 +96,7 @@ export default function ListHeader({
                 />
               </>
             )}
-            {list.hasCollaborators && collaboratorsData && (
-              <div className="group flex items-center">
-                {collaboratorsData.owner && (
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <div className="-mr-2 transition-all duration-300 ease-out group-hover:mr-1">
-                        <UserAvatar
-                          name={collaboratorsData.owner.name}
-                          image={collaboratorsData.owner.image}
-                          className="size-5 shrink-0 rounded-full ring-2 ring-background"
-                        />
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>{collaboratorsData.owner.name}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                )}
-                {collaboratorsData.collaborators.map((collab) => (
-                  <Tooltip key={collab.userId}>
-                    <TooltipTrigger>
-                      <div className="-mr-2 transition-all duration-300 ease-out group-hover:mr-1">
-                        <UserAvatar
-                          name={collab.user.name}
-                          image={collab.user.image}
-                          className="size-5 shrink-0 rounded-full ring-2 ring-background"
-                        />
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>{collab.user.name}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                ))}
-              </div>
-            )}
+            <ListCollaboratorsIcons list={list} />
           </div>
         </div>
       </div>

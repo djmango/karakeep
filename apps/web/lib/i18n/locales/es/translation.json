@@ -873,12 +873,17 @@
       "failed_to_decline": "No se pudo rechazar la invitación"
     },
     "shared_lists": "Listas compartidas",
-    "items_count": "{{count}} elementos",
     "privacy": {
       "public": "Público",
       "shared": "Compartido",
       "private": "Privado"
-    }
+    },
+    "summary_list_one": "{{count}} Listas",
+    "summary_list_other": "{{count}} Listas",
+    "summary_bookmark_one": "{{count}} Marcadores",
+    "summary_bookmark_other": "{{count}} Marcadores",
+    "items_count_one": "{{count}} elementos",
+    "items_count_other": "{{count}} elementos"
   },
   "tags": {
     "all_tags": "Todas las etiquetas",

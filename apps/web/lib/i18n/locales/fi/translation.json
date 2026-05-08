@@ -877,12 +877,17 @@
       "failed_to_decline": "Kutsun hylkääminen epäonnistui"
     },
     "shared_lists": "Jaetut listat",
-    "items_count": "{{count}} kohdetta",
     "privacy": {
       "public": "Julkinen",
       "shared": "Jaettu",
       "private": "Yksityinen"
-    }
+    },
+    "summary_list_one": "{{count}} Listat",
+    "summary_list_other": "{{count}} Listat",
+    "summary_bookmark_one": "{{count}} Kirjanmerkit",
+    "summary_bookmark_other": "{{count}} Kirjanmerkit",
+    "items_count_one": "{{count}} kohdetta",
+    "items_count_other": "{{count}} kohdetta"
   },
   "tags": {
     "all_tags": "Kaikki tunnisteet",

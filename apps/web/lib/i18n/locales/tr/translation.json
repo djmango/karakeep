@@ -876,12 +876,17 @@
       "failed_to_decline": "Davetiye reddedilemedi"
     },
     "shared_lists": "Paylaşılan Listeler",
-    "items_count": "{{count}} öge",
     "privacy": {
       "public": "Genel",
       "shared": "Paylaşılan",
       "private": "Özel"
-    }
+    },
+    "summary_list_one": "{{count}} Listeler",
+    "summary_list_other": "{{count}} Listeler",
+    "summary_bookmark_one": "{{count}} Yer İmleri",
+    "summary_bookmark_other": "{{count}} Yer İmleri",
+    "items_count_one": "{{count}} öge",
+    "items_count_other": "{{count}} öge"
   },
   "tags": {
     "all_tags": "Tüm Etiketler",

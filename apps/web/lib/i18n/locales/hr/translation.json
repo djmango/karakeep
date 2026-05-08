@@ -876,12 +876,17 @@
       "failed_to_decline": "Nije uspjelo odbiti pozivnicu"
     },
     "shared_lists": "Zajednički popisi",
-    "items_count": "{{count}} stavki",
     "privacy": {
       "public": "Javno",
       "shared": "Podijeljeno",
       "private": "Privatno"
-    }
+    },
+    "summary_list_one": "{{count}} Popisi",
+    "summary_list_other": "{{count}} Popisi",
+    "summary_bookmark_one": "{{count}} Oznake",
+    "summary_bookmark_other": "{{count}} Oznake",
+    "items_count_one": "{{count}} stavki",
+    "items_count_other": "{{count}} stavki"
   },
   "tags": {
     "all_tags": "Sve oznake",

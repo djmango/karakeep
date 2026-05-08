@@ -866,12 +866,17 @@
       "failed_to_decline": "招待の辞退に失敗しました"
     },
     "shared_lists": "共有リスト",
-    "items_count": "{{count}} 個のアイテム",
     "privacy": {
       "public": "公開",
       "shared": "共有済み",
       "private": "非公開"
-    }
+    },
+    "summary_list_one": "{{count}} リスト",
+    "summary_list_other": "{{count}} リスト",
+    "summary_bookmark_one": "{{count}} ブックマーク",
+    "summary_bookmark_other": "{{count}} ブックマーク",
+    "items_count_one": "{{count}} 個のアイテム",
+    "items_count_other": "{{count}} 個のアイテム"
   },
   "options": {
     "dark_mode": "ダークモード",

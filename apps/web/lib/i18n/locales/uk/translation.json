@@ -934,12 +934,17 @@
       "failed_to_decline": "Не вдалося відхилити запрошення"
     },
     "shared_lists": "Спільні списки",
-    "items_count": "{{count}} елементів",
     "privacy": {
       "public": "Публічний",
       "shared": "Спільний",
       "private": "Приватний"
-    }
+    },
+    "summary_list_one": "{{count}} Списки",
+    "summary_list_other": "{{count}} Списки",
+    "summary_bookmark_one": "{{count}} Закладки",
+    "summary_bookmark_other": "{{count}} Закладки",
+    "items_count_one": "{{count}} елементів",
+    "items_count_other": "{{count}} елементів"
   },
   "tags": {
     "your_tags": "Ваші теги",

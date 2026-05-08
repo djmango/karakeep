@@ -852,12 +852,17 @@
       "failed_to_decline": "رد کردن دعوت ناموفق بود"
     },
     "shared_lists": "فهرست‌های مشترک",
-    "items_count": "{{count}} مورد",
     "privacy": {
       "public": "عمومی",
       "shared": "اشتراک‌گذاری شده",
       "private": "خصوصی"
-    }
+    },
+    "summary_list_one": "{{count}} فهرست‌ها",
+    "summary_list_other": "{{count}} فهرست‌ها",
+    "summary_bookmark_one": "{{count}} نشانک‌ها",
+    "summary_bookmark_other": "{{count}} نشانک‌ها",
+    "items_count_one": "{{count}} مورد",
+    "items_count_other": "{{count}} مورد"
   },
   "tags": {
     "all_tags": "همهٔ برچسب‌ها",

@@ -962,12 +962,17 @@
       "failed_to_decline": "Kunne ikke afvise invitationen"
     },
     "shared_lists": "Delte lister",
-    "items_count": "{{count}} elementer",
     "privacy": {
       "public": "Offentlig",
       "shared": "Delt",
       "private": "Privat"
-    }
+    },
+    "summary_list_one": "{{count}} Lister",
+    "summary_list_other": "{{count}} Lister",
+    "summary_bookmark_one": "{{count}} Bogmærker",
+    "summary_bookmark_other": "{{count}} Bogmærker",
+    "items_count_one": "{{count}} elementer",
+    "items_count_other": "{{count}} elementer"
   },
   "preview": {
     "view_original": "Se original",

@@ -867,12 +867,17 @@
       "failed_to_decline": "Kunne ikke avslå invitasjonen"
     },
     "shared_lists": "Delte lister",
-    "items_count": "{{count}} elementer",
     "privacy": {
       "public": "Offentlig",
       "shared": "Delt",
       "private": "Privat"
-    }
+    },
+    "summary_list_one": "{{count}} Lister",
+    "summary_list_other": "{{count}} Lister",
+    "summary_bookmark_one": "{{count}} Bokmerker",
+    "summary_bookmark_other": "{{count}} Bokmerker",
+    "items_count_one": "{{count}} elementer",
+    "items_count_other": "{{count}} elementer"
   },
   "tags": {
     "all_tags": "Alle tagger",

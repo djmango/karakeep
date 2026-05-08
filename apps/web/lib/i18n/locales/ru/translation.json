@@ -130,12 +130,17 @@
       "failed_to_decline": "Не удалось отклонить приглашение"
     },
     "shared_lists": "Общие списки",
-    "items_count": "{{count}} элементов",
     "privacy": {
       "public": "Общий",
       "shared": "Общий доступ",
       "private": "Личный"
-    }
+    },
+    "summary_list_one": "{{count}} Списки",
+    "summary_list_other": "{{count}} Списки",
+    "summary_bookmark_one": "{{count}} Закладки",
+    "summary_bookmark_other": "{{count}} Закладки",
+    "items_count_one": "{{count}} элементов",
+    "items_count_other": "{{count}} элементов"
   },
   "settings": {
     "user_settings": "Настройки пользователя",

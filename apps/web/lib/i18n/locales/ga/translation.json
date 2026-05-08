@@ -691,12 +691,17 @@
       "failed_to_decline": "Theip ar dhiúltú don chuireadh"
     },
     "shared_lists": "Liostaí Comhroinnte",
-    "items_count": "{{count}} mír",
     "privacy": {
       "public": "Poiblí",
       "shared": "Comhroinnte",
       "private": "Príobháideach"
-    }
+    },
+    "summary_list_one": "{{count}} Liostaí",
+    "summary_list_other": "{{count}} Liostaí",
+    "summary_bookmark_one": "{{count}} Leabhair mharcála",
+    "summary_bookmark_other": "{{count}} Leabhair mharcála",
+    "items_count_one": "{{count}} mír",
+    "items_count_other": "{{count}} mír"
   },
   "tags": {
     "unused_tags": "Clibeanna Neamhúsáidte",

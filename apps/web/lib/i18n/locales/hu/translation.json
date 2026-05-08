@@ -799,12 +799,17 @@
       "failed_to_decline": "Nem sikerült elutasítani a meghívást"
     },
     "shared_lists": "Megosztott listák",
-    "items_count": "{{count}} elem",
     "privacy": {
       "public": "Nyilvános",
       "shared": "Megosztott",
       "private": "Privát"
-    }
+    },
+    "summary_list_one": "{{count}} Listák",
+    "summary_list_other": "{{count}} Listák",
+    "summary_bookmark_one": "{{count}} Könyvjelzők",
+    "summary_bookmark_other": "{{count}} Könyvjelzők",
+    "items_count_one": "{{count}} elem",
+    "items_count_other": "{{count}} elem"
   },
   "admin": {
     "background_jobs": {

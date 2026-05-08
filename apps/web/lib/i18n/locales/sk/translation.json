@@ -186,12 +186,17 @@
       "failed_to_decline": "Nepodarilo sa odmietnuť pozvánku"
     },
     "shared_lists": "Zdieľané zoznamy",
-    "items_count": "{{count}} položiek",
     "privacy": {
       "public": "Verejné",
       "shared": "Zdieľané",
       "private": "Súkromné"
-    }
+    },
+    "summary_list_one": "{{count}} Zoznamy",
+    "summary_list_other": "{{count}} Zoznamy",
+    "summary_bookmark_one": "{{count}} Záložky",
+    "summary_bookmark_other": "{{count}} Záložky",
+    "items_count_one": "{{count}} položiek",
+    "items_count_other": "{{count}} položiek"
   },
   "settings": {
     "import": {

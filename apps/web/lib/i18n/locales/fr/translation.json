@@ -873,12 +873,17 @@
       "failed_to_decline": "Impossible de refuser l’invitation"
     },
     "shared_lists": "Listes partagées",
-    "items_count": "{{count}} articles",
     "privacy": {
       "public": "Public",
       "shared": "Partagé",
       "private": "Privé"
-    }
+    },
+    "summary_list_one": "{{count}} Listes",
+    "summary_list_other": "{{count}} Listes",
+    "summary_bookmark_one": "{{count}} Marque-pages",
+    "summary_bookmark_other": "{{count}} Marque-pages",
+    "items_count_one": "{{count}} articles",
+    "items_count_other": "{{count}} articles"
   },
   "tags": {
     "all_tags": "Tous les tags",

@@ -873,12 +873,17 @@
       "failed_to_decline": "Einladung konnte nicht abgelehnt werden"
     },
     "shared_lists": "Geteilte Listen",
-    "items_count": "{{count}} Elemente",
     "privacy": {
       "public": "Öffentlich",
       "shared": "Geteilt",
       "private": "Privat"
-    }
+    },
+    "summary_list_one": "{{count}} Listen",
+    "summary_list_other": "{{count}} Listen",
+    "summary_bookmark_one": "{{count}} Lesezeichen",
+    "summary_bookmark_other": "{{count}} Lesezeichen",
+    "items_count_one": "{{count}} Elemente",
+    "items_count_other": "{{count}} Elemente"
   },
   "tags": {
     "all_tags": "Alle Tags",

@@ -994,12 +994,17 @@
       "failed_to_decline": "Nie udało się odrzucić zaproszenia"
     },
     "shared_lists": "Listy współdzielone",
-    "items_count": "{{count}} elementów",
     "privacy": {
       "public": "Publiczne",
       "shared": "Udostępnione",
       "private": "Prywatne"
-    }
+    },
+    "summary_list_one": "{{count}} Listy",
+    "summary_list_other": "{{count}} Listy",
+    "summary_bookmark_one": "{{count}} Zakładki",
+    "summary_bookmark_other": "{{count}} Zakładki",
+    "items_count_one": "{{count}} elementów",
+    "items_count_other": "{{count}} elementów"
   },
   "preview": {
     "view_original": "Zobacz oryginał",

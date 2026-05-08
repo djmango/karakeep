@@ -876,12 +876,17 @@
       "failed_to_decline": "Αποτυχία απόρριψης πρόσκλησης"
     },
     "shared_lists": "Κοινόχρηστες λίστες",
-    "items_count": "{{count}} στοιχεία",
     "privacy": {
       "public": "Δημόσιο",
       "shared": "Κοινόχρηστο",
       "private": "Ιδιωτικό"
-    }
+    },
+    "summary_list_one": "{{count}} Λίστες",
+    "summary_list_other": "{{count}} Λίστες",
+    "summary_bookmark_one": "{{count}} Σελιδοδείκτες",
+    "summary_bookmark_other": "{{count}} Σελιδοδείκτες",
+    "items_count_one": "{{count}} στοιχεία",
+    "items_count_other": "{{count}} στοιχεία"
   },
   "tags": {
     "all_tags": "Όλες οι Ετικέτες",

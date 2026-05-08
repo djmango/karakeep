@@ -945,12 +945,17 @@
       "failed_to_decline": "Zavrnitev povabila ni uspela"
     },
     "shared_lists": "Deljeni seznami",
-    "items_count": "{{count}} elementov",
     "privacy": {
       "public": "Javno",
       "shared": "V skupni rabi",
       "private": "Zasebno"
-    }
+    },
+    "summary_list_one": "{{count}} Seznami",
+    "summary_list_other": "{{count}} Seznami",
+    "summary_bookmark_one": "{{count}} Zaznamki",
+    "summary_bookmark_other": "{{count}} Zaznamki",
+    "items_count_one": "{{count}} elementov",
+    "items_count_other": "{{count}} elementov"
   },
   "options": {
     "dark_mode": "Temni način",

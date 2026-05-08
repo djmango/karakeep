@@ -777,7 +777,6 @@
     "favourites": "Favourites",
     "shared": "Shared",
     "shared_lists": "Shared Lists",
-    "items_count": "{{count}} items",
     "privacy": {
       "public": "Public",
       "shared": "Shared",
@@ -862,7 +861,13 @@
       "warning": "You will no longer be able to view or access bookmarks in this list. The list owner can add you back if needed.",
       "action": "Leave List",
       "success": "You have left \"{{icon}} {{name}}\""
-    }
+    },
+    "summary_list_one": "{{count}} list",
+    "summary_list_other": "{{count}} lists",
+    "summary_bookmark_one": "{{count}} bookmark",
+    "summary_bookmark_other": "{{count}} bookmarks",
+    "items_count_one": "{{count}} item",
+    "items_count_other": "{{count}} items"
   },
   "tags": {
     "all_tags": "All Tags",

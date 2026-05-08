@@ -869,12 +869,17 @@
       "failed_to_decline": "Không từ chối được lời mời"
     },
     "shared_lists": "Danh sách dùng chung",
-    "items_count": "{{count}} mục",
     "privacy": {
       "public": "Công khai",
       "shared": "Đã chia sẻ",
       "private": "Riêng tư"
-    }
+    },
+    "summary_list_one": "{{count}} Danh sách",
+    "summary_list_other": "{{count}} Danh sách",
+    "summary_bookmark_one": "{{count}} Dấu trang",
+    "summary_bookmark_other": "{{count}} Dấu trang",
+    "items_count_one": "{{count}} mục",
+    "items_count_other": "{{count}} mục"
   },
   "search": {
     "is_favorited": "Được ưa thích",

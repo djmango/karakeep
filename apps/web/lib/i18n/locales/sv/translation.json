@@ -873,12 +873,17 @@
       "failed_to_decline": "Kunde inte neka inbjudan"
     },
     "shared_lists": "Delade listor",
-    "items_count": "{{count}} objekt",
     "privacy": {
       "public": "Offentlig",
       "shared": "Delad",
       "private": "Privat"
-    }
+    },
+    "summary_list_one": "{{count}} Listor",
+    "summary_list_other": "{{count}} Listor",
+    "summary_bookmark_one": "{{count}} Bokmärken",
+    "summary_bookmark_other": "{{count}} Bokmärken",
+    "items_count_one": "{{count}} objekt",
+    "items_count_other": "{{count}} objekt"
   },
   "tags": {
     "drag_and_drop_merging_info": "Dra och släpp taggar på varandra för att sammanfoga dem",

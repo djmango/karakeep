@@ -691,12 +691,17 @@
       "failed_to_decline": "Nepodařilo se odmítnout pozvánku"
     },
     "shared_lists": "Sdílené seznamy",
-    "items_count": "{{count}} položek",
     "privacy": {
       "public": "Veřejné",
       "shared": "Sdílené",
       "private": "Soukromé"
-    }
+    },
+    "summary_list_one": "{{count}} Seznamy",
+    "summary_list_other": "{{count}} Seznamy",
+    "summary_bookmark_one": "{{count}} Záložky",
+    "summary_bookmark_other": "{{count}} Záložky",
+    "items_count_one": "{{count}} položek",
+    "items_count_other": "{{count}} položek"
   },
   "tags": {
     "unused_tags": "Nepoužité tagy",

@@ -932,12 +932,17 @@
       "failed_to_decline": "Impossibile rifiutare l'invito"
     },
     "shared_lists": "Elenchi condivisi",
-    "items_count": "{{count}} elementi",
     "privacy": {
       "public": "Pubblico",
       "shared": "Condiviso",
       "private": "Privato"
-    }
+    },
+    "summary_list_one": "{{count}} Elenchi",
+    "summary_list_other": "{{count}} Elenchi",
+    "summary_bookmark_one": "{{count}} Segnalibri",
+    "summary_bookmark_other": "{{count}} Segnalibri",
+    "items_count_one": "{{count}} elementi",
+    "items_count_other": "{{count}} elementi"
   },
   "tags": {
     "your_tags": "I tuoi tag",

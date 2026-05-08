@@ -873,12 +873,17 @@
       "failed_to_decline": "拒绝邀请失败"
     },
     "shared_lists": "共享列表",
-    "items_count": "{{count}} 个项目",
     "privacy": {
       "public": "公共",
       "shared": "已共享",
       "private": "私有"
-    }
+    },
+    "summary_list_one": "{{count}} 列表",
+    "summary_list_other": "{{count}} 列表",
+    "summary_bookmark_one": "{{count}} 书签",
+    "summary_bookmark_other": "{{count}} 书签",
+    "items_count_one": "{{count}} 个项目",
+    "items_count_other": "{{count}} 个项目"
   },
   "tags": {
     "all_tags": "所有标签",

@@ -1058,12 +1058,17 @@
       "failed_to_decline": "초대 거절 실패"
     },
     "shared_lists": "공유 목록",
-    "items_count": "{{count}}개의 항목",
     "privacy": {
       "public": "공개",
       "shared": "공유됨",
       "private": "비공개"
-    }
+    },
+    "summary_list_one": "{{count}} 목록",
+    "summary_list_other": "{{count}} 목록",
+    "summary_bookmark_one": "{{count}} 북마크",
+    "summary_bookmark_other": "{{count}} 북마크",
+    "items_count_one": "{{count}}개의 항목",
+    "items_count_other": "{{count}}개의 항목"
   },
   "options": {
     "light_mode": "라이트 모드",

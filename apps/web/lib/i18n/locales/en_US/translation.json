@@ -976,12 +976,17 @@
       "failed_to_decline": "Failed to decline invitation"
     },
     "shared_lists": "Shared Lists",
-    "items_count": "{{count}} items",
     "privacy": {
       "public": "Public",
       "shared": "Shared",
       "private": "Private"
-    }
+    },
+    "summary_list_one": "{{count}} list",
+    "summary_list_other": "{{count}} lists",
+    "summary_bookmark_one": "{{count}} bookmark",
+    "summary_bookmark_other": "{{count}} bookmarks",
+    "items_count_one": "{{count}} item",
+    "items_count_other": "{{count}} items"
   },
   "search": {
     "is_favorited": "Is Favorited",

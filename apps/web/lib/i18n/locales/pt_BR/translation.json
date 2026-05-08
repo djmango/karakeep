@@ -876,12 +876,17 @@
       "failed_to_decline": "Falha ao recusar o convite"
     },
     "shared_lists": "Listas compartilhadas",
-    "items_count": "{{count}} itens",
     "privacy": {
       "public": "Público",
       "shared": "Compartilhado",
       "private": "Privado"
-    }
+    },
+    "summary_list_one": "{{count}} Listas",
+    "summary_list_other": "{{count}} Listas",
+    "summary_bookmark_one": "{{count}} Favoritos",
+    "summary_bookmark_other": "{{count}} Favoritos",
+    "items_count_one": "{{count}} itens",
+    "items_count_other": "{{count}} itens"
   },
   "tags": {
     "all_tags": "Todas Tags",

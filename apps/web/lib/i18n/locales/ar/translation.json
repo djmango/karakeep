@@ -876,12 +876,17 @@
       "failed_to_decline": "فشل رفض الدعوة"
     },
     "shared_lists": "قوائم مشتركة",
-    "items_count": "{{count}} عناصر",
     "privacy": {
       "public": "عام",
       "shared": "مشترك",
       "private": "خاص"
-    }
+    },
+    "summary_list_one": "{{count}} القوائم",
+    "summary_list_other": "{{count}} القوائم",
+    "summary_bookmark_one": "{{count}} الإشارات المرجعية",
+    "summary_bookmark_other": "{{count}} الإشارات المرجعية",
+    "items_count_one": "{{count}} عناصر",
+    "items_count_other": "{{count}} عناصر"
   },
   "tags": {
     "all_tags": "جميع الوسوم",
