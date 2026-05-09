@@ -1,5 +1,9 @@
 # Using Karakeep with SingleFile Extension
 
+:::tip
+The official Karakeep extension now also supports client-side crawling as an experimental feature (powered by SingleFile under the hood). If you only need to hoard pages from your own browser session, you may not need the standalone SingleFile extension anymore.
+:::
+
 Karakeep supports being a destination for the [SingleFile extension](https://github.com/gildas-lormeau/SingleFile). This has the benefit of allowing you to use the singlefile extension to hoard links as you're seeing them in the browser. This is perfect for websites that don't like to get crawled, has annoying cookie banner or require authentication.
 
 ## Setup
