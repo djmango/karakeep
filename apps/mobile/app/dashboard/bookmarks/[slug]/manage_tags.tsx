@@ -8,6 +8,7 @@ import { useToast } from "@/components/ui/Toast";
 import { useColorScheme } from "@/lib/useColorScheme";
 import { useQuery } from "@tanstack/react-query";
 import { Check, Plus } from "lucide-react-native";
+import { useHeaderHeight } from "@react-navigation/elements";
 
 import {
   useAutoRefreshingBookmarkQuery,
@@ -18,6 +19,7 @@ import { useTRPC } from "@karakeep/shared-react/trpc";
 const NEW_TAG_ID = "new-tag";
 
 const TagPickerPage = () => {
+  const headerHeight = useHeaderHeight();
   const api = useTRPC();
   const { colors } = useColorScheme();
   const { slug: bookmarkId } = useLocalSearchParams();
@@ -195,7 +197,11 @@ const TagPickerPage = () => {
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ padding: 16, gap: 20, paddingBottom: 40 }}
+        contentContainerStyle={{
+          padding: 16,
+          gap: 20,
+          paddingBottom: 40 + headerHeight,
+        }}
         className="flex-1 bg-background"
       >
         {filteredOptimisticTags.length > 0 && (
