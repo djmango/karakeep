@@ -38,7 +38,7 @@ export default function BookmarkSearchResults({
   const renderHistoryItem = ({ item }: { item: string }) => (
     <Pressable
       onPress={() => onSelectHistory(item)}
-      className="border-b border-gray-200 p-3"
+      className="border-b border-border p-3"
     >
       <Text className="text-foreground">{item}</Text>
     </Pressable>
