@@ -32,6 +32,8 @@ import {
 import { useWhoAmI } from "@karakeep/shared-react/hooks/users";
 import { BookmarkTypes, ZBookmark } from "@karakeep/shared/types/bookmarks";
 
+const TOOLBAR_ICON_GAP = 28;
+
 function triggerHaptic() {
   Haptics.selectionAsync().catch(() => {
     // Ignore — haptics unavailable (e.g. simulator)
@@ -296,6 +298,19 @@ function ToolbarContainer({
   bottomMargin: number;
   bottomInset: number;
 }) {
+  const innerRow = (
+    <View
+      style={{
+        alignSelf: "center",
+        flexDirection: "row",
+        alignItems: "center",
+        gap: TOOLBAR_ICON_GAP,
+      }}
+    >
+      {children}
+    </View>
+  );
+
   if (shouldUseGlassPill) {
     return (
       <GlassView
@@ -303,23 +318,18 @@ function ToolbarContainer({
         style={{
           borderRadius: 22,
           marginHorizontal: 16,
+          alignSelf: "center",
           marginBottom: bottomMargin,
           paddingVertical: 10,
           paddingHorizontal: 20,
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
         }}
       >
-        {children}
+        {innerRow}
       </GlassView>
     );
   }
 
   const fallbackStyle = {
-    flexDirection: "row" as const,
-    alignItems: "center" as const,
-    justifyContent: "space-between" as const,
     paddingHorizontal: 40,
     paddingTop: 16,
     paddingBottom: bottomInset + 16,
@@ -328,14 +338,14 @@ function ToolbarContainer({
   if (Platform.OS === "ios") {
     return (
       <BlurView tint="systemMaterial" intensity={80} style={fallbackStyle}>
-        {children}
+        {innerRow}
       </BlurView>
     );
   }
 
   return (
     <View className="bg-background" style={fallbackStyle}>
-      {children}
+      {innerRow}
     </View>
   );
 }
