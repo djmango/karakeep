@@ -65,7 +65,7 @@ function LinkImage({
   if (isBookmarkStillCrawling(bookmark)) {
     img = imgComponent("/blur.avif", false);
   } else if (imageDetails) {
-    img = imgComponent(imageDetails.url, !imageDetails.localAsset);
+    img = imgComponent(imageDetails.url, true);
   } else {
     // No image found
     // A dummy white pixel for when there's no image.

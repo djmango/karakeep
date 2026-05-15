@@ -28,6 +28,7 @@ function AssetImage({
             alt="asset"
             src={getAssetUrl(bookmarkedAsset.assetId)}
             fill={true}
+            unoptimized
             className={className}
           />
         </Link>
@@ -53,6 +54,7 @@ function AssetImage({
             alt="asset"
             src={getAssetUrl(screenshotAssetId)}
             fill={true}
+            unoptimized
             className={className}
           />
         </Link>

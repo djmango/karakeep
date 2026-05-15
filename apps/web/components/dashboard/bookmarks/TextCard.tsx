@@ -53,6 +53,7 @@ export default function TextCard({
                   <Image
                     alt="card banner"
                     fill={true}
+                    unoptimized
                     className={cn("flex-1", className)}
                     src={getAssetUrl(banner.id)}
                   />
