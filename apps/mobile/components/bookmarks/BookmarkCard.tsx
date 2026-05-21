@@ -229,7 +229,7 @@ function ListLayout({ ctx }: { ctx: BookmarkCardContext }) {
             </View>
             <BookmarkCardContainer.CompactBody />
             <BookmarkCardContainer.NoteSection />
-            <View className="h-7 overflow-hidden">
+            <View className="h-7 justify-center overflow-hidden">
               <TagList bookmark={ctx.bookmark} />
             </View>
             <View className="flex-row justify-end pt-0.5">

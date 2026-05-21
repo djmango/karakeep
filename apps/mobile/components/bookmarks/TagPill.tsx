@@ -30,7 +30,7 @@ export default function TagPill({
   return (
     <View
       key={tag.id}
-      className="rounded-full border border-transparent px-2.5 py-0.5"
+      className="h-[22px] flex-row items-center rounded-full border border-transparent px-2.5"
       style={{ backgroundColor: colors.backgroundColor }}
     >
       {clickable ? (
