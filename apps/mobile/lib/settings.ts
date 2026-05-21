@@ -45,6 +45,7 @@ const zSettingsSchema = z.object({
     .optional()
     .default("reader"),
   bookmarkLayout: z.enum(["card", "list"]).optional().default("card"),
+  bookmarkSortOrder: z.enum(["asc", "desc"]).optional().default("desc"),
   showNotes: z.boolean().optional().default(false),
   keepScreenOnWhileReading: z.boolean().optional().default(false),
   customHeaders: z.record(z.string(), z.string()).optional().default({}),
@@ -80,6 +81,7 @@ const useSettings = create<AppSettingsState>((set, get) => ({
       theme: "system",
       defaultBookmarkView: "reader",
       bookmarkLayout: "card",
+      bookmarkSortOrder: "desc",
       showNotes: false,
       keepScreenOnWhileReading: false,
       customHeaders: {},

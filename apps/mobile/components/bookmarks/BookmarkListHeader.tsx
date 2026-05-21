@@ -36,18 +36,48 @@ function useBookmarkListLayoutMenu(): {
         },
       ],
     },
+    {
+      id: "sort",
+      title: "Sort",
+      image: Platform.select({ ios: "arrow.up.arrow.down" }),
+      imageColor: Platform.select({ ios: menuIconColor }),
+      subactions: [
+        {
+          id: "sort_desc",
+          title: "Newest First",
+          state: settings.bookmarkSortOrder === "desc" ? "on" : "off",
+          image: Platform.select({ ios: "arrow.down" }),
+          imageColor: Platform.select({ ios: menuIconColor }),
+        },
+        {
+          id: "sort_asc",
+          title: "Oldest First",
+          state: settings.bookmarkSortOrder === "asc" ? "on" : "off",
+          image: Platform.select({ ios: "arrow.up" }),
+          imageColor: Platform.select({ ios: menuIconColor }),
+        },
+      ],
+    },
   ];
 
   const handleLayoutAction = (event: string) => {
-    if (event !== "card" && event !== "list") {
-      return false;
+    if (event === "card" || event === "list") {
+      setSettings({
+        ...settings,
+        bookmarkLayout: event,
+      });
+      return true;
     }
 
-    setSettings({
-      ...settings,
-      bookmarkLayout: event,
-    });
-    return true;
+    if (event === "sort_desc" || event === "sort_asc") {
+      setSettings({
+        ...settings,
+        bookmarkSortOrder: event === "sort_desc" ? "desc" : "asc",
+      });
+      return true;
+    }
+
+    return false;
   };
 
   return { layoutActions, handleLayoutAction, menuIconColor };
