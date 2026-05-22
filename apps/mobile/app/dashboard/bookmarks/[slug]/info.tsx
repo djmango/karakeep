@@ -177,9 +177,6 @@ function AISummarySection({
   const [isExpanded, setIsExpanded] = React.useState(false);
 
   const { mutate: summarize, isPending: isSummarizing } = useSummarizeBookmark({
-    onSuccess: () => {
-      toast({ message: "Summary generated!", showProgress: false });
-    },
     onError: () => {
       toast({
         message: "Failed to generate summary",
@@ -203,9 +200,6 @@ function AISummarySection({
 
   const { mutate: updateBookmark, isPending: isDeletingSummary } =
     useUpdateBookmark({
-      onSuccess: () => {
-        toast({ message: "Summary deleted!", showProgress: false });
-      },
       onError: () => {
         toast({
           message: "Failed to delete summary",
@@ -317,23 +311,11 @@ function BookmarkActionsSection({ bookmark }: { bookmark: ZBookmark }) {
 
   const { mutate: favoriteBookmark, variables: favoriteVariables } =
     useUpdateBookmark({
-      onSuccess: (resp) => {
-        toast({
-          message: `Bookmark ${resp.favourited ? "added to" : "removed from"} favourites!`,
-          showProgress: false,
-        });
-      },
       onError,
     });
 
   const { mutate: archiveBookmark, isPending: isArchivePending } =
     useUpdateBookmark({
-      onSuccess: (resp) => {
-        toast({
-          message: `Bookmark ${resp.archived ? "archived" : "un-archived"}!`,
-          showProgress: false,
-        });
-      },
       onError,
     });
 
