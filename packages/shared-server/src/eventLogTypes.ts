@@ -40,6 +40,8 @@ type EventLogInternal =
       "feed.status_code"?: number;
       "feed.items_found"?: number;
       "feed.items_new"?: number;
+      "feed.bookmarks_created"?: number;
+      "feed.bookmarks_failed"?: number;
       "feed.skipped_quota"?: boolean;
     }
   | {

@@ -9,9 +9,9 @@ import TagPill from "../TagPill";
 
 function TagListSkeleton() {
   return (
-      <View className="w-full">
-        <Skeleton className="h-[18px] w-full rounded-full" />
-      </View>
+    <View className="w-full">
+      <Skeleton className="h-[18px] w-full rounded-full" />
+    </View>
   );
 }
 
