@@ -6,7 +6,7 @@ RUN apt-get update \
         libssl-dev \
         pkg-config \
     && rm -rf /var/lib/apt/lists/* \
-    && cargo install monolith
+    && cargo install monolith --locked
 
 ################# Base Builder ##############
 FROM node:24-slim AS base
