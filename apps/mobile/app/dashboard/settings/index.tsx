@@ -240,6 +240,102 @@ export default function Settings() {
         </View>
       </View>
 
+      <SectionHeader title="Offline" />
+      <View
+        className="w-full rounded-xl bg-card py-2"
+        style={{ borderCurve: "continuous" }}
+      >
+        <View className="flex flex-row items-center justify-between gap-8 px-4 py-1">
+          <Text className="flex-1" numberOfLines={1}>
+            Offline mode
+          </Text>
+          <Switch
+            className="shrink-0"
+            value={settings.offlineEnabled}
+            onValueChange={(value) =>
+              setSettings({
+                ...settings,
+                offlineEnabled: value,
+              })
+            }
+          />
+        </View>
+        <Divider orientation="horizontal" className="mx-6 my-1" />
+        <View className="flex flex-row items-center justify-between gap-8 px-4 py-1">
+          <Text className="flex-1" numberOfLines={1}>
+            Sync on cellular
+          </Text>
+          <Switch
+            className="shrink-0"
+            disabled={!settings.offlineEnabled}
+            value={settings.offlineSyncOnCellular}
+            onValueChange={(value) =>
+              setSettings({
+                ...settings,
+                offlineSyncOnCellular: value,
+              })
+            }
+          />
+        </View>
+        <Divider orientation="horizontal" className="mx-6 my-1" />
+        <View className="flex flex-row items-center justify-between gap-8 px-4 py-1">
+          <Text className="flex-1" numberOfLines={1}>
+            Cache reader HTML
+          </Text>
+          <Switch
+            className="shrink-0"
+            disabled={!settings.offlineEnabled}
+            value={settings.offlineCacheReaderHtml}
+            onValueChange={(value) =>
+              setSettings({
+                ...settings,
+                offlineCacheReaderHtml: value,
+              })
+            }
+          />
+        </View>
+        <Divider orientation="horizontal" className="mx-6 my-1" />
+        <View className="flex flex-row items-center justify-between gap-8 px-4 py-1">
+          <Text className="flex-1" numberOfLines={1}>
+            Cache images
+          </Text>
+          <Switch
+            className="shrink-0"
+            disabled={!settings.offlineEnabled}
+            value={settings.offlineCacheImages}
+            onValueChange={(value) =>
+              setSettings({
+                ...settings,
+                offlineCacheImages: value,
+              })
+            }
+          />
+        </View>
+        <Divider orientation="horizontal" className="mx-6 my-1" />
+        <View className="flex w-full flex-col gap-1 px-4 py-2">
+          <View className="flex flex-row items-center justify-between">
+            <Text>Max cache size (MB)</Text>
+            <Text className="text-foreground">
+              {settings.offlineMaxCacheSizeMb}
+            </Text>
+          </View>
+          <Slider
+            style={{ height: 40, width: "100%" }}
+            disabled={!settings.offlineEnabled}
+            minimumValue={128}
+            maximumValue={8192}
+            step={128}
+            value={settings.offlineMaxCacheSizeMb}
+            onSlidingComplete={(value) =>
+              setSettings({
+                ...settings,
+                offlineMaxCacheSizeMb: Math.round(value),
+              })
+            }
+          />
+        </View>
+      </View>
+
       <SectionHeader title="Media" />
       <View
         className="w-full rounded-xl bg-card py-2"

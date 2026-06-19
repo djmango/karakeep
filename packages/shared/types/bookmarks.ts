@@ -17,6 +17,7 @@ export type ZSortOrder = z.infer<typeof zSortOrder>;
 
 export const zAssetTypesSchema = z.enum([
   "linkHtmlContent",
+  "contentImage",
   "screenshot",
   "pdf",
   "assetScreenshot",

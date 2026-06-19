@@ -10,11 +10,15 @@ import { useSearchHistory } from "@karakeep/shared-react/hooks/search-history";
 import { useDebounce } from "@karakeep/shared-react/hooks/use-debounce";
 import { useTRPC } from "@karakeep/shared-react/trpc";
 
+import useAppSettings from "@/lib/settings";
+import { useOfflineSearch } from "@/lib/offline/hooks";
+
 const MAX_DISPLAY_SUGGESTIONS = 5;
 const DEBOUNCE_MS = 10;
 
 export function useBookmarkSearchState(rawSearch: string) {
   const query = useDebounce(rawSearch, DEBOUNCE_MS);
+  const { settings } = useAppSettings();
 
   const { history, addTerm, clearHistory } = useSearchHistory({
     getItem: (k: string) => AsyncStorage.getItem(k),
@@ -24,24 +28,40 @@ export function useBookmarkSearchState(rawSearch: string) {
 
   const api = useTRPC();
   const queryClient = useQueryClient();
+  const offlineSearch = useOfflineSearch(query);
 
   const onRefresh = () => {
     queryClient.invalidateQueries(api.bookmarks.searchBookmarks.pathFilter());
   };
 
-  const { data, error, refetch, isPending, fetchNextPage, isFetchingNextPage } =
-    useInfiniteQuery(
-      api.bookmarks.searchBookmarks.infiniteQueryOptions(
-        { text: query },
-        {
-          enabled: query.trim().length > 0,
-          placeholderData: keepPreviousData,
-          gcTime: 0,
-          initialCursor: null,
-          getNextPageParam: (lastPage) => lastPage.nextCursor,
-        },
-      ),
-    );
+  const {
+    data,
+    error,
+    refetch,
+    isPending,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery(
+    api.bookmarks.searchBookmarks.infiniteQueryOptions(
+      { text: query },
+      {
+        enabled: query.trim().length > 0 && !settings.offlineEnabled,
+        placeholderData: keepPreviousData,
+        gcTime: 0,
+        initialCursor: null,
+        getNextPageParam: (lastPage) => lastPage.nextCursor,
+      },
+    ),
+  );
+
+  const offlineResults = useMemo(
+    () =>
+      offlineSearch.results.map((result) => ({
+        bookmarks: [result.bookmark],
+        nextCursor: null,
+      })),
+    [offlineSearch.results],
+  );
 
   const filteredHistory = useMemo(() => {
     if (rawSearch.trim().length === 0) {
@@ -59,6 +79,11 @@ export function useBookmarkSearchState(rawSearch: string) {
     }
   };
 
+  const useOfflineResults =
+    settings.offlineEnabled &&
+    query.trim().length > 0 &&
+    (offlineSearch.results.length > 0 || !isPending);
+
   return {
     query,
     history,
@@ -66,10 +91,12 @@ export function useBookmarkSearchState(rawSearch: string) {
     addTerm,
     commitTerm,
     clearHistory,
-    data,
+    data: useOfflineResults
+      ? { pages: offlineResults, pageParams: [null] }
+      : data,
     error,
     refetch,
-    isPending,
+    isPending: settings.offlineEnabled ? offlineSearch.isLoading : isPending,
     fetchNextPage,
     isFetchingNextPage,
     onRefresh,

@@ -16,14 +16,14 @@ import { useMenuIconColors } from "@/lib/useMenuIconColors";
 import { MenuView } from "@react-native-menu/menu";
 import { Plus } from "lucide-react-native";
 import { toast as sonnerToast } from "sonner-native";
-import { useCreateBookmark } from "@karakeep/shared-react/hooks/bookmarks";
+import { useOfflineCreateBookmark } from "@/lib/offline/mutations";
 import { BookmarkTypes } from "@karakeep/shared/types/bookmarks";
 
 function useNewBookmarkActions(openNewBookmarkModal: () => void) {
   const { settings } = useAppSettings();
   const { menuIconColor } = useMenuIconColors();
   const uploadToastIdRef = useRef<string | number | null>(null);
-  const createBookmark = useCreateBookmark();
+  const createBookmark = useOfflineCreateBookmark();
 
   const { uploadAsset } = useUploadAsset(settings, {
     onSuccess: () => {

@@ -13,8 +13,8 @@ import { useDebounce } from "@karakeep/shared-react/hooks/use-debounce";
 
 import {
   useAutoRefreshingBookmarkQuery,
-  useUpdateBookmarkTags,
 } from "@karakeep/shared-react/hooks/bookmarks";
+import { useOfflineUpdateBookmarkTags } from "@/lib/offline/mutations";
 
 const NEW_TAG_ID = "new-tag";
 
@@ -119,7 +119,7 @@ const TagPickerPage = () => {
     });
   }, [existingTags]);
 
-  const { mutate: updateTags } = useUpdateBookmarkTags({
+  const { mutate: updateTags } = useOfflineUpdateBookmarkTags({
     onMutate: (req) => {
       req.attach.forEach((t) =>
         setOptimisticTags((prev) => [

@@ -323,6 +323,20 @@ export const RuleEngineQueue = createDeferredQueue<ZRuleEngineRequest>(
   },
 );
 
+export const zContentImageRequestSchema = z.object({
+  bookmarkId: z.string(),
+});
+export type ZContentImageRequest = z.infer<typeof zContentImageRequestSchema>;
+export const ContentImageQueue = createDeferredQueue<ZContentImageRequest>(
+  "content_image_queue",
+  {
+    defaultJobArgs: {
+      numRetries: 3,
+    },
+    keepFailedJobs: false,
+  },
+);
+
 // Backup worker
 export const zBackupRequestSchema = z.object({
   userId: z.string(),

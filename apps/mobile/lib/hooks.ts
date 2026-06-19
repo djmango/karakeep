@@ -1,9 +1,11 @@
+import React from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { useTRPC } from "@karakeep/shared-react/trpc";
 
 import useAppSettings from "./settings";
 import { buildApiHeaders } from "./utils";
+import { getCachedAssetUri } from "./offline/repository";
 
 interface AssetSource {
   uri: string;
@@ -12,9 +14,22 @@ interface AssetSource {
 
 export function useAssetUrl(assetId: string): AssetSource {
   const { settings } = useAppSettings();
+  const [localUri, setLocalUri] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (!settings.offlineEnabled || !assetId) {
+      setLocalUri(null);
+      return;
+    }
+    void getCachedAssetUri(assetId).then(setLocalUri);
+  }, [assetId, settings.offlineEnabled]);
+
+  const remoteUri = `${settings.address}/api/assets/${assetId}`;
   return {
-    uri: `${settings.address}/api/assets/${assetId}`,
-    headers: buildApiHeaders(settings.apiKey, settings.customHeaders),
+    uri: localUri ?? remoteUri,
+    headers: localUri
+      ? {}
+      : buildApiHeaders(settings.apiKey, settings.customHeaders),
   };
 }
 

@@ -17,6 +17,7 @@ import {
   prepareQueue,
   RuleEngineQueue,
   SearchIndexingQueue,
+  ContentImageQueue,
   shutdownEventLogger,
   shutdownTracing,
   startQueue,
@@ -31,6 +32,7 @@ import { AdminMaintenanceWorker } from "./workers/adminMaintenanceWorker";
 import { AssetPreprocessingWorker } from "./workers/assetPreprocessingWorker";
 import { BackupSchedulingWorker, BackupWorker } from "./workers/backupWorker";
 import { CrawlerWorker } from "./workers/crawlerWorker";
+import { ContentImageWorker } from "./workers/contentImageWorker";
 import { EmbeddingsWorker } from "./workers/embeddingsWorker";
 import { FeedRefreshingWorker, FeedWorker } from "./workers/feedWorker";
 import { ImportWorker } from "./workers/importWorker";
@@ -84,6 +86,10 @@ const workerBuilders = {
   ruleEngine: async () => {
     await RuleEngineQueue.ensureInit();
     return RuleEngineWorker.build();
+  },
+  contentImage: async () => {
+    await ContentImageQueue.ensureInit();
+    return ContentImageWorker.build();
   },
   backup: async () => {
     await BackupQueue.ensureInit();

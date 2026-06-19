@@ -275,6 +275,9 @@ export const bookmarkLinks = sqliteTable(
       enum: ["pending", "failure", "success"],
     }).default("pending"),
     crawlStatusCode: integer("crawlStatusCode").default(200),
+    contentImageStatus: text("contentImageStatus", {
+      enum: ["pending", "failure", "success"],
+    }),
   },
   (bl) => [index("bookmarkLinks_url_idx").on(bl.url)],
 );
@@ -288,6 +291,7 @@ export const enum AssetTypes {
   LINK_PRECRAWLED_ARCHIVE = "linkPrecrawledArchive",
   LINK_VIDEO = "linkVideo",
   LINK_HTML_CONTENT = "linkHtmlContent",
+  CONTENT_IMAGE = "contentImage",
   BOOKMARK_ASSET = "bookmarkAsset",
   USER_UPLOADED = "userUploaded",
   AVATAR = "avatar",
@@ -309,8 +313,9 @@ export const assets = sqliteTable(
         AssetTypes.LINK_FULL_PAGE_ARCHIVE,
         AssetTypes.LINK_PRECRAWLED_ARCHIVE,
         AssetTypes.LINK_VIDEO,
-        AssetTypes.LINK_HTML_CONTENT,
-        AssetTypes.BOOKMARK_ASSET,
+      AssetTypes.LINK_HTML_CONTENT,
+      AssetTypes.CONTENT_IMAGE,
+      AssetTypes.BOOKMARK_ASSET,
         AssetTypes.USER_UPLOADED,
         AssetTypes.AVATAR,
         AssetTypes.BACKUP,
@@ -417,6 +422,39 @@ export const bookmarkAssets = sqliteTable("bookmarkAssets", {
   fileName: text("fileName"),
   sourceUrl: text("sourceUrl"),
 });
+
+export const syncEvents = sqliteTable(
+  "syncEvents",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: text("userId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    entityType: text("entityType", {
+      enum: ["bookmark", "tag", "list", "bookmarkTag", "bookmarkList"],
+    }).notNull(),
+    entityId: text("entityId").notNull(),
+    operation: text("operation", {
+      enum: ["create", "update", "delete"],
+    }).notNull(),
+    bookmarkId: text("bookmarkId"),
+    payload: text("payload", { mode: "json" }).$type<unknown>(),
+    modifiedAt: integer("modifiedAt", { mode: "timestamp" }).notNull(),
+  },
+  (se) => [index("syncEvents_userId_id_idx").on(se.userId, se.id)],
+);
+
+export const syncAppliedOperations = sqliteTable(
+  "syncAppliedOperations",
+  {
+    operationId: text("operationId").primaryKey(),
+    userId: text("userId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    appliedAt: integer("appliedAt", { mode: "timestamp" }).notNull(),
+  },
+  (sao) => [index("syncAppliedOperations_userId_idx").on(sao.userId)],
+);
 
 export const bookmarkTags = sqliteTable(
   "bookmarkTags",

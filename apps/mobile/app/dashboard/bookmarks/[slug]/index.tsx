@@ -20,6 +20,8 @@ import { useColorScheme } from "nativewind";
 
 import { useTRPC } from "@karakeep/shared-react/trpc";
 import { BookmarkTypes } from "@karakeep/shared/types/bookmarks";
+import { useOfflineBookmark } from "@/lib/offline/hooks";
+import useAppSettings from "@/lib/settings";
 
 function KeepScreenOn() {
   useKeepAwake();
@@ -45,16 +47,29 @@ export default function BookmarkView() {
     throw new Error("Unexpected param type");
   }
 
+  const offlineBookmark = useOfflineBookmark(
+    settings.offlineEnabled ? slug : undefined,
+  );
+
   const {
-    data: bookmark,
+    data: onlineBookmark,
     error,
     refetch,
   } = useQuery(
-    api.bookmarks.getBookmark.queryOptions({
-      bookmarkId: slug,
-      includeContent: false,
-    }),
+    api.bookmarks.getBookmark.queryOptions(
+      {
+        bookmarkId: slug,
+        includeContent: false,
+      },
+      {
+        enabled: !settings.offlineEnabled,
+      },
+    ),
   );
+
+  const bookmark = settings.offlineEnabled
+    ? (offlineBookmark ?? onlineBookmark)
+    : onlineBookmark;
 
   if (error) {
     return <FullPageError error={error.message} onRetry={refetch} />;

@@ -64,6 +64,7 @@ import {
 } from "../index";
 import { RuleEngine } from "../lib/ruleEngine";
 import { getBookmarkIdsFromMatcher } from "../lib/search";
+import { recordSyncEvent } from "../lib/syncEvents";
 import { Asset } from "../models/assets";
 import { BareBookmark, Bookmark } from "../models/bookmarks";
 import { WebhooksService } from "../models/webhooks.service";
@@ -460,6 +461,13 @@ export const bookmarksAppRouter = router({
           enqueueOpts,
         ),
       ]);
+      await recordSyncEvent(ctx, {
+        entityType: "bookmark",
+        entityId: bookmark.id,
+        operation: "create",
+        bookmarkId: bookmark.id,
+        payload: bookmark,
+      });
       return bookmark;
     }),
 
@@ -648,6 +656,14 @@ export const bookmarksAppRouter = router({
         ),
       ]);
 
+      await recordSyncEvent(ctx, {
+        entityType: "bookmark",
+        entityId: updatedBookmark.id,
+        operation: "update",
+        bookmarkId: updatedBookmark.id,
+        payload: updatedBookmark,
+      });
+
       return updatedBookmark;
     }),
 
@@ -708,6 +724,12 @@ export const bookmarksAppRouter = router({
       addLogFields<"bookmark.delete">({ "bookmark.id": input.bookmarkId });
       const bookmark = await Bookmark.fromId(ctx, input.bookmarkId, false);
       await bookmark.delete();
+      await recordSyncEvent(ctx, {
+        entityType: "bookmark",
+        entityId: input.bookmarkId,
+        operation: "delete",
+        bookmarkId: input.bookmarkId,
+      });
     }),
   recrawlBookmark: bookmarksProcedure
     .use(
@@ -1169,6 +1191,18 @@ export const bookmarksAppRouter = router({
             },
           ),
         ]);
+      }
+      if (res.numChanges > 0) {
+        const updatedBookmark = (
+          await Bookmark.fromId(ctx, input.bookmarkId, false)
+        ).asZBookmark();
+        await recordSyncEvent(ctx, {
+          entityType: "bookmark",
+          entityId: updatedBookmark.id,
+          operation: "update",
+          bookmarkId: updatedBookmark.id,
+          payload: updatedBookmark,
+        });
       }
       return res;
     }),
