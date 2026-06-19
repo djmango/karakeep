@@ -50,6 +50,7 @@ import {
 import {
   addLogFields,
   AssetPreprocessingQueue,
+  ContentImageQueue,
   getTracer,
   EmbeddingsQueue,
   OpenAIQueue,
@@ -395,6 +396,9 @@ export class CrawlerWorker {
                 crawlStatus: "success",
               })
               .where(eq(bookmarkLinks.id, bookmarkId));
+            if (serverConfig.crawler.storeContentImages) {
+              await ContentImageQueue.enqueue({ bookmarkId });
+            }
           }
         },
         onError: async (job: DequeuedJobError<ZCrawlLinkRequest>) => {

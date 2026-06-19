@@ -11,14 +11,20 @@ import { useHeaderHeight } from "@react-navigation/elements";
 
 import type { ZBookmarkList } from "@karakeep/shared/types/lists";
 import {
-  useAddBookmarkToList,
+  useOfflineAddBookmarkToList,
+  useOfflineRemoveBookmarkFromList,
+} from "@/lib/offline/mutations";
+import { getBookmarkListIds } from "@/lib/offline/repository";
+import useAppSettings from "@/lib/settings";
+import { isOnline } from "@/lib/offline/syncEngine";
+import {
   useBookmarkLists,
-  useRemoveBookmarkFromList,
 } from "@karakeep/shared-react/hooks/lists";
 import { useTRPC } from "@karakeep/shared-react/trpc";
 
 const ListPickerPage = () => {
   const headerHeight = useHeaderHeight();
+  const { settings } = useAppSettings();
   const api = useTRPC();
   const { slug: bookmarkId } = useLocalSearchParams();
   const { colors } = useColorScheme();
@@ -36,15 +42,36 @@ const ListPickerPage = () => {
     });
   };
 
-  const { data: existingLists } = useQuery(
+  const [localListIds, setLocalListIds] = React.useState<Set<string> | null>(
+    null,
+  );
+
+  React.useEffect(() => {
+    if (!settings.offlineEnabled) {
+      return;
+    }
+    void (async () => {
+      if (!(await isOnline(settings))) {
+        const ids = await getBookmarkListIds(bookmarkId);
+        setLocalListIds(new Set(ids));
+      }
+    })();
+  }, [bookmarkId, settings]);
+
+  const { data: existingListsRemote } = useQuery(
     api.lists.getListsOfBookmark.queryOptions(
       { bookmarkId },
       {
+        enabled: settings.offlineEnabled ? localListIds === null : true,
         select: (data: { lists: ZBookmarkList[] }) =>
           new Set(data.lists.map((l) => l.id)),
       },
     ),
   );
+
+  const existingLists = settings.offlineEnabled
+    ? (localListIds ?? existingListsRemote)
+    : existingListsRemote;
 
   const { data } = useBookmarkLists();
 
@@ -52,16 +79,26 @@ const ListPickerPage = () => {
     mutate: addToList,
     isPending: isAddingToList,
     variables: addVariables,
-  } = useAddBookmarkToList({
+  } = useOfflineAddBookmarkToList({
     onError,
+    onSuccess: (_res, variables) => {
+      setLocalListIds((prev) => new Set([...(prev ?? []), variables.listId]));
+    },
   });
 
   const {
     mutate: removeToList,
     isPending: isRemovingFromList,
     variables: removeVariables,
-  } = useRemoveBookmarkFromList({
+  } = useOfflineRemoveBookmarkFromList({
     onError,
+    onSuccess: (_res, variables) => {
+      setLocalListIds((prev) => {
+        const next = new Set(prev ?? []);
+        next.delete(variables.listId);
+        return next;
+      });
+    },
   });
 
   const toggleList = (listId: string) => {

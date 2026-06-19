@@ -14,6 +14,7 @@ import { promptsAppRouter } from "./prompts";
 import { publicBookmarks } from "./publicBookmarks";
 import { rulesAppRouter } from "./rules";
 import { subscriptionsRouter } from "./subscriptions";
+import { syncAppRouter } from "./sync";
 import { tagsAppRouter } from "./tags";
 import { usersAppRouter } from "./users";
 import { webhooksAppRouter } from "./webhooks";
@@ -36,6 +37,7 @@ export const appRouter = router({
   invites: invitesAppRouter,
   publicBookmarks: publicBookmarks,
   subscriptions: subscriptionsRouter,
+  sync: syncAppRouter,
   config: configAppRouter,
 });
 // export type definition of API

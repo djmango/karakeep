@@ -28,7 +28,7 @@ import {
 import {
   useDeleteBookmark,
   useUpdateBookmark,
-} from "@karakeep/shared-react/hooks/bookmarks";
+} from "@/lib/offline/mutations";
 import { useWhoAmI } from "@karakeep/shared-react/hooks/users";
 import { BookmarkTypes, ZBookmark } from "@karakeep/shared/types/bookmarks";
 

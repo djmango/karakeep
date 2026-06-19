@@ -5,6 +5,7 @@ import { Toaster } from "sonner-native";
 import { TRPCSettingsProvider } from "@karakeep/shared-react/providers/trpc-provider";
 
 import { ReaderSettingsProvider } from "./readerSettings";
+import { OfflineProvider } from "./offline/OfflineProvider";
 import useAppSettings from "./settings";
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -22,7 +23,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <TRPCSettingsProvider settings={settings}>
       <ReaderSettingsProvider>
-        {children}
+        <OfflineProvider>{children}</OfflineProvider>
         <Toaster />
       </ReaderSettingsProvider>
     </TRPCSettingsProvider>

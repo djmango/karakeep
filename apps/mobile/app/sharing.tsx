@@ -10,9 +10,10 @@ import { Button } from "@/components/ui/Button";
 import { Text } from "@/components/ui/Text";
 import useAppSettings from "@/lib/settings";
 import { useUploadAsset } from "@/lib/upload";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 
+import { useOfflineCreateBookmark } from "@/lib/offline/mutations";
 import { useTRPC } from "@karakeep/shared-react/trpc";
 import { BookmarkTypes, ZBookmark } from "@karakeep/shared/types/bookmarks";
 
@@ -82,14 +83,12 @@ function SaveBookmark({ setMode }: { setMode: (mode: Mode) => void }) {
     }
   }, [isLoading]);
 
-  const { mutate, isPending } = useMutation(
-    api.bookmarks.createBookmark.mutationOptions({
-      onSuccess: onSaved,
-      onError: () => {
-        setMode({ type: "error" });
-      },
-    }),
-  );
+  const { mutate, isPending } = useOfflineCreateBookmark({
+    onSuccess: onSaved,
+    onError: () => {
+      setMode({ type: "error" });
+    },
+  });
 
   return null;
 }

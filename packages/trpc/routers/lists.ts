@@ -20,6 +20,7 @@ import {
 import { ListInvitation } from "../models/listInvitations";
 import { List } from "../models/lists";
 import { ensureBookmarkOwnership } from "./bookmarks";
+import { recordSyncEvent } from "../lib/syncEvents";
 
 const listsProcedure = createScopedAuthedProcedure("lists");
 
@@ -142,6 +143,13 @@ export const listsAppRouter = router({
     .use(ensureBookmarkOwnership)
     .mutation(async ({ input, ctx }) => {
       await ctx.list.addBookmark(input.bookmarkId);
+      await recordSyncEvent(ctx, {
+        entityType: "bookmarkList",
+        entityId: `${input.listId}:${input.bookmarkId}`,
+        operation: "create",
+        bookmarkId: input.bookmarkId,
+        payload: input,
+      });
     }),
   removeFromList: listsProcedure
     .input(
@@ -154,6 +162,13 @@ export const listsAppRouter = router({
     .use(ensureListAtLeastEditor)
     .mutation(async ({ input, ctx }) => {
       await ctx.list.removeBookmark(input.bookmarkId);
+      await recordSyncEvent(ctx, {
+        entityType: "bookmarkList",
+        entityId: `${input.listId}:${input.bookmarkId}`,
+        operation: "delete",
+        bookmarkId: input.bookmarkId,
+        payload: input,
+      });
     }),
   get: listsProcedure
     .input(

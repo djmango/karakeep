@@ -62,6 +62,13 @@ const zSettingsSchema = z.object({
     .array(zToolbarActionId)
     .optional()
     .default(DEFAULT_OVERFLOW_ACTIONS),
+  offlineEnabled: z.boolean().optional().default(true),
+  offlineMaxCacheSizeMb: z.number().int().positive().optional().default(1024),
+  offlineSyncOnCellular: z.boolean().optional().default(false),
+  offlineCacheReaderHtml: z.boolean().optional().default(true),
+  offlineCacheImages: z.boolean().optional().default(true),
+  offlineCachePdfs: z.boolean().optional().default(true),
+  offlineCacheArchives: z.boolean().optional().default(false),
 });
 
 export type Settings = z.infer<typeof zSettingsSchema>;
@@ -87,6 +94,13 @@ const useSettings = create<AppSettingsState>((set, get) => ({
       customHeaders: {},
       toolbarActions: DEFAULT_TOOLBAR_ACTIONS,
       overflowActions: DEFAULT_OVERFLOW_ACTIONS,
+      offlineEnabled: true,
+      offlineMaxCacheSizeMb: 1024,
+      offlineSyncOnCellular: false,
+      offlineCacheReaderHtml: true,
+      offlineCacheImages: true,
+      offlineCachePdfs: true,
+      offlineCacheArchives: false,
     },
   },
   setSettings: async (settings) => {
