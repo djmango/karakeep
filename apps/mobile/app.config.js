@@ -70,6 +70,7 @@ export default {
     plugins: [
       "./plugins/trust-local-certs.js",
       "./plugins/camera-not-required.js",
+      "./plugins/fix-fmt-xcode26.js",
       "expo-router",
       [
         "expo-share-intent",
