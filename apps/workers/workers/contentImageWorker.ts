@@ -4,14 +4,19 @@ import { workerStatsCounter } from "metrics";
 import { withWorkerEventLog, withWorkerTracing } from "workerTracing";
 
 import { db } from "@karakeep/db";
-import { assets, AssetTypes, bookmarkLinks, bookmarks } from "@karakeep/db/schema";
+import {
+  assets,
+  AssetTypes,
+  bookmarkLinks,
+  bookmarks,
+} from "@karakeep/db/schema";
 import {
   ContentImageQueue,
   QuotaService,
   StorageQuotaError,
   zContentImageRequestSchema,
-  type ZContentImageRequest,
 } from "@karakeep/shared-server";
+import type { ZContentImageRequest } from "@karakeep/shared-server";
 import { saveAsset } from "@karakeep/shared/assetdb";
 import serverConfig from "@karakeep/shared/config";
 import logger from "@karakeep/shared/logger";
@@ -82,9 +87,7 @@ async function runContentImageJob(job: DequeuedJob<ZContentImageRequest>) {
   const matches = [...link.htmlContent.matchAll(IMG_SRC_REGEX)];
   const uniqueUrls = [
     ...new Set(
-      matches
-        .map((match) => match[1])
-        .filter((url) => url.startsWith("http")),
+      matches.map((match) => match[1]).filter((url) => url.startsWith("http")),
     ),
   ].slice(0, serverConfig.crawler.contentImageMaxCount);
 
@@ -178,9 +181,7 @@ export class ContentImageWorker {
         onError: async (job) => {
           workerStatsCounter.labels("contentImage", "failed").inc();
           if (job.numRetriesLeft === 0) {
-            workerStatsCounter
-              .labels("contentImage", "failed_permanent")
-              .inc();
+            workerStatsCounter.labels("contentImage", "failed_permanent").inc();
           }
           logger.error(
             `[ContentImage][${job.id}] Content image job failed: ${job.error}`,

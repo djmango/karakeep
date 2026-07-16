@@ -63,7 +63,7 @@ export async function mirrorBookmarkAssets(
     if (
       (assetType === "bannerImage" ||
         assetType === "screenshot" ||
-        assetType === "image" ||
+        assetType === "assetScreenshot" ||
         assetType === "contentImage") &&
       !settings.offlineCacheImages
     ) {
@@ -101,7 +101,7 @@ export async function mirrorBookmarkAssets(
 
 export async function mirrorReaderHtmlBookmark(
   bookmark: ZBookmark,
-  settings: Settings,
+  _settings: Settings,
 ) {
   if (bookmark.content.type !== "link") {
     return bookmark;

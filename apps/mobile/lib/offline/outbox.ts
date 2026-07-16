@@ -15,7 +15,7 @@ export async function enqueueOutboxOperation(
   const payload =
     "payload" in operation
       ? operation.payload
-      : (operation as { payload?: unknown }).payload ?? {};
+      : ((operation as { payload?: unknown }).payload ?? {});
   await db.runAsync(
     `INSERT INTO outbox(id, type, payload_json, created_at, attempts, last_error)
      VALUES(?, ?, ?, ?, 0, NULL)`,

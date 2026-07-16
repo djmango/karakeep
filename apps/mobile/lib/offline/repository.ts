@@ -106,7 +106,7 @@ export async function listBookmarks(
 ): Promise<ZBookmark[]> {
   const db = await getOfflineDb();
   const clauses = ["deleted = 0"];
-  const params: Array<string | number> = [];
+  const params: (string | number)[] = [];
 
   if (query.archived !== undefined) {
     clauses.push("archived = ?");
@@ -254,7 +254,9 @@ export async function evictCachedAssets(maxBytes: number) {
   }
 }
 
-export async function getBookmarkListIds(bookmarkId: string): Promise<string[]> {
+export async function getBookmarkListIds(
+  bookmarkId: string,
+): Promise<string[]> {
   const db = await getOfflineDb();
   const rows = await db.getAllAsync<{ list_id: string }>(
     "SELECT list_id FROM bookmark_lists WHERE bookmark_id = ?",

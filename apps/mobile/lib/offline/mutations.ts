@@ -12,10 +12,15 @@ import {
   useRemoveBookmarkFromList as useSharedRemoveBookmarkFromList,
 } from "@karakeep/shared-react/hooks/lists";
 import { useTRPC } from "@karakeep/shared-react/trpc";
-import type { ZBookmark } from "@karakeep/shared/types/bookmarks";
-import type { ZNewBookmarkRequest } from "@karakeep/shared/types/bookmarks";
-import type { ZUpdateBookmarksRequest } from "@karakeep/shared/types/bookmarks";
-import { zManipulatedTagSchema } from "@karakeep/shared/types/bookmarks";
+import type {
+  ZBookmark,
+  ZNewBookmarkRequest,
+  ZUpdateBookmarksRequest,
+} from "@karakeep/shared/types/bookmarks";
+import {
+  BookmarkTypes,
+  zManipulatedTagSchema,
+} from "@karakeep/shared/types/bookmarks";
 
 import useAppSettings from "@/lib/settings";
 
@@ -67,9 +72,9 @@ export function useOfflineCreateBookmark(
           tags: [],
           assets: [],
           content:
-            input.type === "link"
+            input.type === BookmarkTypes.LINK
               ? {
-                  type: "link" as const,
+                  type: BookmarkTypes.LINK,
                   url: input.url,
                   title: null,
                   description: null,
@@ -90,14 +95,14 @@ export function useOfflineCreateBookmark(
                   datePublished: null,
                   dateModified: null,
                 }
-              : input.type === "text"
+              : input.type === BookmarkTypes.TEXT
                 ? {
-                    type: "text" as const,
+                    type: BookmarkTypes.TEXT,
                     text: input.text,
                     sourceUrl: input.sourceUrl ?? null,
                   }
                 : {
-                    type: "asset" as const,
+                    type: BookmarkTypes.ASSET,
                     assetType: input.assetType,
                     assetId: input.assetId,
                     fileName: input.fileName ?? null,
@@ -256,7 +261,14 @@ export function useOfflineUpdateBookmarkTags(
           },
         });
         setPendingCount(await getPendingSyncCount());
-        return updated;
+        return {
+          attached: input.attach
+            .map((tag) => tag.tagId)
+            .filter((id): id is string => !!id),
+          detached: input.detach
+            .map((tag) => tag.tagId)
+            .filter((id): id is string => !!id),
+        };
       }
       return onlineMutation.mutateAsync(input);
     },
@@ -311,3 +323,6 @@ export function useOfflineRemoveBookmarkFromList(
     onSuccess: opts?.onSuccess,
   });
 }
+
+export const useUpdateBookmark = useOfflineUpdateBookmark;
+export const useDeleteBookmark = useOfflineDeleteBookmark;

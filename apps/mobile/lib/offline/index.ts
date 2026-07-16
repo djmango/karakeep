@@ -1,6 +1,8 @@
 import { enqueueOutboxOperation, listOutboxOperations } from "./outbox";
 import {
   getBookmarkById,
+  getCachedAssetUri,
+  getMeta,
   getPendingSyncCount,
   listBookmarks,
   markBookmarkDeleted,

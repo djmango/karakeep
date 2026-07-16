@@ -1,22 +1,44 @@
 {
   "cli": {
     "version": ">= 7.5.0",
-    "promptToConfigurePushNotifications": false
+    "promptToConfigurePushNotifications": false,
+    "appVersionSource": "local"
   },
   "build": {
     "development": {
       "developmentClient": true,
       "distribution": "internal",
+      "node": "24.18.0",
       "env": {
-        "APP_VARIANT": "development"
+        "APP_VARIANT": "development",
+        "EAS_SKIP_AUTO_FINGERPRINT": "1"
       }
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "node": "24.18.0",
+      "env": {
+        "EAS_SKIP_AUTO_FINGERPRINT": "1"
+      }
     },
-    "production": {}
+    "production": {
+      "node": "24.18.0",
+      "env": {
+        "EAS_SKIP_AUTO_FINGERPRINT": "1",
+        "EXPO_APPLE_TEAM_ID": "A95F4H2423",
+        "EXPO_APPLE_TEAM_TYPE": "INDIVIDUAL",
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true",
+        "SENTRY_ALLOW_FAILURE": "true"
+      }
+    }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "ios": {
+        "appleTeamId": "A95F4H2423",
+        "ascAppId": "6791516899",
+        "appleId": "s@galateacorp.com"
+      }
+    }
   }
 }

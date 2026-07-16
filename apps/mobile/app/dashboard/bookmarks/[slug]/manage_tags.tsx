@@ -11,9 +11,7 @@ import { Check, Plus } from "lucide-react-native";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useDebounce } from "@karakeep/shared-react/hooks/use-debounce";
 
-import {
-  useAutoRefreshingBookmarkQuery,
-} from "@karakeep/shared-react/hooks/bookmarks";
+import { useAutoRefreshingBookmarkQuery } from "@karakeep/shared-react/hooks/bookmarks";
 import { useOfflineUpdateBookmarkTags } from "@/lib/offline/mutations";
 
 const NEW_TAG_ID = "new-tag";
@@ -145,6 +143,7 @@ const TagPickerPage = () => {
       detach: optimisticTags.map((tag) => ({
         tagId: tag.id,
         tagName: tag.name,
+        attachedBy: "human" as const,
       })),
       attach: [],
     });
@@ -162,6 +161,7 @@ const TagPickerPage = () => {
               {
                 tagId: tag.id === NEW_TAG_ID ? undefined : tag.id,
                 tagName: tag.name,
+                attachedBy: "human" as const,
               },
             ]
           : [],
@@ -171,6 +171,7 @@ const TagPickerPage = () => {
               {
                 tagId: tag.id === NEW_TAG_ID ? undefined : tag.id,
                 tagName: tag.name,
+                attachedBy: "human" as const,
               },
             ]
           : [],

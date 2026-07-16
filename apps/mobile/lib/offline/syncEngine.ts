@@ -1,7 +1,7 @@
 import NetInfo from "@react-native-community/netinfo";
+import type { TRPCClient } from "@trpc/client";
 
-import type { ZBookmark } from "@karakeep/shared/types/bookmarks";
-import { zBookmarkSchema } from "@karakeep/shared/types/bookmarks";
+import type { AppRouter } from "@karakeep/trpc/routers/_app";
 
 import type { Settings } from "@/lib/settings";
 import { buildApiHeaders } from "@/lib/utils";
@@ -24,52 +24,7 @@ import {
 } from "./repository";
 import type { OfflineSyncState } from "./types";
 
-type TrpcClient = {
-  sync: {
-    pull: {
-      query: (input: { cursor: number; limit: number }) => Promise<{
-        events: Array<{
-          sequence: number;
-          entityType: string;
-          entityId: string;
-          operation: "create" | "update" | "delete";
-          data?: unknown;
-        }>;
-        nextCursor: number | null;
-      }>;
-    };
-    push: {
-      mutate: (input: {
-        operations: ReturnType<typeof outboxToSyncOperations>;
-      }) => Promise<{
-        results: Array<{
-          operationId: string;
-          status: "applied" | "duplicate" | "conflict" | "error";
-          bookmark?: ZBookmark;
-        }>;
-      }>;
-    };
-  };
-  bookmarks: {
-    getBookmarks: {
-      query: (input: {
-        limit: number;
-        useCursorV2: boolean;
-        includeContent: boolean;
-        sortOrder: "asc" | "desc";
-      }) => Promise<{
-        bookmarks: ZBookmark[];
-        nextCursor: { id: string; createdAt: Date } | null;
-      }>;
-    };
-    getBookmark: {
-      query: (input: {
-        bookmarkId: string;
-        includeContent: boolean;
-      }) => Promise<ZBookmark>;
-    };
-  };
-};
+type TrpcClient = TRPCClient<AppRouter>;
 
 export async function isOnline(settings: Settings): Promise<boolean> {
   const state = await NetInfo.fetch();
@@ -124,10 +79,7 @@ export async function runOfflineSync(
         }
         await removeOutboxOperation(result.operationId);
       } else {
-        await markOutboxAttempt(
-          result.operationId,
-          `Sync ${result.status}`,
-        );
+        await markOutboxAttempt(result.operationId, `Sync ${result.status}`);
       }
     }
   }
@@ -161,10 +113,7 @@ export async function runOfflineSync(
       } else if (event.entityType === "bookmarkList" && event.data) {
         const payload = event.data as { bookmarkId: string; listId: string };
         if (event.operation === "delete") {
-          await removeBookmarkFromListLocal(
-            payload.bookmarkId,
-            payload.listId,
-          );
+          await removeBookmarkFromListLocal(payload.bookmarkId, payload.listId);
         } else {
           await addBookmarkToListLocal(payload.bookmarkId, payload.listId);
         }

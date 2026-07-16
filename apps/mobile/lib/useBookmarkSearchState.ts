@@ -34,25 +34,19 @@ export function useBookmarkSearchState(rawSearch: string) {
     queryClient.invalidateQueries(api.bookmarks.searchBookmarks.pathFilter());
   };
 
-  const {
-    data,
-    error,
-    refetch,
-    isPending,
-    fetchNextPage,
-    isFetchingNextPage,
-  } = useInfiniteQuery(
-    api.bookmarks.searchBookmarks.infiniteQueryOptions(
-      { text: query },
-      {
-        enabled: query.trim().length > 0 && !settings.offlineEnabled,
-        placeholderData: keepPreviousData,
-        gcTime: 0,
-        initialCursor: null,
-        getNextPageParam: (lastPage) => lastPage.nextCursor,
-      },
-    ),
-  );
+  const { data, error, refetch, isPending, fetchNextPage, isFetchingNextPage } =
+    useInfiniteQuery(
+      api.bookmarks.searchBookmarks.infiniteQueryOptions(
+        { text: query },
+        {
+          enabled: query.trim().length > 0 && !settings.offlineEnabled,
+          placeholderData: keepPreviousData,
+          gcTime: 0,
+          initialCursor: null,
+          getNextPageParam: (lastPage) => lastPage.nextCursor,
+        },
+      ),
+    );
 
   const offlineResults = useMemo(
     () =>

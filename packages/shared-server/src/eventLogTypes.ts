@@ -93,6 +93,10 @@ type EventLogInternal =
       "backup.uncompressed_size"?: number;
       "backup.compressed_size"?: number;
     }
+  | {
+      ["event.name"]: "contentImageWorker.run";
+      "bookmark.id"?: string;
+    }
   // Product Events
   | {
       ["event.name"]: "user.login";

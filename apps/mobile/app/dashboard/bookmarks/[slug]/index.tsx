@@ -21,7 +21,6 @@ import { useColorScheme } from "nativewind";
 import { useTRPC } from "@karakeep/shared-react/trpc";
 import { BookmarkTypes } from "@karakeep/shared/types/bookmarks";
 import { useOfflineBookmark } from "@/lib/offline/hooks";
-import useAppSettings from "@/lib/settings";
 
 function KeepScreenOn() {
   useKeepAwake();

@@ -2,7 +2,6 @@ import { eq } from "drizzle-orm";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { syncAppliedOperations, syncEvents } from "@karakeep/db/schema";
-import * as sharedServer from "@karakeep/shared-server";
 import { BookmarkTypes } from "@karakeep/shared/types/bookmarks";
 
 import type { CustomTestContext } from "../testUtils";
@@ -96,7 +95,9 @@ describe("Sync Routes", () => {
     const firstPush = await api.sync.push({ operations: [operation] });
     expect(firstPush.results[0]?.status).toBe("applied");
 
-    const updated = await api.bookmarks.getBookmark({ bookmarkId: bookmark.id });
+    const updated = await api.bookmarks.getBookmark({
+      bookmarkId: bookmark.id,
+    });
     expect(updated.title).toBe("Offline title");
 
     const secondPush = await api.sync.push({ operations: [operation] });
@@ -134,8 +135,7 @@ describe("Sync Routes", () => {
 
     const pull = await api.sync.pull({ cursor: 0, limit: 500 });
     const deleteEvent = pull.events.find(
-      (event) =>
-        event.entityId === bookmark.id && event.operation === "delete",
+      (event) => event.entityId === bookmark.id && event.operation === "delete",
     );
     expect(deleteEvent).toBeDefined();
   });
