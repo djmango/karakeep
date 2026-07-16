@@ -1,0 +1,21 @@
+diff --git a/ReactCommon/react/nativemodule/core/platform/ios/ReactCommon/RCTTurboModule.mm b/ReactCommon/react/nativemodule/core/platform/ios/ReactCommon/RCTTurboModule.mm
+--- a/ReactCommon/react/nativemodule/core/platform/ios/ReactCommon/RCTTurboModule.mm
++++ b/ReactCommon/react/nativemodule/core/platform/ios/ReactCommon/RCTTurboModule.mm
+@@ -435,7 +435,16 @@
+     @try {
+       [inv invokeWithTarget:strongModule];
+     } @catch (NSException *exception) {
+-      throw convertNSExceptionToJSError(runtime, exception, std::string{moduleName}, methodNameStr);
++      // Void TurboModule methods run on a background queue. Converting the
++      // NSException into a jsi::JSError touches the Hermes runtime off-thread,
++      // which corrupts the heap and crashes with EXC_BAD_ACCESS (common on
++      // iOS 26). Log instead — nothing can observe a thrown error here anyway.
++      // See facebook/react-native#55390 / #53960.
++      RCTLogError(
++          @"Exception thrown while invoking async method %s.%s: %@",
++          moduleName,
++          methodNameStr.c_str(),
++          exception);
+     } @finally {
+       [retainedObjectsForInvocation removeAllObjects];
+     }
