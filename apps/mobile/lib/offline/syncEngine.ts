@@ -93,22 +93,12 @@ export async function runOfflineSync(
         if (event.operation === "delete") {
           await markBookmarkDeleted(event.entityId);
         } else if (event.data) {
+          // Persist metadata from the sync event only. Fetching full HTML and
+          // mirroring every asset inline saturates the network (hundreds of
+          // requests) and leaves the home screen spinning forever.
           const bookmark = hydrateBookmark(event.data);
           await upsertBookmark(bookmark);
-          if (settings.offlineCacheReaderHtml ?? true) {
-            try {
-              const withContent = await client.bookmarks.getBookmark.query({
-                bookmarkId: bookmark.id,
-                includeContent: true,
-              });
-              await upsertBookmark(withContent);
-              await mirrorBookmarkAssets(withContent, settings);
-            } catch {
-              await mirrorBookmarkAssets(bookmark, settings);
-            }
-          } else {
-            await mirrorBookmarkAssets(bookmark, settings);
-          }
+          await mirrorBookmarkAssets(bookmark, settings);
         }
       } else if (event.entityType === "bookmarkList" && event.data) {
         const payload = event.data as { bookmarkId: string; listId: string };

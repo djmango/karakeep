@@ -46,7 +46,7 @@ export interface OfflineSearchResult {
 }
 
 export const DEFAULT_OFFLINE_SETTINGS = {
-  offlineEnabled: true,
+  offlineEnabled: false,
   maxCacheSizeMb: 1024,
   syncOnCellular: false,
   cacheReaderHtml: true,

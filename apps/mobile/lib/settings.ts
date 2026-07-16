@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import Constants from "expo-constants";
 import * as SecureStore from "expo-secure-store";
 import { z } from "zod";
 import { create } from "zustand";
@@ -6,6 +7,28 @@ import { create } from "zustand";
 import { zReaderFontFamilySchema } from "@karakeep/shared/types/users";
 
 const SETTING_NAME = "settings";
+
+/** Explicit keychain service avoids iOS 26 SecureStore NSExceptions. */
+const SECURE_STORE_OPTIONS: SecureStore.SecureStoreOptions = {
+  keychainService:
+    Constants.expoConfig?.ios?.bundleIdentifier ?? "gg.skg.karakeep",
+};
+
+async function readSecureSettings(): Promise<string | null> {
+  const withService = await SecureStore.getItemAsync(
+    SETTING_NAME,
+    SECURE_STORE_OPTIONS,
+  );
+  if (withService != null) {
+    return withService;
+  }
+  // Migrate values written before keychainService was set.
+  const legacy = await SecureStore.getItemAsync(SETTING_NAME);
+  if (legacy != null) {
+    await SecureStore.setItemAsync(SETTING_NAME, legacy, SECURE_STORE_OPTIONS);
+  }
+  return legacy;
+}
 
 const zToolbarActionId = z.enum([
   "lists",
@@ -62,7 +85,8 @@ const zSettingsSchema = z.object({
     .array(zToolbarActionId)
     .optional()
     .default(DEFAULT_OVERFLOW_ACTIONS),
-  offlineEnabled: z.boolean().optional().default(true),
+  // Default off: first sync with content+asset mirroring can starve the UI.
+  offlineEnabled: z.boolean().optional().default(false),
   offlineMaxCacheSizeMb: z.number().int().positive().optional().default(1024),
   offlineSyncOnCellular: z.boolean().optional().default(false),
   offlineCacheReaderHtml: z.boolean().optional().default(true),
@@ -94,7 +118,7 @@ const useSettings = create<AppSettingsState>((set, get) => ({
       customHeaders: {},
       toolbarActions: DEFAULT_TOOLBAR_ACTIONS,
       overflowActions: DEFAULT_OVERFLOW_ACTIONS,
-      offlineEnabled: true,
+      offlineEnabled: false,
       offlineMaxCacheSizeMb: 1024,
       offlineSyncOnCellular: false,
       offlineCacheReaderHtml: true,
@@ -104,14 +128,18 @@ const useSettings = create<AppSettingsState>((set, get) => ({
     },
   },
   setSettings: async (settings) => {
-    await SecureStore.setItemAsync(SETTING_NAME, JSON.stringify(settings));
+    await SecureStore.setItemAsync(
+      SETTING_NAME,
+      JSON.stringify(settings),
+      SECURE_STORE_OPTIONS,
+    );
     set((_state) => ({ settings: { isLoading: false, settings } }));
   },
   load: async () => {
     if (!get().settings.isLoading) {
       return;
     }
-    const strVal = await SecureStore.getItemAsync(SETTING_NAME);
+    const strVal = await readSecureSettings();
     if (!strVal) {
       set((state) => ({
         settings: { isLoading: false, settings: state.settings.settings },
