@@ -268,7 +268,10 @@ export async function upsertCachedAsset(input: {
       content_type = excluded.content_type,
       byte_size = excluded.byte_size,
       last_access_at = excluded.last_access_at,
-      pinned = excluded.pinned`,
+      pinned = CASE
+        WHEN excluded.pinned = 1 OR cached_assets.pinned = 1 THEN 1
+        ELSE 0
+      END`,
     [
       input.assetId,
       input.bookmarkId ?? null,
@@ -278,6 +281,43 @@ export async function upsertCachedAsset(input: {
       new Date().toISOString(),
       input.pinned ? 1 : 0,
     ],
+  );
+}
+
+export async function pinCachedAsset(assetId: string) {
+  const db = await getOfflineDb();
+  await db.runAsync("UPDATE cached_assets SET pinned = 1 WHERE asset_id = ?", [
+    assetId,
+  ]);
+}
+
+export async function pinAssetsForBookmark(bookmarkId: string) {
+  const db = await getOfflineDb();
+  await db.runAsync(
+    "UPDATE cached_assets SET pinned = 1 WHERE bookmark_id = ?",
+    [bookmarkId],
+  );
+}
+
+export async function isBookmarkDownloaded(
+  bookmarkId: string,
+): Promise<boolean> {
+  const db = await getOfflineDb();
+  const row = await db.getFirstAsync<{ downloaded: number }>(
+    "SELECT downloaded FROM bookmarks WHERE id = ? OR server_id = ?",
+    [bookmarkId, bookmarkId],
+  );
+  return (row?.downloaded ?? 0) === 1;
+}
+
+export async function markBookmarkDownloaded(
+  bookmarkId: string,
+  downloaded: boolean,
+) {
+  const db = await getOfflineDb();
+  await db.runAsync(
+    "UPDATE bookmarks SET downloaded = ? WHERE id = ? OR server_id = ?",
+    [downloaded ? 1 : 0, bookmarkId, bookmarkId],
   );
 }
 

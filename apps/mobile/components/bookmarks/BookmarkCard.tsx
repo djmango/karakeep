@@ -1,6 +1,5 @@
 import { Text } from "@/components/ui/Text";
 import useAppSettings from "@/lib/settings";
-import { buildApiHeaders } from "@/lib/utils";
 import { useWhoAmI } from "@karakeep/shared-react/hooks/users";
 import { useQuery } from "@tanstack/react-query";
 import { Image } from "expo-image";
@@ -11,10 +10,11 @@ import { useTRPC } from "@karakeep/shared-react/trpc";
 import type { ZBookmark } from "@karakeep/shared/types/bookmarks";
 import { BookmarkTypes } from "@karakeep/shared/types/bookmarks";
 import {
-  getBookmarkLinkImageUrl,
+  getBookmarkLinkAssetIdOrUrl,
   getBookmarkRefreshInterval,
 } from "@karakeep/shared/utils/bookmarkUtils";
 
+import { useAssetUrl } from "@/lib/hooks";
 import { useToast } from "../ui/Toast";
 import BookmarkAssetImage from "./BookmarkAssetImage";
 import BookmarkTextMarkdown from "./BookmarkTextMarkdown";
@@ -26,13 +26,39 @@ import TagList from "./card/TagList";
 import { Divider } from "../ui/Divider";
 import ActionBar from "./card/ActionBar";
 
+function LinkCardImage({
+  assetId,
+  remoteUrl,
+  className,
+}: {
+  assetId?: string;
+  remoteUrl?: string;
+  className: string;
+}) {
+  const assetSource = useAssetUrl(assetId ?? "");
+  const source = assetId
+    ? assetSource
+    : remoteUrl
+      ? { uri: remoteUrl }
+      : // oxlint-disable-next-line no-require-imports
+        require("@/assets/blur.jpeg");
+
+  return (
+    <View className={className}>
+      <Image
+        source={source}
+        style={{ width: "100%", height: "100%" }}
+        contentFit="cover"
+      />
+    </View>
+  );
+}
+
 function useLinkCardContext({
   bookmark,
 }: {
   bookmark: ZBookmark;
 }): Omit<BookmarkCardContext, "isOwner" | "bookmark"> | undefined {
-  const { settings } = useAppSettings();
-
   if (bookmark.content.type !== BookmarkTypes.LINK) {
     return undefined;
   }
@@ -40,30 +66,18 @@ function useLinkCardContext({
   const url = bookmark.content.url;
   const parsedUrl = new URL(url);
 
-  const imageUrl = getBookmarkLinkImageUrl(bookmark.content);
+  const image = getBookmarkLinkAssetIdOrUrl(bookmark.content);
+  const assetId = image?.localAsset ? image.assetId : undefined;
+  const remoteUrl = image && !image.localAsset ? image.url : undefined;
 
   let contentComp;
-  if (imageUrl) {
+  if (image) {
     contentComp = (
-      <View className="h-56 min-h-56 w-full">
-        <Image
-          source={
-            imageUrl.localAsset
-              ? {
-                  uri: `${settings.address}${imageUrl.url}`,
-                  headers: buildApiHeaders(
-                    settings.apiKey,
-                    settings.customHeaders,
-                  ),
-                }
-              : {
-                  uri: imageUrl.url,
-                }
-          }
-          style={{ width: "100%", height: "100%" }}
-          contentFit="cover"
-        />
-      </View>
+      <LinkCardImage
+        assetId={assetId}
+        remoteUrl={remoteUrl}
+        className="h-56 min-h-56 w-full"
+      />
     );
   } else {
     contentComp = (
@@ -79,28 +93,11 @@ function useLinkCardContext({
   }
 
   const compactMedia = (
-    <View className="h-28 w-24 overflow-hidden rounded-lg bg-muted">
-      <Image
-        source={
-          imageUrl
-            ? imageUrl.localAsset
-              ? {
-                  uri: `${settings.address}${imageUrl.url}`,
-                  headers: buildApiHeaders(
-                    settings.apiKey,
-                    settings.customHeaders,
-                  ),
-                }
-              : {
-                  uri: imageUrl.url,
-                }
-            : // oxlint-disable-next-line no-require-imports
-              require("@/assets/blur.jpeg")
-        }
-        style={{ width: "100%", height: "100%" }}
-        contentFit="cover"
-      />
-    </View>
+    <LinkCardImage
+      assetId={assetId}
+      remoteUrl={remoteUrl}
+      className="h-28 w-24 overflow-hidden rounded-lg bg-muted"
+    />
   );
 
   return {
@@ -248,6 +245,7 @@ export default function BookmarkCard({
   bookmark: ZBookmark;
 }) {
   const api = useTRPC();
+  const { settings } = useAppSettings();
   const { data: bookmark } = useQuery(
     api.bookmarks.getBookmark.queryOptions(
       {
@@ -255,7 +253,12 @@ export default function BookmarkCard({
       },
       {
         initialData,
+        // Offline mode: never refetch from network — SQLite initialData is enough.
+        enabled: !settings.offlineEnabled,
         refetchInterval: (query) => {
+          if (settings.offlineEnabled) {
+            return false;
+          }
           const data = query.state.data;
           if (!data) {
             return false;
@@ -267,7 +270,6 @@ export default function BookmarkCard({
   );
 
   const router = useRouter();
-  const { settings } = useAppSettings();
   const { toast } = useToast();
   const { data: currentUser } = useWhoAmI();
 

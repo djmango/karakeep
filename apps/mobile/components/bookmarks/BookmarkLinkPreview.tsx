@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Linking, Pressable, TouchableOpacity, View } from "react-native";
 import ImageView from "react-native-image-viewing";
 import WebView from "react-native-webview";
@@ -9,6 +9,9 @@ import {
 import * as WebBrowser from "expo-web-browser";
 import { Text } from "@/components/ui/Text";
 import { useAssetUrl } from "@/lib/hooks";
+import { resolveOfflineReaderHtml } from "@/lib/offline/readerHtml";
+import { isOnline, seedBookmarkFromNetwork } from "@/lib/offline/syncEngine";
+import useAppSettings from "@/lib/settings";
 import { useReaderSettings, WEBVIEW_FONT_FAMILIES } from "@/lib/readerSettings";
 import { useColorScheme } from "@/lib/useColorScheme";
 import { useQuery } from "@tanstack/react-query";
@@ -20,7 +23,7 @@ import {
   useUpdateHighlight,
 } from "@karakeep/shared-react/hooks/highlights";
 import { useReadingProgress } from "@karakeep/shared-react/hooks/reading-progress";
-import { useTRPC } from "@karakeep/shared-react/trpc";
+import { useTRPC, useTRPCClient } from "@karakeep/shared-react/trpc";
 import { BookmarkTypes, ZBookmark } from "@karakeep/shared/types/bookmarks";
 
 import FullPageError from "../FullPageError";
@@ -107,7 +110,56 @@ export function BookmarkLinkReaderPreview({
 }) {
   const { isDarkColorScheme: isDark } = useColorScheme();
   const { settings: readerSettings } = useReaderSettings();
+  const { settings } = useAppSettings();
   const api = useTRPC();
+  const client = useTRPCClient();
+
+  const [offlineHtml, setOfflineHtml] = useState<string | null>(null);
+  const [offlineChecked, setOfflineChecked] = useState(false);
+  const [offlineSeedError, setOfflineSeedError] = useState<string | null>(null);
+  const [offlineRetry, setOfflineRetry] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    setOfflineChecked(false);
+    setOfflineSeedError(null);
+    void (async () => {
+      if (!settings.offlineEnabled) {
+        if (!cancelled) {
+          setOfflineHtml(null);
+          setOfflineChecked(true);
+        }
+        return;
+      }
+
+      let html = await resolveOfflineReaderHtml(bookmark);
+      if (!html && (await isOnline(settings))) {
+        try {
+          const seeded = await seedBookmarkFromNetwork(
+            client,
+            settings,
+            bookmark.id,
+          );
+          html = await resolveOfflineReaderHtml(seeded);
+        } catch (err) {
+          if (!cancelled) {
+            setOfflineSeedError(
+              err instanceof Error ? err.message : "Failed to download article",
+            );
+          }
+        }
+      }
+      if (!cancelled) {
+        setOfflineHtml(html);
+        setOfflineChecked(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [bookmark, client, settings, offlineRetry]);
+
+  const useLocalReader = settings.offlineEnabled && offlineChecked;
 
   const {
     data: bookmarkWithContent,
@@ -115,16 +167,27 @@ export function BookmarkLinkReaderPreview({
     isLoading,
     refetch,
   } = useQuery(
-    api.bookmarks.getBookmark.queryOptions({
-      bookmarkId: bookmark.id,
-      includeContent: true,
-    }),
+    api.bookmarks.getBookmark.queryOptions(
+      {
+        bookmarkId: bookmark.id,
+        includeContent: true,
+      },
+      {
+        enabled: !settings.offlineEnabled,
+      },
+    ),
   );
 
   const { data: highlights } = useQuery(
-    api.highlights.getForBookmark.queryOptions({
-      bookmarkId: bookmark.id,
-    }),
+    api.highlights.getForBookmark.queryOptions(
+      {
+        bookmarkId: bookmark.id,
+      },
+      {
+        enabled: !settings.offlineEnabled,
+        retry: false,
+      },
+    ),
   );
 
   const { mutate: createHighlight } = useCreateHighlight();
@@ -155,17 +218,43 @@ export function BookmarkLinkReaderPreview({
     setViewingImage(src);
   }, []);
 
-  if (isLoading) {
+  if (settings.offlineEnabled && !offlineChecked) {
     return <FullPageSpinner />;
   }
 
-  if (error) {
-    return <FullPageError error={error.message} onRetry={refetch} />;
+  if (useLocalReader) {
+    if (!offlineHtml) {
+      return (
+        <FullPageError
+          error={
+            offlineSeedError ??
+            "Article content is not available offline yet. Connect and sync, then try again."
+          }
+          onRetry={() => {
+            setOfflineRetry((n) => n + 1);
+          }}
+        />
+      );
+    }
+  } else {
+    if (isLoading) {
+      return <FullPageSpinner />;
+    }
+
+    if (error) {
+      return <FullPageError error={error.message} onRetry={refetch} />;
+    }
+
+    if (bookmarkWithContent?.content.type !== BookmarkTypes.LINK) {
+      throw new Error("Wrong content type rendered");
+    }
   }
 
-  if (bookmarkWithContent?.content.type !== BookmarkTypes.LINK) {
-    throw new Error("Wrong content type rendered");
-  }
+  const htmlContent = useLocalReader
+    ? (offlineHtml ?? "")
+    : bookmarkWithContent!.content.type === BookmarkTypes.LINK
+      ? (bookmarkWithContent!.content.htmlContent ?? "")
+      : "";
 
   const contentStyle: React.CSSProperties = {
     fontFamily: WEBVIEW_FONT_FAMILIES[readerSettings.fontFamily],
@@ -207,7 +296,7 @@ export function BookmarkLinkReaderPreview({
         </View>
       )}
       <BookmarkHtmlHighlighterDom
-        htmlContent={bookmarkWithContent.content.htmlContent ?? ""}
+        htmlContent={htmlContent}
         contentStyle={contentStyle}
         highlights={highlights?.highlights ?? []}
         readingProgressOffset={readingProgressOffset}

@@ -19,11 +19,21 @@ export function useOfflineSyncLifecycle() {
     if (!settings.offlineEnabled) {
       return;
     }
+    // Fail fast when the OS already knows we're offline — don't flash "syncing"
+    // and don't wait on a hung fetch probe.
+    const net = await NetInfo.fetch();
+    if (net.isConnected === false || net.isInternetReachable === false) {
+      setSyncState("offline");
+      setPendingCount(await getPendingSyncCount());
+      return;
+    }
     setSyncState("syncing");
     try {
       const state = await runOfflineSync(client, settings);
       setSyncState(state);
-      setLastSyncedAt(new Date().toISOString());
+      if (state === "idle") {
+        setLastSyncedAt(new Date().toISOString());
+      }
     } catch {
       setSyncState("error");
     } finally {
@@ -37,10 +47,12 @@ export function useOfflineSyncLifecycle() {
     }
     void syncNow();
     const unsubscribe = NetInfo.addEventListener((state) => {
+      if (state.isConnected === false || state.isInternetReachable === false) {
+        setSyncState("offline");
+        return;
+      }
       if (state.isConnected) {
         void syncNow();
-      } else {
-        setSyncState("offline");
       }
     });
     const appStateSub = AppState.addEventListener("change", (nextState) => {
@@ -108,6 +120,7 @@ export function useOfflineBookmark(bookmarkId: string | undefined) {
     useState<
       Awaited<ReturnType<typeof import("./repository").getBookmarkById>>
     >(null);
+  const [resolved, setResolved] = useState(false);
   const client = useTRPCClient();
   const { settings } = useAppSettings();
 
@@ -115,22 +128,71 @@ export function useOfflineBookmark(bookmarkId: string | undefined) {
     if (!bookmarkId) {
       return;
     }
+    let cancelled = false;
+    setResolved(false);
     void (async () => {
       const { getBookmarkById } = await import("./repository");
       let local = await getBookmarkById(bookmarkId);
       if (!local && settings.offlineEnabled) {
-        try {
-          const { seedBookmarkFromNetwork } = await import("./syncEngine");
-          local = await seedBookmarkFromNetwork(client, settings, bookmarkId);
-        } catch {
-          local = await getBookmarkById(bookmarkId);
+        const { isOnline, seedBookmarkFromNetwork } =
+          await import("./syncEngine");
+        if (await isOnline(settings)) {
+          try {
+            local = await seedBookmarkFromNetwork(client, settings, bookmarkId);
+          } catch {
+            local = await getBookmarkById(bookmarkId);
+          }
         }
       }
-      setBookmark(local);
+      if (!cancelled) {
+        setBookmark(local);
+        setResolved(true);
+      }
     })();
+    return () => {
+      cancelled = true;
+    };
   }, [client, bookmarkId, settings]);
 
-  return bookmark;
+  return { bookmark, resolved };
+}
+
+export function useBookmarkDownload(bookmarkId: string) {
+  const client = useTRPCClient();
+  const { settings } = useAppSettings();
+  const [downloaded, setDownloaded] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const cacheGeneration = useOfflineStore((s) => s.cacheGeneration);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const { getBookmarkDownloadStatus } = await import("./download");
+      const status = await getBookmarkDownloadStatus(bookmarkId);
+      if (!cancelled) {
+        setDownloaded(status.downloaded);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [bookmarkId, cacheGeneration]);
+
+  const download = useCallback(async () => {
+    if (isDownloading || downloaded) {
+      return;
+    }
+    setIsDownloading(true);
+    try {
+      const { downloadBookmarkForOffline } = await import("./download");
+      await downloadBookmarkForOffline(client, settings, bookmarkId);
+      setDownloaded(true);
+    } finally {
+      setIsDownloading(false);
+    }
+  }, [bookmarkId, client, downloaded, isDownloading, settings]);
+
+  return { downloaded, isDownloading, download };
 }
 
 export function useOfflineSearch(query: string) {

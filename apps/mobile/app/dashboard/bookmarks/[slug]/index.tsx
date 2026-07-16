@@ -46,9 +46,8 @@ export default function BookmarkView() {
     throw new Error("Unexpected param type");
   }
 
-  const offlineBookmark = useOfflineBookmark(
-    settings.offlineEnabled ? slug : undefined,
-  );
+  const { bookmark: offlineBookmark, resolved: offlineResolved } =
+    useOfflineBookmark(settings.offlineEnabled ? slug : undefined);
 
   const {
     data: onlineBookmark,
@@ -66,12 +65,21 @@ export default function BookmarkView() {
     ),
   );
 
-  const bookmark = settings.offlineEnabled
-    ? (offlineBookmark ?? onlineBookmark)
-    : onlineBookmark;
+  const bookmark = settings.offlineEnabled ? offlineBookmark : onlineBookmark;
 
   if (error) {
     return <FullPageError error={error.message} onRetry={refetch} />;
+  }
+
+  if (settings.offlineEnabled && offlineResolved && !bookmark) {
+    return (
+      <FullPageError
+        error="Bookmark is not available offline"
+        onRetry={() => {
+          void router.back();
+        }}
+      />
+    );
   }
 
   if (!bookmark) {

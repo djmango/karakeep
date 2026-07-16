@@ -9,6 +9,7 @@ import { hydrateBookmark } from "./bookmarkCodec";
 import {
   evictCachedAssets,
   getCachedAssetUri,
+  pinCachedAsset,
   upsertCachedAsset,
 } from "./repository";
 
@@ -54,7 +55,8 @@ function resolveAssetType(
       return "video";
     }
     if (content.contentAssetId === assetId) {
-      return "contentImage";
+      // Server stores large reader HTML as a content asset (not an image).
+      return "readerHtml";
     }
   }
   if (
@@ -107,11 +109,14 @@ function shouldCacheAssetType(
   if (assetType === "fullPageArchive" || assetType === "precrawledArchive") {
     return settings.offlineCacheArchives;
   }
+  if (assetType === "readerHtml" || assetType === "contentImage") {
+    // contentImage is the legacy label we used for contentAssetId.
+    return settings.offlineCacheReaderHtml;
+  }
   if (
     assetType === "bannerImage" ||
     assetType === "screenshot" ||
     assetType === "assetScreenshot" ||
-    assetType === "contentImage" ||
     assetType === "image"
   ) {
     return settings.offlineCacheImages;
@@ -123,12 +128,18 @@ function shouldCacheAssetType(
 export async function mirrorBookmarkAssets(
   bookmark: ZBookmark,
   settings: Settings,
+  opts?: { durable?: boolean },
 ) {
+  const durable = opts?.durable ?? false;
   const maxBytes = settings.offlineMaxCacheSizeMb * 1024 * 1024;
   const headers = buildApiHeaders(settings.apiKey, settings.customHeaders);
 
   for (const assetId of assetIdsForBookmark(bookmark)) {
-    if (await getCachedAssetUri(assetId)) {
+    const existingUri = await getCachedAssetUri(assetId);
+    if (existingUri) {
+      if (durable) {
+        await pinCachedAsset(assetId);
+      }
       continue;
     }
 
@@ -157,33 +168,51 @@ export async function mirrorBookmarkAssets(
         localUri: result.uri,
         contentType: result.headers["Content-Type"] ?? null,
         byteSize: info.exists && "size" in info ? (info.size ?? 0) : 0,
+        // Reader HTML and explicit downloads are durable — never evicted.
+        pinned:
+          durable || assetType === "readerHtml" || assetType === "contentImage",
       });
     } catch {
       // Best effort mirroring; failed assets can retry on next sync.
     }
   }
 
-  await evictCachedAssets(maxBytes);
+  // Never evict pinned/durable assets; only trim unpinned overflow.
+  if (!durable) {
+    await evictCachedAssets(maxBytes);
+  }
 }
 
 export async function mirrorBookmarksAssets(
   bookmarks: ZBookmark[],
   settings: Settings,
+  opts?: { durable?: boolean },
 ) {
   for (const bookmark of bookmarks) {
-    await mirrorBookmarkAssets(bookmark, settings);
+    await mirrorBookmarkAssets(bookmark, settings, opts);
   }
 }
 
+/** Ensure reader HTML for a bookmark is available locally (inline or file). */
 export async function mirrorReaderHtmlBookmark(
   bookmark: ZBookmark,
-  _settings: Settings,
-) {
+  settings: Settings,
+): Promise<ZBookmark> {
   if (bookmark.content.type !== "link") {
+    return bookmark;
+  }
+  if (!settings.offlineCacheReaderHtml) {
     return bookmark;
   }
   if (bookmark.content.htmlContent) {
     return bookmark;
   }
+
+  // Prefer downloading the content asset (already used for large HTML on server).
+  if (bookmark.content.contentAssetId) {
+    await mirrorBookmarkAssets(bookmark, settings);
+    return bookmark;
+  }
+
   return bookmark;
 }

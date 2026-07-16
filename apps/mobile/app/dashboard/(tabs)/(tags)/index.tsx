@@ -14,6 +14,9 @@ import { usePaginatedSearchTags } from "@karakeep/shared-react/hooks/tags";
 import { useDebounce } from "@karakeep/shared-react/hooks/use-debounce";
 import { useTRPC } from "@karakeep/shared-react/trpc";
 
+import useAppSettings from "@/lib/settings";
+import { useIsAppOnline } from "@/lib/offline/useIsAppOnline";
+
 interface TagItem {
   id: string;
   name: string;
@@ -26,6 +29,8 @@ export default function Tags() {
   const [searchQuery, setSearchQuery] = useState("");
   const api = useTRPC();
   const queryClient = useQueryClient();
+  const { settings } = useAppSettings();
+  const online = useIsAppOnline();
 
   // Debounce search query to avoid too many API calls
   const debouncedSearch = useDebounce(searchQuery, 300);
@@ -51,6 +56,16 @@ export default function Tags() {
 
   if (error) {
     return <FullPageError error={error.message} onRetry={() => refetch()} />;
+  }
+
+  if (settings.offlineEnabled && online === false && !data) {
+    return (
+      <EmptyState
+        icon={Tag}
+        title="Tags unavailable offline"
+        subtitle="Connect to the internet to browse tags"
+      />
+    );
   }
 
   if (!data) {

@@ -15,10 +15,13 @@ import {
   outboxToSyncOperations,
   removeOutboxOperation,
 } from "./outbox";
+import { resolveOfflineReaderHtml } from "./readerHtml";
 import {
   addBookmarkToListLocal,
   getMeta,
   markBookmarkDeleted,
+  markBookmarkDownloaded,
+  pinAssetsForBookmark,
   reconcileLocalBookmark,
   removeBookmarkFromListLocal,
   setMeta,
@@ -35,9 +38,28 @@ function bumpCache() {
   useOfflineStore.getState().bumpCacheGeneration();
 }
 
+const ONLINE_PROBE_MS = 3000;
+const SYNC_HARD_TIMEOUT_MS = 60_000;
+
 export async function isOnline(settings: Settings): Promise<boolean> {
+  if (__DEV__) {
+    try {
+      const FileSystem = await import("expo-file-system/legacy");
+      if (FileSystem.documentDirectory) {
+        const flag = `${FileSystem.documentDirectory}force-offline`;
+        const info = await FileSystem.getInfoAsync(flag);
+        if (info.exists) {
+          return false;
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
+
   const state = await NetInfo.fetch();
-  if (!state.isConnected) {
+  // iOS can report isConnected=true while unreachable; treat explicit false as offline.
+  if (state.isConnected === false || state.isInternetReachable === false) {
     return false;
   }
   if (
@@ -49,13 +71,18 @@ export async function isOnline(settings: Settings): Promise<boolean> {
   }
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
-    const response = await fetch(`${settings.address}/api/version`, {
-      headers: buildApiHeaders(settings.apiKey, settings.customHeaders),
-      signal: controller.signal,
-    });
+    const timeout = setTimeout(() => controller.abort(), ONLINE_PROBE_MS);
+    const response = await Promise.race([
+      fetch(`${settings.address}/api/version`, {
+        headers: buildApiHeaders(settings.apiKey, settings.customHeaders),
+        signal: controller.signal,
+      }),
+      new Promise<null>((resolve) =>
+        setTimeout(() => resolve(null), ONLINE_PROBE_MS + 250),
+      ),
+    ]);
     clearTimeout(timeout);
-    return response.ok;
+    return response != null && response.ok;
   } catch {
     return false;
   }
@@ -169,14 +196,97 @@ async function runOfflineSyncInner(
     bumpCache();
   } while (listCursor);
 
-  // Mirror assets in the background after metadata sync returns idle.
+  // Mirror assets + fetch missing reader HTML in the background after the list
+  // is usable. This restores the original offline article download behavior
+  // without blocking the home screen.
   if (bookmarksToMirror.length > 0) {
-    void mirrorBookmarksAssets(bookmarksToMirror, settings).catch((err) => {
-      console.warn("[offline-sync] background asset mirror failed", err);
-    });
+    void (async () => {
+      try {
+        // Pin reader HTML assets so auto-synced articles stay durable.
+        await mirrorBookmarksAssets(bookmarksToMirror, settings, {
+          durable: settings.offlineCacheReaderHtml,
+        });
+      } catch (err) {
+        console.warn("[offline-sync] background asset mirror failed", err);
+      }
+      try {
+        await enrichBookmarksWithReaderHtml(
+          client,
+          settings,
+          bookmarksToMirror,
+        );
+      } catch (err) {
+        console.warn("[offline-sync] background content enrich failed", err);
+      }
+      // Mark bookmarks with durable local HTML as downloaded.
+      if (settings.offlineCacheReaderHtml) {
+        for (const bookmark of bookmarksToMirror) {
+          try {
+            const html = await resolveOfflineReaderHtml(bookmark);
+            if (html) {
+              await pinAssetsForBookmark(bookmark.id);
+              await markBookmarkDownloaded(bookmark.id, true);
+            }
+          } catch {
+            // best effort
+          }
+        }
+        bumpCache();
+      }
+    })();
   }
 
   return "idle";
+}
+
+const CONTENT_ENRICH_CONCURRENCY = 3;
+
+/** Fetch full HTML for bookmarks that have neither inline content nor a content asset. */
+async function enrichBookmarksWithReaderHtml(
+  client: TrpcClient,
+  settings: Settings,
+  bookmarks: ZBookmark[],
+) {
+  if (!settings.offlineCacheReaderHtml) {
+    return;
+  }
+
+  const needing = bookmarks.filter((bookmark) => {
+    if (bookmark.content.type !== "link") {
+      return false;
+    }
+    if (bookmark.content.htmlContent) {
+      return false;
+    }
+    // contentAssetId is downloaded by asset mirroring; no getBookmark needed.
+    if (bookmark.content.contentAssetId) {
+      return false;
+    }
+    return true;
+  });
+
+  for (let i = 0; i < needing.length; i += CONTENT_ENRICH_CONCURRENCY) {
+    const batch = needing.slice(i, i + CONTENT_ENRICH_CONCURRENCY);
+    await Promise.all(
+      batch.map(async (bookmark) => {
+        try {
+          const withContent = await client.bookmarks.getBookmark.query({
+            bookmarkId: bookmark.id,
+            includeContent: true,
+          });
+          await upsertBookmark(hydrateBookmark(withContent));
+          await mirrorBookmarkAssets(withContent, settings);
+          bumpCache();
+        } catch (err) {
+          console.warn(
+            "[offline-sync] content enrich failed for",
+            bookmark.id,
+            err,
+          );
+        }
+      }),
+    );
+  }
 }
 
 export async function runOfflineSync(
@@ -186,7 +296,12 @@ export async function runOfflineSync(
   if (syncInFlight) {
     return syncInFlight;
   }
-  syncInFlight = runOfflineSyncInner(client, settings).finally(() => {
+  syncInFlight = Promise.race([
+    runOfflineSyncInner(client, settings),
+    new Promise<OfflineSyncState>((resolve) =>
+      setTimeout(() => resolve("error"), SYNC_HARD_TIMEOUT_MS),
+    ),
+  ]).finally(() => {
     syncInFlight = null;
   });
   return syncInFlight;
@@ -203,9 +318,18 @@ export async function seedBookmarkFromNetwork(
   });
   await upsertBookmark(bookmark);
   bumpCache();
-  // Don't block bookmark open on asset downloads.
-  void mirrorBookmarkAssets(bookmark, settings).catch((err) => {
-    console.warn("[offline-sync] asset mirror failed for", bookmarkId, err);
-  });
+  // Don't block bookmark open on asset downloads — pin so they stay durable.
+  void (async () => {
+    try {
+      await mirrorBookmarkAssets(bookmark, settings, { durable: true });
+      await pinAssetsForBookmark(bookmark.id);
+      if (await resolveOfflineReaderHtml(bookmark)) {
+        await markBookmarkDownloaded(bookmark.id, true);
+        bumpCache();
+      }
+    } catch (err) {
+      console.warn("[offline-sync] asset mirror failed for", bookmarkId, err);
+    }
+  })();
   return bookmark;
 }
