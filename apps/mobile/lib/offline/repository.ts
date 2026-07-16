@@ -325,6 +325,27 @@ export async function pinAssetsForBookmark(bookmarkId: string) {
   );
 }
 
+/** Delete on-disk files and DB rows for a bookmark's cached assets. */
+export async function deleteCachedAssetsForBookmark(bookmarkId: string) {
+  const db = await getOfflineDb();
+  const rows = await db.getAllAsync<{
+    asset_id: string;
+    local_uri: string;
+  }>("SELECT asset_id, local_uri FROM cached_assets WHERE bookmark_id = ?", [
+    bookmarkId,
+  ]);
+  for (const row of rows) {
+    try {
+      await FileSystem.deleteAsync(row.local_uri, { idempotent: true });
+    } catch {
+      // Best effort file cleanup.
+    }
+    await db.runAsync("DELETE FROM cached_assets WHERE asset_id = ?", [
+      row.asset_id,
+    ]);
+  }
+}
+
 export async function isBookmarkDownloaded(
   bookmarkId: string,
 ): Promise<boolean> {

@@ -169,6 +169,7 @@ export function useBookmarkDownload(bookmarkId: string) {
   const { settings } = useAppSettings();
   const [downloaded, setDownloaded] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isRemoving, setIsRemoving] = useState(false);
   const cacheGeneration = useOfflineStore((s) => s.cacheGeneration);
 
   useEffect(() => {
@@ -186,7 +187,7 @@ export function useBookmarkDownload(bookmarkId: string) {
   }, [bookmarkId, cacheGeneration]);
 
   const download = useCallback(async () => {
-    if (isDownloading || downloaded) {
+    if (isDownloading || isRemoving || downloaded) {
       return;
     }
     setIsDownloading(true);
@@ -197,9 +198,28 @@ export function useBookmarkDownload(bookmarkId: string) {
     } finally {
       setIsDownloading(false);
     }
-  }, [bookmarkId, client, downloaded, isDownloading, settings]);
+  }, [bookmarkId, client, downloaded, isDownloading, isRemoving, settings]);
 
-  return { downloaded, isDownloading, download };
+  const remove = useCallback(async () => {
+    if (isDownloading || isRemoving || !downloaded) {
+      return;
+    }
+    setIsRemoving(true);
+    try {
+      const { removeBookmarkOfflineDownload } = await import("./download");
+      await removeBookmarkOfflineDownload(bookmarkId);
+      setDownloaded(false);
+    } finally {
+      setIsRemoving(false);
+    }
+  }, [bookmarkId, downloaded, isDownloading, isRemoving]);
+
+  return {
+    downloaded,
+    isDownloading: isDownloading || isRemoving,
+    download,
+    remove,
+  };
 }
 
 export function useOfflineSearch(query: string) {
