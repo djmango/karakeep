@@ -1,8 +1,9 @@
 import type { ZBookmark } from "@karakeep/shared/types/bookmarks";
-import { zBookmarkSchema } from "@karakeep/shared/types/bookmarks";
 
-import { getOfflineDb } from "./db";
 import { bookmarkSearchBody } from "@karakeep/shared/offlineText";
+
+import { hydrateBookmark } from "./bookmarkCodec";
+import { getOfflineDb } from "./db";
 import type { OfflineBookmarkRecord } from "./types";
 
 function serializeBookmark(bookmark: ZBookmark) {
@@ -10,7 +11,17 @@ function serializeBookmark(bookmark: ZBookmark) {
 }
 
 function parseBookmark(record: OfflineBookmarkRecord): ZBookmark {
-  return zBookmarkSchema.parse(JSON.parse(record.dataJson));
+  // expo-sqlite returns snake_case column names; tolerate either shape.
+  const raw =
+    record.data_json ??
+    (record as { dataJson?: string }).dataJson ??
+    (record as { data_json?: string; DATA_JSON?: string }).DATA_JSON;
+  if (typeof raw !== "string") {
+    throw new Error(
+      `missing data_json for ${record.id} (keys: ${Object.keys(record).join(",")})`,
+    );
+  }
+  return hydrateBookmark(JSON.parse(raw));
 }
 
 export async function getMeta(key: string): Promise<string | null> {
@@ -84,11 +95,29 @@ export async function markBookmarkDeleted(id: string) {
 
 export async function getBookmarkById(id: string): Promise<ZBookmark | null> {
   const db = await getOfflineDb();
-  const row = await db.getFirstAsync<OfflineBookmarkRecord>(
-    "SELECT * FROM bookmarks WHERE (id = ? OR server_id = ?) AND deleted = 0",
+  const row = await db.getFirstAsync<Record<string, unknown>>(
+    `SELECT id, server_id, data_json, created_at, modified_at, archived, favourited, deleted, pending_sync
+     FROM bookmarks WHERE (id = ? OR server_id = ?) AND deleted = 0`,
     [id, id],
   );
-  return row ? parseBookmark(row) : null;
+  if (!row) {
+    return null;
+  }
+  const dataJson = row.data_json ?? row.dataJson;
+  if (typeof dataJson !== "string") {
+    return null;
+  }
+  return parseBookmark({
+    id: String(row.id),
+    server_id: (row.server_id as string | null) ?? null,
+    data_json: dataJson,
+    created_at: String(row.created_at ?? ""),
+    modified_at: (row.modified_at as string | null) ?? null,
+    archived: Number(row.archived ?? 0),
+    favourited: Number(row.favourited ?? 0),
+    deleted: Number(row.deleted ?? 0),
+    pending_sync: Number(row.pending_sync ?? 0),
+  });
 }
 
 export interface BookmarkListQuery {
@@ -118,15 +147,42 @@ export async function listBookmarks(
   }
 
   const sortOrder = query.sortOrder === "asc" ? "ASC" : "DESC";
-  const limit = query.limit ?? 100;
-  const offset = query.offset ?? 0;
+  let sql = `SELECT id, server_id, data_json, created_at, modified_at, archived, favourited, deleted, pending_sync
+    FROM bookmarks WHERE ${clauses.join(" AND ")} ORDER BY created_at ${sortOrder}`;
+  const sqlParams: (string | number)[] = [...params];
+  if (query.limit != null) {
+    sql += " LIMIT ? OFFSET ?";
+    sqlParams.push(query.limit, query.offset ?? 0);
+  }
 
-  const rows = await db.getAllAsync<OfflineBookmarkRecord>(
-    `SELECT * FROM bookmarks WHERE ${clauses.join(" AND ")} ORDER BY created_at ${sortOrder} LIMIT ? OFFSET ?`,
-    [...params, limit, offset],
-  );
+  const rows = await db.getAllAsync<Record<string, unknown>>(sql, sqlParams);
 
-  let bookmarks = rows.map(parseBookmark);
+  let bookmarks: ZBookmark[] = [];
+  for (const row of rows) {
+    try {
+      const dataJson = row.data_json ?? row.dataJson;
+      if (typeof dataJson !== "string") {
+        throw new Error(
+          `missing data_json (keys: ${Object.keys(row).join(",")})`,
+        );
+      }
+      bookmarks.push(
+        parseBookmark({
+          id: String(row.id),
+          server_id: (row.server_id as string | null) ?? null,
+          data_json: dataJson,
+          created_at: String(row.created_at ?? ""),
+          modified_at: (row.modified_at as string | null) ?? null,
+          archived: Number(row.archived ?? 0),
+          favourited: Number(row.favourited ?? 0),
+          deleted: Number(row.deleted ?? 0),
+          pending_sync: Number(row.pending_sync ?? 0),
+        }),
+      );
+    } catch (err) {
+      console.warn("[offline] skipped corrupt bookmark row", row.id, err);
+    }
+  }
 
   if (query.tagId) {
     bookmarks = bookmarks.filter((b) =>

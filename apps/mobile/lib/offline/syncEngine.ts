@@ -1,12 +1,14 @@
 import NetInfo from "@react-native-community/netinfo";
 import type { TRPCClient } from "@trpc/client";
 
+import type { ZBookmark } from "@karakeep/shared/types/bookmarks";
 import type { AppRouter } from "@karakeep/trpc/routers/_app";
 
 import type { Settings } from "@/lib/settings";
 import { buildApiHeaders } from "@/lib/utils";
 
-import { mirrorBookmarkAssets, hydrateBookmark } from "./assetMirror";
+import { mirrorBookmarkAssets, mirrorBookmarksAssets } from "./assetMirror";
+import { hydrateBookmark } from "./bookmarkCodec";
 import {
   listOutboxOperations,
   markOutboxAttempt,
@@ -22,9 +24,16 @@ import {
   setMeta,
   upsertBookmark,
 } from "./repository";
+import { useOfflineStore } from "./store";
 import type { OfflineSyncState } from "./types";
 
 type TrpcClient = TRPCClient<AppRouter>;
+
+let syncInFlight: Promise<OfflineSyncState> | null = null;
+
+function bumpCache() {
+  useOfflineStore.getState().bumpCacheGeneration();
+}
 
 export async function isOnline(settings: Settings): Promise<boolean> {
   const state = await NetInfo.fetch();
@@ -39,16 +48,20 @@ export async function isOnline(settings: Settings): Promise<boolean> {
     return false;
   }
   try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
     const response = await fetch(`${settings.address}/api/version`, {
       headers: buildApiHeaders(settings.apiKey, settings.customHeaders),
+      signal: controller.signal,
     });
+    clearTimeout(timeout);
     return response.ok;
   } catch {
     return false;
   }
 }
 
-export async function runOfflineSync(
+async function runOfflineSyncInner(
   client: TrpcClient,
   settings: Settings,
 ): Promise<OfflineSyncState> {
@@ -82,8 +95,10 @@ export async function runOfflineSync(
         await markOutboxAttempt(result.operationId, `Sync ${result.status}`);
       }
     }
+    bumpCache();
   }
 
+  const bookmarksToMirror: ZBookmark[] = [];
   let cursor = Number((await getMeta("syncCursor")) ?? "0");
   let hasMore = true;
   while (hasMore) {
@@ -93,12 +108,19 @@ export async function runOfflineSync(
         if (event.operation === "delete") {
           await markBookmarkDeleted(event.entityId);
         } else if (event.data) {
-          // Persist metadata from the sync event only. Fetching full HTML and
-          // mirroring every asset inline saturates the network (hundreds of
-          // requests) and leaves the home screen spinning forever.
-          const bookmark = hydrateBookmark(event.data);
-          await upsertBookmark(bookmark);
-          await mirrorBookmarkAssets(bookmark, settings);
+          // Persist metadata only in the pull loop. Asset downloads happen after
+          // the list is usable so the home screen can render from SQLite.
+          try {
+            const bookmark = hydrateBookmark(event.data);
+            await upsertBookmark(bookmark);
+            bookmarksToMirror.push(bookmark);
+          } catch (err) {
+            console.warn(
+              "[offline-sync] skipped bookmark event",
+              event.entityId,
+              err,
+            );
+          }
         }
       } else if (event.entityType === "bookmarkList" && event.data) {
         const payload = event.data as { bookmarkId: string; listId: string };
@@ -114,6 +136,8 @@ export async function runOfflineSync(
     if (page.nextCursor !== null) {
       cursor = page.nextCursor;
     }
+    // Let the UI pick up newly upserted rows while sync continues.
+    bumpCache();
   }
 
   await setMeta("syncCursor", String(cursor));
@@ -128,12 +152,44 @@ export async function runOfflineSync(
       ...(listCursor ? { cursor: listCursor } : {}),
     });
     for (const bookmark of page.bookmarks) {
-      await upsertBookmark(bookmark);
+      try {
+        // Client may already have Date objects; revive is idempotent for those.
+        const hydrated = hydrateBookmark(bookmark);
+        await upsertBookmark(hydrated);
+        bookmarksToMirror.push(hydrated);
+      } catch (err) {
+        console.warn(
+          "[offline-sync] skipped bookmark page row",
+          bookmark.id,
+          err,
+        );
+      }
     }
     listCursor = page.nextCursor;
+    bumpCache();
   } while (listCursor);
 
+  // Mirror assets in the background after metadata sync returns idle.
+  if (bookmarksToMirror.length > 0) {
+    void mirrorBookmarksAssets(bookmarksToMirror, settings).catch((err) => {
+      console.warn("[offline-sync] background asset mirror failed", err);
+    });
+  }
+
   return "idle";
+}
+
+export async function runOfflineSync(
+  client: TrpcClient,
+  settings: Settings,
+): Promise<OfflineSyncState> {
+  if (syncInFlight) {
+    return syncInFlight;
+  }
+  syncInFlight = runOfflineSyncInner(client, settings).finally(() => {
+    syncInFlight = null;
+  });
+  return syncInFlight;
 }
 
 export async function seedBookmarkFromNetwork(
@@ -146,6 +202,10 @@ export async function seedBookmarkFromNetwork(
     includeContent: true,
   });
   await upsertBookmark(bookmark);
-  await mirrorBookmarkAssets(bookmark, settings);
+  bumpCache();
+  // Don't block bookmark open on asset downloads.
+  void mirrorBookmarkAssets(bookmark, settings).catch((err) => {
+    console.warn("[offline-sync] asset mirror failed for", bookmarkId, err);
+  });
   return bookmark;
 }

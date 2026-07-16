@@ -8,16 +8,17 @@ export type OfflineSyncState =
   | "error"
   | "pending";
 
+/** Matches expo-sqlite row shape (snake_case column names). */
 export interface OfflineBookmarkRecord {
   id: string;
-  serverId: string | null;
-  dataJson: string;
-  createdAt: string;
-  modifiedAt: string | null;
+  server_id: string | null;
+  data_json: string;
+  created_at: string;
+  modified_at: string | null;
   archived: number;
   favourited: number;
   deleted: number;
-  pendingSync: number;
+  pending_sync: number;
 }
 
 export interface OutboxOperation {
