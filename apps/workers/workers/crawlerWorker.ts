@@ -74,6 +74,7 @@ import {
 } from "@karakeep/shared/assetdb";
 import serverConfig from "@karakeep/shared/config";
 import logger from "@karakeep/shared/logger";
+import { isWeakPdfTitle } from "@karakeep/shared/utils/pdfTitle";
 import { setUrlHostnameFromResolvedAddress } from "@karakeep/shared/utils/url";
 import {
   DequeuedJob,
@@ -1716,6 +1717,14 @@ async function handleAsAssetBookmark(
         return;
       }
       const fileName = path.basename(new URL(url).pathname);
+      const existing = await db.query.bookmarks.findFirst({
+        where: eq(bookmarks.id, bookmarkId),
+        columns: { title: true },
+      });
+      // Browser PDF tabs often set title to the arXiv id / filename. Clear those
+      // so asset preprocessing can fill a real title from PDF metadata/outline.
+      const clearWeakTitle =
+        assetType === "pdf" && isWeakPdfTitle(existing?.title, fileName);
       await db.transaction(async (trx) => {
         await updateAsset(
           undefined,
@@ -1741,7 +1750,10 @@ async function handleAsAssetBookmark(
         // Switch the type of the bookmark from LINK to ASSET
         await trx
           .update(bookmarks)
-          .set({ type: BookmarkTypes.ASSET })
+          .set({
+            type: BookmarkTypes.ASSET,
+            ...(clearWeakTitle ? { title: null } : {}),
+          })
           .where(eq(bookmarks.id, bookmarkId));
         await trx.delete(bookmarkLinks).where(eq(bookmarkLinks.id, bookmarkId));
       });
@@ -2250,20 +2262,31 @@ async function runCrawler(
     `[Crawler][${jobId}] Will crawl "${truncateUrl(url)}" for link with id "${bookmarkId}"`,
   );
 
+  // Always resolve content-type even when a precrawled archive exists. Client-side
+  // SingleFile captures of PDF viewer tabs upload a useless HTML shell; without
+  // this check those bookmarks never become real PDF assets.
+  const contentType = await getContentType(
+    url,
+    jobId,
+    job.abortSignal,
+    runProxy,
+  );
+  job.abortSignal.throwIfAborted();
   if (precrawledArchiveAssetId) {
     logger.info(
-      `[Crawler][${jobId}] Skipped fetching content-type for the url ${url} as precrawledArchiveAssetId exists`,
+      `[Crawler][${jobId}] Precrawled archive present; resolved content-type for ${url} as ${contentType ?? "unknown"}`,
     );
   }
-  const contentType = precrawledArchiveAssetId
-    ? ASSET_TYPES.TEXT_HTML
-    : await getContentType(url, jobId, job.abortSignal, runProxy);
-  job.abortSignal.throwIfAborted();
 
   // Link bookmarks get transformed into asset bookmarks if they point to a supported asset instead of a webpage
   const isPdf = contentType === ASSET_TYPES.APPLICATION_PDF;
 
   if (isPdf) {
+    if (precrawledArchiveAssetId) {
+      logger.info(
+        `[Crawler][${jobId}] Ignoring precrawled HTML archive for PDF URL ${url}`,
+      );
+    }
     await handleAsAssetBookmark(
       url,
       "pdf",
@@ -2278,6 +2301,11 @@ async function runCrawler(
     IMAGE_ASSET_TYPES.has(contentType) &&
     SUPPORTED_UPLOAD_ASSET_TYPES.has(contentType)
   ) {
+    if (precrawledArchiveAssetId) {
+      logger.info(
+        `[Crawler][${jobId}] Ignoring precrawled HTML archive for image URL ${url}`,
+      );
+    }
     await handleAsAssetBookmark(
       url,
       "image",
