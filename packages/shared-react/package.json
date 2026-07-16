@@ -14,12 +14,14 @@
     "@trpc/tanstack-react-query": "^11.9.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
+    "katex": "^0.17.0",
     "lucide-react": "^0.501.0",
     "superjson": "^2.2.1",
     "tailwind-merge": "^2.2.1"
   },
   "devDependencies": {
-    "@karakeep/tsconfig": "workspace:^0.1.0"
+    "@karakeep/tsconfig": "workspace:^0.1.0",
+    "@types/katex": "^0.16.8"
   },
   "peerDependencies": {
     "react": "^19.2.1",

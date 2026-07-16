@@ -316,11 +316,12 @@ export function BookmarkLinkReaderPreview({
     }
   }
 
+  // Let Tailwind `prose` / `dark:prose-invert` own text colors so headings,
+  // code, links, and KaTeX match the web reader. Only set layout + page chrome.
   const contentStyle: React.CSSProperties = {
     fontFamily: WEBVIEW_FONT_FAMILIES[readerSettings.fontFamily],
     fontSize: `${readerSettings.fontSize}px`,
     lineHeight: String(readerSettings.lineHeight),
-    color: isDark ? "#e5e7eb" : "#374151",
     padding: "16px",
     background: isDark ? "#000000" : "#ffffff",
   };
@@ -367,6 +368,7 @@ export function BookmarkLinkReaderPreview({
         onLinkPress={handleLinkPress}
         onImagePress={handleImagePress}
         assetAuth={assetAuth}
+        isDark={isDark}
         onHighlight={(h) =>
           createHighlight({
             startOffset: h.startOffset,

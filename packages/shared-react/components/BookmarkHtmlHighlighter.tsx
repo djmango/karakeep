@@ -14,10 +14,13 @@ import {
   ZHighlightColor,
 } from "@karakeep/shared/types/highlights";
 
+import { renderReaderMath } from "../utils/renderReaderMath";
 import { HIGHLIGHT_COLOR_MAP } from "./highlights";
 import { Button } from "./ui/button";
 import { Popover, PopoverContent } from "./ui/popover";
 import { Textarea } from "./ui/textarea";
+
+import "katex/dist/katex.min.css";
 
 interface HighlightFormProps {
   position: { x: number; y: number } | null;
@@ -183,6 +186,14 @@ const BookmarkHTMLHighlighter = forwardRef<
       typeof window !== "undefined" &&
       window.matchMedia("(pointer: coarse)").matches,
   )[0];
+
+  // Render LaTeX before highlights so formula DOM is stable for offsets.
+  useEffect(() => {
+    if (!contentRef.current) {
+      return;
+    }
+    renderReaderMath(contentRef.current);
+  }, [htmlContent]);
 
   // Apply existing highlights when component mounts or highlights change
   useEffect(() => {
@@ -411,7 +422,7 @@ const BookmarkHTMLHighlighter = forwardRef<
         dangerouslySetInnerHTML={{ __html: htmlContent }}
         onPointerUp={handlePointerUp}
         className={cn(
-          "prose prose-neutral max-w-none break-words dark:prose-invert [&_code]:break-all [&_img]:h-auto [&_img]:max-w-full [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto",
+          "prose prose-neutral max-w-none break-words dark:prose-invert [&_.katex-display]:my-4 [&_.katex-display]:overflow-x-auto [&_.katex]:text-[1.05em] [&_code]:break-all [&_img]:h-auto [&_img]:max-w-full [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto",
           className,
         )}
         style={style}

@@ -2,6 +2,8 @@ const { hairlineWidth } = require("nativewind/theme");
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  // Expo DOM reader toggles `.dark` from the native color scheme.
+  darkMode: "class",
   // NOTE: Update this to include the paths to all of your component files.
   content: [
     "./app/**/*.{js,jsx,ts,tsx}",
