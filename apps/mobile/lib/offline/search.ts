@@ -11,22 +11,21 @@ export async function searchOfflineBookmarks(
   }
 
   const db = await getOfflineDb();
-  const ftsQuery = trimmed
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((term) => `"${term.replaceAll('"', "")}"*`)
-    .join(" ");
+  const like = `%${trimmed.replaceAll("%", "").replaceAll("_", "")}%`;
 
   const rows = await db.getAllAsync<{
     bookmark_id: string;
-    rank: number;
   }>(
-    `SELECT bookmark_id, rank
+    `SELECT bookmark_id
      FROM bookmark_search
-     WHERE bookmark_search MATCH ?
-     ORDER BY rank
+     WHERE title LIKE ? ESCAPE '\\'
+        OR url LIKE ? ESCAPE '\\'
+        OR note LIKE ? ESCAPE '\\'
+        OR summary LIKE ? ESCAPE '\\'
+        OR tags LIKE ? ESCAPE '\\'
+        OR body LIKE ? ESCAPE '\\'
      LIMIT ?`,
-    [ftsQuery, limit],
+    [like, like, like, like, like, like, limit],
   );
 
   const results: OfflineSearchResult[] = [];
@@ -47,7 +46,7 @@ export async function searchOfflineBookmarks(
     }
     results.push({
       bookmark,
-      score: row.rank,
+      score: 0,
       missingAssets: false,
     });
   }

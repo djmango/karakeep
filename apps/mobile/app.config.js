@@ -46,7 +46,7 @@ export default {
           NSAllowsArbitraryLoads: true,
         },
       },
-      buildNumber: "45",
+      buildNumber: "46",
     },
     android: {
       adaptiveIcon: {
@@ -65,7 +65,7 @@ export default {
         },
       },
       package: IS_DEV ? "karakeep.skg.gg" : "gg.skg.karakeep",
-      versionCode: 45,
+      versionCode: 46,
     },
     plugins: [
       "./plugins/trust-local-certs.js",
@@ -106,6 +106,11 @@ export default {
             usesCleartextTraffic: true,
             targetSdkVersion: 35,
             ndkVersion: "27.1.12297006",
+          },
+          ios: {
+            // Prebuilt RN Core ignores our patches/react-native patch. Build from
+            // source so the iOS 26 TurboModule void-exception crash fix ships.
+            buildReactNativeFromSource: true,
           },
         },
       ],
