@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Linking, Pressable, TouchableOpacity, View } from "react-native";
 import ImageView from "react-native-image-viewing";
 import WebView from "react-native-webview";
@@ -9,11 +9,15 @@ import {
 import * as WebBrowser from "expo-web-browser";
 import { Text } from "@/components/ui/Text";
 import { useAssetUrl } from "@/lib/hooks";
-import { resolveOfflineReaderHtml } from "@/lib/offline/readerHtml";
+import {
+  inlineCachedReaderAssets,
+  resolveOfflineReaderHtml,
+} from "@/lib/offline/readerHtml";
 import { isOnline, seedBookmarkFromNetwork } from "@/lib/offline/syncEngine";
 import useAppSettings from "@/lib/settings";
 import { useReaderSettings, WEBVIEW_FONT_FAMILIES } from "@/lib/readerSettings";
 import { useColorScheme } from "@/lib/useColorScheme";
+import { buildApiHeaders } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { BookOpen, X } from "lucide-react-native";
 
@@ -221,6 +225,7 @@ export function BookmarkLinkReaderPreview({
   });
 
   const [viewingImage, setViewingImage] = useState<string | null>(null);
+  const [htmlContent, setHtmlContent] = useState("");
 
   const handleLinkPress = useCallback((url: string) => {
     openUrlExternally(url);
@@ -229,6 +234,36 @@ export function BookmarkLinkReaderPreview({
   const handleImagePress = useCallback((src: string) => {
     setViewingImage(src);
   }, []);
+
+  const assetAuth = useMemo(
+    () => ({
+      serverAddress: settings.address.replace(/\/$/, ""),
+      headers: buildApiHeaders(settings.apiKey, settings.customHeaders),
+    }),
+    [settings.address, settings.apiKey, settings.customHeaders],
+  );
+
+  const rawHtmlContent = useLocalReader
+    ? (offlineHtml ?? "")
+    : bookmarkWithContent?.content.type === BookmarkTypes.LINK
+      ? (bookmarkWithContent.content.htmlContent ?? "")
+      : "";
+
+  useEffect(() => {
+    let cancelled = false;
+    setHtmlContent(rawHtmlContent);
+    if (!rawHtmlContent) {
+      return;
+    }
+    void inlineCachedReaderAssets(rawHtmlContent).then((html) => {
+      if (!cancelled) {
+        setHtmlContent(html);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [rawHtmlContent]);
 
   // Wait for the local-cache check whether Offline mode is on or off.
   // Previously we only waited when Offline was on, so the online path threw
@@ -281,12 +316,6 @@ export function BookmarkLinkReaderPreview({
     }
   }
 
-  const htmlContent = useLocalReader
-    ? (offlineHtml ?? "")
-    : bookmarkWithContent!.content.type === BookmarkTypes.LINK
-      ? (bookmarkWithContent!.content.htmlContent ?? "")
-      : "";
-
   const contentStyle: React.CSSProperties = {
     fontFamily: WEBVIEW_FONT_FAMILIES[readerSettings.fontFamily],
     fontSize: `${readerSettings.fontSize}px`,
@@ -337,6 +366,7 @@ export function BookmarkLinkReaderPreview({
         onScrollPositionChange={onScrollPositionChange}
         onLinkPress={handleLinkPress}
         onImagePress={handleImagePress}
+        assetAuth={assetAuth}
         onHighlight={(h) =>
           createHighlight({
             startOffset: h.startOffset,

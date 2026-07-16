@@ -109,11 +109,12 @@ function shouldCacheAssetType(
   if (assetType === "fullPageArchive" || assetType === "precrawledArchive") {
     return settings.offlineCacheArchives;
   }
-  if (assetType === "readerHtml" || assetType === "contentImage") {
-    // contentImage is the legacy label we used for contentAssetId.
+  if (assetType === "readerHtml") {
     return settings.offlineCacheReaderHtml;
   }
+  // contentImage = inline article images rewritten to /api/assets/... by the worker.
   if (
+    assetType === "contentImage" ||
     assetType === "bannerImage" ||
     assetType === "screenshot" ||
     assetType === "assetScreenshot" ||
@@ -169,8 +170,7 @@ export async function mirrorBookmarkAssets(
         contentType: result.headers["Content-Type"] ?? null,
         byteSize: info.exists && "size" in info ? (info.size ?? 0) : 0,
         // Reader HTML and explicit downloads are durable — never evicted.
-        pinned:
-          durable || assetType === "readerHtml" || assetType === "contentImage",
+        pinned: durable || assetType === "readerHtml",
       });
     } catch {
       // Best effort mirroring; failed assets can retry on next sync.
@@ -180,6 +180,74 @@ export async function mirrorBookmarkAssets(
   // Never evict pinned/durable assets; only trim unpinned overflow.
   if (!durable) {
     await evictCachedAssets(maxBytes);
+  }
+}
+
+/** Asset IDs referenced by reader HTML (`/api/assets/...`). */
+export function extractAssetIdsFromHtml(html: string): string[] {
+  return [
+    ...new Set(
+      [...html.matchAll(/\/api\/assets\/([A-Za-z0-9_-]+)/g)].map(
+        (match) => match[1],
+      ),
+    ),
+  ];
+}
+
+/**
+ * Mirror any /api/assets/... images referenced in HTML that aren't already cached.
+ * Used after reader HTML is available so article images work offline.
+ */
+export async function mirrorHtmlReferencedAssets(
+  html: string,
+  bookmarkId: string,
+  settings: Settings,
+  opts?: { durable?: boolean },
+) {
+  const durable = opts?.durable ?? false;
+  if (!settings.offlineCacheImages) {
+    return;
+  }
+  const headers = buildApiHeaders(settings.apiKey, settings.customHeaders);
+  const targetDir = `${FileSystem.documentDirectory}offline-assets/`;
+  await FileSystem.makeDirectoryAsync(targetDir, { intermediates: true });
+
+  for (const assetId of extractAssetIdsFromHtml(html)) {
+    const existingUri = await getCachedAssetUri(assetId);
+    if (existingUri) {
+      if (durable) {
+        await pinCachedAsset(assetId);
+      }
+      continue;
+    }
+
+    const targetUri = `${targetDir}${assetId}`;
+    try {
+      const result = await FileSystem.downloadAsync(
+        `${settings.address}/api/assets/${assetId}`,
+        targetUri,
+        { headers },
+      );
+      if (result.status !== 200) {
+        continue;
+      }
+      const info = await FileSystem.getInfoAsync(result.uri);
+      const contentType = result.headers["Content-Type"] ?? null;
+      // Skip non-images (e.g. accidentally matching non-image asset links).
+      if (contentType && !contentType.startsWith("image/")) {
+        continue;
+      }
+      await upsertCachedAsset({
+        assetId,
+        bookmarkId,
+        localUri: result.uri,
+        contentType,
+        byteSize: info.exists && "size" in info ? (info.size ?? 0) : 0,
+        pinned: durable,
+      });
+    } catch {
+      // Best effort.
+    }
   }
 }
 
