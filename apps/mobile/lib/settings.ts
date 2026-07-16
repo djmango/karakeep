@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import Constants from "expo-constants";
+import * as FileSystem from "expo-file-system/legacy";
 import * as SecureStore from "expo-secure-store";
 import { z } from "zod";
 import { create } from "zustand";
@@ -15,19 +16,36 @@ const SECURE_STORE_OPTIONS: SecureStore.SecureStoreOptions = {
 };
 
 async function readSecureSettings(): Promise<string | null> {
-  const withService = await SecureStore.getItemAsync(
-    SETTING_NAME,
-    SECURE_STORE_OPTIONS,
-  );
-  if (withService != null) {
-    return withService;
+  try {
+    const withService = await SecureStore.getItemAsync(
+      SETTING_NAME,
+      SECURE_STORE_OPTIONS,
+    );
+    if (withService != null) {
+      return withService;
+    }
+  } catch (err) {
+    console.warn("[settings] SecureStore read with service failed", err);
   }
-  // Migrate values written before keychainService was set.
-  const legacy = await SecureStore.getItemAsync(SETTING_NAME);
-  if (legacy != null) {
-    await SecureStore.setItemAsync(SETTING_NAME, legacy, SECURE_STORE_OPTIONS);
+  try {
+    // Migrate values written before keychainService was set.
+    const legacy = await SecureStore.getItemAsync(SETTING_NAME);
+    if (legacy != null) {
+      try {
+        await SecureStore.setItemAsync(
+          SETTING_NAME,
+          legacy,
+          SECURE_STORE_OPTIONS,
+        );
+      } catch {
+        // Keep returning the legacy value even if migration write fails.
+      }
+      return legacy;
+    }
+  } catch (err) {
+    console.warn("[settings] SecureStore legacy read failed", err);
   }
-  return legacy;
+  return null;
 }
 
 const zToolbarActionId = z.enum([
@@ -128,18 +146,44 @@ const useSettings = create<AppSettingsState>((set, get) => ({
     },
   },
   setSettings: async (settings) => {
-    await SecureStore.setItemAsync(
-      SETTING_NAME,
-      JSON.stringify(settings),
-      SECURE_STORE_OPTIONS,
-    );
+    try {
+      await SecureStore.setItemAsync(
+        SETTING_NAME,
+        JSON.stringify(settings),
+        SECURE_STORE_OPTIONS,
+      );
+    } catch (err) {
+      console.warn("[settings] SecureStore write failed", err);
+    }
     set((_state) => ({ settings: { isLoading: false, settings } }));
   },
   load: async () => {
     if (!get().settings.isLoading) {
       return;
     }
-    const strVal = await readSecureSettings();
+    let strVal = await readSecureSettings();
+    // Dev-only: Documents/e2e-settings.json seeds SecureStore for simulator tests.
+    if (__DEV__ && FileSystem.documentDirectory) {
+      const e2ePath = `${FileSystem.documentDirectory}e2e-settings.json`;
+      try {
+        const info = await FileSystem.getInfoAsync(e2ePath);
+        if (info.exists) {
+          strVal = await FileSystem.readAsStringAsync(e2ePath);
+          try {
+            await SecureStore.setItemAsync(
+              SETTING_NAME,
+              strVal,
+              SECURE_STORE_OPTIONS,
+            );
+          } catch {
+            // Ignore SecureStore failures during e2e seed.
+          }
+          await FileSystem.deleteAsync(e2ePath, { idempotent: true });
+        }
+      } catch {
+        // Ignore e2e seed failures.
+      }
+    }
     if (!strVal) {
       set((state) => ({
         settings: { isLoading: false, settings: state.settings.settings },
