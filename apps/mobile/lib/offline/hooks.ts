@@ -133,20 +133,27 @@ export function useOfflineBookmark(bookmarkId: string | undefined) {
     void (async () => {
       const { getBookmarkById } = await import("./repository");
       let local = await getBookmarkById(bookmarkId);
-      if (!local && settings.offlineEnabled) {
-        const { isOnline, seedBookmarkFromNetwork } =
-          await import("./syncEngine");
-        if (await isOnline(settings)) {
-          try {
-            local = await seedBookmarkFromNetwork(client, settings, bookmarkId);
-          } catch {
-            local = await getBookmarkById(bookmarkId);
-          }
-        }
-      }
+      // Unblock the bookmark screen immediately from SQLite — never wait on a
+      // hung includeContent seed before showing something.
       if (!cancelled) {
         setBookmark(local);
         setResolved(true);
+      }
+      if (local || !settings.offlineEnabled || cancelled) {
+        return;
+      }
+      const { isOnline, seedBookmarkFromNetwork } =
+        await import("./syncEngine");
+      if (!(await isOnline(settings))) {
+        return;
+      }
+      try {
+        local = await seedBookmarkFromNetwork(client, settings, bookmarkId);
+        if (!cancelled) {
+          setBookmark(local);
+        }
+      } catch {
+        // Keep the resolved empty/error state from the local miss.
       }
     })();
     return () => {

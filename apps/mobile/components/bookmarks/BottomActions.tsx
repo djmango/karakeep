@@ -17,7 +17,7 @@ import { TailwindResolver } from "@/components/TailwindResolver";
 import { useToast } from "@/components/ui/Toast";
 import { shouldUseGlassPill } from "@/lib/ios";
 import { useBookmarkDownload } from "@/lib/offline/hooks";
-import useAppSettings from "@/lib/settings";
+import useAppSettings, { ensureDownloadToolbarAction } from "@/lib/settings";
 import { shareBookmark } from "@/lib/shareBookmark";
 import { useMenuIconColors } from "@/lib/useMenuIconColors";
 import { MenuAction, MenuView } from "@react-native-menu/menu";
@@ -331,11 +331,15 @@ function useToolbarActions(bookmark: ZBookmark) {
     },
   };
 
-  const barActions = settings.toolbarActions
+  // Saved toolbar layouts from before Download existed omit it entirely.
+  // Re-inject at render so Offline mode always exposes the control.
+  const toolbarLayout = ensureDownloadToolbarAction(settings);
+
+  const barActions = toolbarLayout.toolbarActions
     .map((id) => allActions[id])
     .filter((a): a is ToolbarAction => a !== undefined);
 
-  const overflowActions = (settings.overflowActions ?? [])
+  const overflowActions = (toolbarLayout.overflowActions ?? [])
     .map((id) => allActions[id])
     .filter((a): a is ToolbarAction => a !== undefined);
 

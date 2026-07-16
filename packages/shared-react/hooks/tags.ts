@@ -15,6 +15,7 @@ type TRPCApi = ReturnType<typeof useTRPC>;
 
 export function usePaginatedSearchTags(
   input: Parameters<TRPCApi["tags"]["list"]["infiniteQueryOptions"]>[0],
+  opts?: { enabled?: boolean },
 ) {
   const api = useTRPC();
   return useInfiniteQuery({
@@ -22,6 +23,7 @@ export function usePaginatedSearchTags(
       placeholderData: keepPreviousData,
       getNextPageParam: (lastPage) => lastPage.nextCursor,
       gcTime: 60_000,
+      enabled: opts?.enabled,
     }),
     select: (data) => ({
       tags: data.pages.flatMap((page) => page.tags),

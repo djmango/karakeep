@@ -44,21 +44,23 @@ export default function Tags() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = usePaginatedSearchTags({
-    limit: 50,
-    sortBy: debouncedSearch ? "relevance" : "usage",
-    nameContains: debouncedSearch,
-  });
+  } = usePaginatedSearchTags(
+    {
+      limit: 50,
+      sortBy: debouncedSearch ? "relevance" : "usage",
+      nameContains: debouncedSearch,
+    },
+    {
+      // Don't fire tags queries while offline / connectivity unknown.
+      enabled: !settings.offlineEnabled || online === true,
+    },
+  );
 
   useEffect(() => {
     setRefreshing(isPending);
   }, [isPending]);
 
-  if (error) {
-    return <FullPageError error={error.message} onRetry={() => refetch()} />;
-  }
-
-  if (settings.offlineEnabled && online === false && !data) {
+  if (settings.offlineEnabled && online !== true && !data) {
     return (
       <EmptyState
         icon={Tag}
@@ -66,6 +68,10 @@ export default function Tags() {
         subtitle="Connect to the internet to browse tags"
       />
     );
+  }
+
+  if (error) {
+    return <FullPageError error={error.message} onRetry={() => refetch()} />;
   }
 
   if (!data) {
