@@ -64,12 +64,18 @@ export function useArchiveFilter(): {
   isLoading: boolean;
 } {
   const api = useTRPC();
+  const { settings } = useAppSettings();
   const { data: userSettings, isLoading } = useQuery(
-    api.users.settings.queryOptions(),
+    api.users.settings.queryOptions(undefined, {
+      // Don't block list screens forever when offline.
+      enabled: !settings.offlineEnabled,
+      retry: settings.offlineEnabled ? false : undefined,
+    }),
   );
   return {
     archived:
       userSettings?.archiveDisplayBehaviour === "show" ? undefined : false,
-    isLoading,
+    // When offline mode is on, fall through with default (hide archived).
+    isLoading: settings.offlineEnabled ? false : isLoading,
   };
 }

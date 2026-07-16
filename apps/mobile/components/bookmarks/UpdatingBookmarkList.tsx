@@ -1,6 +1,7 @@
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import useAppSettings from "@/lib/settings";
 import { useOfflineBookmarks } from "@/lib/offline/hooks";
+import { useIsAppOnline } from "@/lib/offline/useIsAppOnline";
 
 import type { ZGetBookmarksRequest } from "@karakeep/shared/types/bookmarks";
 import { useTRPC } from "@karakeep/shared-react/trpc";
@@ -20,6 +21,7 @@ export default function UpdatingBookmarkList({
   const api = useTRPC();
   const queryClient = useQueryClient();
   const { settings } = useAppSettings();
+  const online = useIsAppOnline();
   const offline = useOfflineBookmarks({
     archived: query.archived,
     favourited: query.favourited,
@@ -27,9 +29,11 @@ export default function UpdatingBookmarkList({
     sortOrder: settings.bookmarkSortOrder,
   });
 
-  // When offline mode is on, SQLite is the source of truth for the list.
-  // Background sync fills the cache; we never wait on the network query.
-  const useOfflineFirst = settings.offlineEnabled;
+  // Offline mode: SQLite is source of truth. Also fall back to cache when the
+  // device is offline even if the toggle was left off / settings were lost.
+  const useOfflineFirst =
+    settings.offlineEnabled ||
+    (online === false && !offline.isLoading && offline.bookmarks.length > 0);
 
   const {
     data,
@@ -51,29 +55,34 @@ export default function UpdatingBookmarkList({
         initialCursor: null,
         getNextPageParam: (lastPage) => lastPage.nextCursor,
         enabled: !useOfflineFirst,
+        retry: online === false ? false : undefined,
       },
     ),
   );
 
+  const offlineList = (
+    <BookmarkList
+      bookmarks={offline.bookmarks.filter(
+        (b) => b.content.type != BookmarkTypes.UNKNOWN,
+      )}
+      header={header}
+      onRefresh={() => offline.refresh()}
+      isRefreshing={offline.isLoading}
+    />
+  );
+
   if (useOfflineFirst) {
-    const waitingForFirstSyncRows =
-      offline.bookmarks.length === 0 && offline.syncState === "syncing";
-    if (
-      (offline.isLoading && offline.bookmarks.length === 0) ||
-      waitingForFirstSyncRows
-    ) {
+    // Never block the home list on sync/network. SQLite is the source of truth;
+    // show an empty state once the first local read finishes.
+    if (offline.isLoading && offline.bookmarks.length === 0) {
       return <FullPageSpinner />;
     }
-    return (
-      <BookmarkList
-        bookmarks={offline.bookmarks.filter(
-          (b) => b.content.type != BookmarkTypes.UNKNOWN,
-        )}
-        header={header}
-        onRefresh={() => offline.refresh()}
-        isRefreshing={offline.isLoading}
-      />
-    );
+    return offlineList;
+  }
+
+  // Network failed but we have a local cache — serve it instead of a dead end.
+  if (error && offline.bookmarks.length > 0) {
+    return offlineList;
   }
 
   if (error) {
@@ -81,6 +90,19 @@ export default function UpdatingBookmarkList({
   }
 
   if (isPending || !data) {
+    // Avoid an infinite spinner when unreachable: wait briefly then show cache/error.
+    if (
+      online === false &&
+      !offline.isLoading &&
+      offline.bookmarks.length === 0
+    ) {
+      return (
+        <FullPageError
+          error="You're offline and no bookmarks are cached yet. Enable Offline mode while online to sync."
+          onRetry={() => refetch()}
+        />
+      );
+    }
     return <FullPageSpinner />;
   }
 

@@ -1,6 +1,13 @@
 import type { ToolbarActionId } from "@/lib/settings";
 import type { LucideIcon } from "lucide-react-native";
-import { Alert, Linking, Platform, Pressable, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  Linking,
+  Platform,
+  Pressable,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BlurView } from "expo-blur";
 import { GlassView } from "expo-glass-effect";
@@ -9,13 +16,16 @@ import { useRouter } from "expo-router";
 import { TailwindResolver } from "@/components/TailwindResolver";
 import { useToast } from "@/components/ui/Toast";
 import { shouldUseGlassPill } from "@/lib/ios";
+import { useBookmarkDownload } from "@/lib/offline/hooks";
 import useAppSettings from "@/lib/settings";
 import { shareBookmark } from "@/lib/shareBookmark";
 import { useMenuIconColors } from "@/lib/useMenuIconColors";
 import { MenuAction, MenuView } from "@react-native-menu/menu";
 import {
   Archive,
+  CheckCircle2,
   ClipboardList,
+  Download,
   Ellipsis,
   Globe,
   Info,
@@ -85,6 +95,12 @@ export const TOOLBAR_ACTION_REGISTRY: Record<
     Icon: ShareIcon,
     sfSymbol: "square.and.arrow.up",
   },
+  download: {
+    label: "Download",
+    render: () => "Download for Offline",
+    Icon: Download,
+    sfSymbol: "arrow.down.circle",
+  },
   delete: {
     label: "Delete",
     render: () => "Delete",
@@ -106,6 +122,11 @@ function useToolbarActions(bookmark: ZBookmark) {
   const router = useRouter();
   const { settings } = useAppSettings();
   const { data: currentUser } = useWhoAmI();
+  const {
+    downloaded,
+    isDownloading,
+    download: downloadBookmark,
+  } = useBookmarkDownload(bookmark.id);
 
   const isOwner = currentUser?.id === bookmark.userId;
 
@@ -266,6 +287,41 @@ function useToolbarActions(bookmark: ZBookmark) {
       },
       disabled: false,
     },
+    download: {
+      id: "download",
+      icon: isDownloading ? (
+        <ActivityIndicator size="small" />
+      ) : downloaded ? (
+        makeIcon(CheckCircle2, "#16a34a")
+      ) : (
+        makeIcon(Download)
+      ),
+      shouldRender:
+        settings.offlineEnabled &&
+        (bookmark.content.type === BookmarkTypes.LINK ||
+          bookmark.content.type === BookmarkTypes.ASSET),
+      onClick: () => {
+        if (downloaded || isDownloading) {
+          return;
+        }
+        triggerHaptic();
+        void downloadBookmark()
+          .then(() => {
+            toast({
+              message: "Saved offline",
+              showProgress: false,
+            });
+          })
+          .catch(() => {
+            toast({
+              message: "Download failed",
+              variant: "destructive",
+              showProgress: false,
+            });
+          });
+      },
+      disabled: isDownloading || downloaded,
+    },
     delete: {
       id: "delete",
       icon: makeIcon(Trash2),
@@ -365,10 +421,22 @@ export default function BottomActions({ bookmark }: BottomActionsProps) {
     .filter((a) => a.shouldRender)
     .map((a) => {
       const meta = TOOLBAR_ACTION_REGISTRY[a.id];
+      const title =
+        a.id === "download"
+          ? a.disabled
+            ? "Downloaded"
+            : "Download for Offline"
+          : meta.render(bookmark);
       return {
         id: a.id,
-        title: meta.render(bookmark),
-        image: Platform.select({ ios: meta.sfSymbol, default: undefined }),
+        title,
+        image: Platform.select({
+          ios:
+            a.id === "download" && a.disabled
+              ? "checkmark.circle.fill"
+              : meta.sfSymbol,
+          default: undefined,
+        }),
         imageColor:
           a.id === "delete" ? destructiveMenuIconColor : menuIconColor,
         attributes: {

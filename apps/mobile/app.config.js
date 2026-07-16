@@ -46,7 +46,7 @@ export default {
           NSAllowsArbitraryLoads: true,
         },
       },
-      buildNumber: "46",
+      buildNumber: "47",
     },
     android: {
       adaptiveIcon: {
@@ -65,7 +65,7 @@ export default {
         },
       },
       package: IS_DEV ? "karakeep.skg.gg" : "gg.skg.karakeep",
-      versionCode: 46,
+      versionCode: 47,
     },
     plugins: [
       "./plugins/trust-local-certs.js",

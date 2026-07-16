@@ -56,6 +56,7 @@ const zToolbarActionId = z.enum([
   "archive",
   "browser",
   "share",
+  "download",
   "delete",
 ]);
 
@@ -66,6 +67,7 @@ export const DEFAULT_TOOLBAR_ACTIONS: ToolbarActionId[] = [
   "tags",
   "info",
   "favourite",
+  "download",
   "share",
   "browser",
 ];
@@ -204,6 +206,16 @@ const useSettings = create<AppSettingsState>((set, get) => ({
       ...parsed.data.toolbarActions,
       ...parsed.data.overflowActions,
     ]);
+    // Download belongs on the main toolbar, not buried in overflow.
+    if (!knownIds.has("download")) {
+      const shareIdx = parsed.data.toolbarActions.indexOf("share");
+      if (shareIdx >= 0) {
+        parsed.data.toolbarActions.splice(shareIdx, 0, "download");
+      } else {
+        parsed.data.toolbarActions.push("download");
+      }
+      knownIds.add("download");
+    }
     const missing = zToolbarActionId.options.filter((id) => !knownIds.has(id));
     if (missing.length > 0) {
       parsed.data.overflowActions = [

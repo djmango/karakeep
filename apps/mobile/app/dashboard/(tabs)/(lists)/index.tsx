@@ -16,11 +16,15 @@ import { Text } from "@/components/ui/Text";
 import { useColorScheme } from "@/lib/useColorScheme";
 import { condProps } from "@/lib/utils";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus } from "lucide-react-native";
+import { List as ListIcon, Plus } from "lucide-react-native";
 
 import { useBookmarkLists } from "@karakeep/shared-react/hooks/lists";
 import { useTRPC } from "@karakeep/shared-react/trpc";
 import { ZBookmarkListTreeNode } from "@karakeep/shared/utils/listUtils";
+
+import EmptyState from "@/components/ui/EmptyState";
+import useAppSettings from "@/lib/settings";
+import { useIsAppOnline } from "@/lib/offline/useIsAppOnline";
 
 interface ListLink {
   id: string;
@@ -71,14 +75,26 @@ function traverseTree(
 
 export default function Lists() {
   const { colors } = useColorScheme();
+  const { settings } = useAppSettings();
+  const online = useIsAppOnline();
   const [refreshing, setRefreshing] = useState(false);
-  const { data: lists, isPending, error, refetch } = useBookmarkLists();
+  const listsEnabled = !settings.offlineEnabled || online !== false;
+  const {
+    data: lists,
+    isPending,
+    error,
+    refetch,
+  } = useBookmarkLists(undefined, { enabled: listsEnabled });
   const [showChildrenOf, setShowChildrenOf] = useState<Record<string, boolean>>(
     {},
   );
   const api = useTRPC();
   const queryClient = useQueryClient();
-  const { data: listStats } = useQuery(api.lists.stats.queryOptions());
+  const { data: listStats } = useQuery(
+    api.lists.stats.queryOptions(undefined, {
+      enabled: listsEnabled,
+    }),
+  );
 
   // Check if there are any shared lists
   const hasSharedLists = useMemo(() => {
@@ -102,6 +118,16 @@ export default function Lists() {
 
   if (error) {
     return <FullPageError error={error.message} onRetry={() => refetch()} />;
+  }
+
+  if (settings.offlineEnabled && online === false && !lists) {
+    return (
+      <EmptyState
+        icon={ListIcon}
+        title="Lists unavailable offline"
+        subtitle="Connect to the internet to browse lists"
+      />
+    );
   }
 
   if (!lists) {

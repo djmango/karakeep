@@ -22,7 +22,8 @@ CREATE TABLE IF NOT EXISTS bookmarks (
   archived INTEGER NOT NULL DEFAULT 0,
   favourited INTEGER NOT NULL DEFAULT 0,
   deleted INTEGER NOT NULL DEFAULT 0,
-  pending_sync INTEGER NOT NULL DEFAULT 0
+  pending_sync INTEGER NOT NULL DEFAULT 0,
+  downloaded INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE INDEX IF NOT EXISTS bookmarks_created_at_idx ON bookmarks(created_at DESC);
@@ -131,11 +132,24 @@ async function ensureSearchSchema(db: SQLite.SQLiteDatabase) {
   }
 }
 
+async function ensureDownloadedColumn(db: SQLite.SQLiteDatabase) {
+  const cols = await db.getAllAsync<{ name: string }>(
+    "PRAGMA table_info(bookmarks)",
+  );
+  if (cols.some((c) => c.name === "downloaded")) {
+    return;
+  }
+  await db.execAsync(
+    "ALTER TABLE bookmarks ADD COLUMN downloaded INTEGER NOT NULL DEFAULT 0",
+  );
+}
+
 export async function getOfflineDb() {
   if (!dbPromise) {
     dbPromise = (async () => {
       const db = await SQLite.openDatabaseAsync(DB_NAME);
       await db.execAsync(BASE_SCHEMA);
+      await ensureDownloadedColumn(db);
       await ensureSearchSchema(db);
       return db;
     })();
