@@ -6,7 +6,10 @@ import type { AppRouter } from "@karakeep/trpc/routers/_app";
 import type { Settings } from "@/lib/settings";
 
 import { hydrateBookmark } from "./bookmarkCodec";
-import { mirrorBookmarkAssets } from "./assetMirror";
+import {
+  mirrorBookmarkAssets,
+  mirrorHtmlReferencedAssets,
+} from "./assetMirror";
 import { resolveOfflineReaderHtml } from "./readerHtml";
 import {
   getBookmarkById,
@@ -46,6 +49,13 @@ export async function downloadBookmarkForOffline(
     await upsertBookmark({
       ...bookmark,
       content: { ...bookmark.content, htmlContent: html },
+    });
+  }
+
+  // Article body images are rewritten to /api/assets/... — cache those too.
+  if (html) {
+    await mirrorHtmlReferencedAssets(html, bookmark.id, settings, {
+      durable: true,
     });
   }
 

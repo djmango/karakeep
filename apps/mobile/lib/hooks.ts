@@ -21,6 +21,8 @@ export function useAssetUrl(assetId: string): AssetSource {
       setLocalUri(null);
       return;
     }
+    // getCachedAssetUri verifies the file still exists; missing files fall
+    // back to the authenticated remote URL instead of a grey broken image.
     void getCachedAssetUri(assetId).then(setLocalUri);
   }, [assetId, settings.offlineEnabled]);
 

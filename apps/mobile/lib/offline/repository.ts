@@ -1,3 +1,5 @@
+import * as FileSystem from "expo-file-system/legacy";
+
 import type { ZBookmark } from "@karakeep/shared/types/bookmarks";
 
 import { bookmarkSearchBody } from "@karakeep/shared/offlineText";
@@ -232,21 +234,45 @@ export async function getPendingSyncCount(): Promise<number> {
   return row?.count ?? 0;
 }
 
+export async function getCachedAsset(
+  assetId: string,
+): Promise<{ localUri: string; contentType: string | null } | null> {
+  const db = await getOfflineDb();
+  const row = await db.getFirstAsync<{
+    local_uri: string;
+    content_type: string | null;
+  }>("SELECT local_uri, content_type FROM cached_assets WHERE asset_id = ?", [
+    assetId,
+  ]);
+  if (!row?.local_uri) {
+    return null;
+  }
+
+  // Drop stale DB rows whose file was removed (shows up as grey broken images).
+  try {
+    const info = await FileSystem.getInfoAsync(row.local_uri);
+    if (!info.exists) {
+      await db.runAsync("DELETE FROM cached_assets WHERE asset_id = ?", [
+        assetId,
+      ]);
+      return null;
+    }
+  } catch {
+    return null;
+  }
+
+  await db.runAsync(
+    "UPDATE cached_assets SET last_access_at = ? WHERE asset_id = ?",
+    [new Date().toISOString(), assetId],
+  );
+  return { localUri: row.local_uri, contentType: row.content_type };
+}
+
 export async function getCachedAssetUri(
   assetId: string,
 ): Promise<string | null> {
-  const db = await getOfflineDb();
-  const row = await db.getFirstAsync<{ local_uri: string }>(
-    "SELECT local_uri FROM cached_assets WHERE asset_id = ?",
-    [assetId],
-  );
-  if (row?.local_uri) {
-    await db.runAsync(
-      "UPDATE cached_assets SET last_access_at = ? WHERE asset_id = ?",
-      [new Date().toISOString(), assetId],
-    );
-  }
-  return row?.local_uri ?? null;
+  const cached = await getCachedAsset(assetId);
+  return cached?.localUri ?? null;
 }
 
 export async function upsertCachedAsset(input: {

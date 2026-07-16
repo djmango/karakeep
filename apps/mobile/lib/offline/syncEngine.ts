@@ -7,7 +7,11 @@ import type { AppRouter } from "@karakeep/trpc/routers/_app";
 import type { Settings } from "@/lib/settings";
 import { buildApiHeaders } from "@/lib/utils";
 
-import { mirrorBookmarkAssets, mirrorBookmarksAssets } from "./assetMirror";
+import {
+  mirrorBookmarkAssets,
+  mirrorBookmarksAssets,
+  mirrorHtmlReferencedAssets,
+} from "./assetMirror";
 import { hydrateBookmark } from "./bookmarkCodec";
 import {
   listOutboxOperations,
@@ -231,12 +235,16 @@ async function runOfflineSyncInner(
       } catch (err) {
         console.warn("[offline-sync] background content enrich failed", err);
       }
-      // Mark bookmarks with durable local HTML as downloaded.
+      // Mark bookmarks with durable local HTML as downloaded, and cache
+      // /api/assets/... images referenced inside the article HTML.
       if (settings.offlineCacheReaderHtml) {
         for (const bookmark of bookmarksToMirror) {
           try {
             const html = await resolveOfflineReaderHtml(bookmark);
             if (html) {
+              await mirrorHtmlReferencedAssets(html, bookmark.id, settings, {
+                durable: true,
+              });
               await pinAssetsForBookmark(bookmark.id);
               await markBookmarkDownloaded(bookmark.id, true);
             }
@@ -339,10 +347,16 @@ export async function seedBookmarkFromNetwork(
   void (async () => {
     try {
       await mirrorBookmarkAssets(bookmark, settings, { durable: true });
-      await pinAssetsForBookmark(bookmark.id);
-      if (await resolveOfflineReaderHtml(bookmark)) {
+      const html = await resolveOfflineReaderHtml(bookmark);
+      if (html) {
+        await mirrorHtmlReferencedAssets(html, bookmark.id, settings, {
+          durable: true,
+        });
+        await pinAssetsForBookmark(bookmark.id);
         await markBookmarkDownloaded(bookmark.id, true);
         bumpCache();
+      } else {
+        await pinAssetsForBookmark(bookmark.id);
       }
     } catch (err) {
       console.warn("[offline-sync] asset mirror failed for", bookmarkId, err);

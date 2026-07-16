@@ -8,6 +8,14 @@ import type { Highlight } from "@karakeep/shared-react/components/BookmarkHtmlHi
 import BookmarkHTMLHighlighter from "@karakeep/shared-react/components/BookmarkHtmlHighlighter";
 import ScrollProgressTracker from "@karakeep/shared-react/components/ScrollProgressTracker";
 
+function assetIdFromSrc(src: string | null | undefined): string | null {
+  if (!src) {
+    return null;
+  }
+  const match = src.match(/\/api\/assets\/([A-Za-z0-9_-]+)/);
+  return match?.[1] ?? null;
+}
+
 export default function BookmarkHtmlHighlighterDom({
   htmlContent,
   contentStyle,
@@ -23,6 +31,7 @@ export default function BookmarkHtmlHighlighterDom({
   restoreReadingPosition,
   onSavePosition,
   onScrollPositionChange,
+  assetAuth,
 }: {
   htmlContent: string;
   contentStyle?: React.CSSProperties;
@@ -46,6 +55,14 @@ export default function BookmarkHtmlHighlighterDom({
     anchor: string;
     percent: number;
   }) => void;
+  /**
+   * Reader HTML rewrites images to `/api/assets/...`, which cannot send a
+   * Bearer token from an <img>. Hydrate those with authenticated fetch.
+   */
+  assetAuth?: {
+    serverAddress: string;
+    headers: Record<string, string>;
+  };
   dom?: import("expo/dom").DOMProps;
 }) {
   // Strip href from links so the browser treats them as regular selectable text
@@ -116,6 +133,78 @@ export default function BookmarkHtmlHighlighterDom({
     document.addEventListener("click", handleClick);
     return () => document.removeEventListener("click", handleClick);
   }, [onLinkPress, onImagePress]);
+
+  // Hydrate /api/assets/... images with authenticated fetches (Bearer token).
+  // Plain <img src="/api/assets/..."> cannot attach Authorization headers, so
+  // they render as grey broken placeholders in the Expo DOM reader.
+  useEffect(() => {
+    if (!assetAuth?.serverAddress) {
+      return;
+    }
+
+    const objectUrls: string[] = [];
+    let cancelled = false;
+    const inFlight = new WeakSet<HTMLImageElement>();
+
+    const hydrateImg = async (img: HTMLImageElement) => {
+      const src = img.getAttribute("src") ?? "";
+      if (
+        src.startsWith("blob:") ||
+        src.startsWith("data:") ||
+        inFlight.has(img)
+      ) {
+        return;
+      }
+      const assetId = assetIdFromSrc(src);
+      if (!assetId) {
+        return;
+      }
+      inFlight.add(img);
+      try {
+        const response = await fetch(
+          `${assetAuth.serverAddress}/api/assets/${assetId}`,
+          { headers: assetAuth.headers },
+        );
+        if (!response.ok || cancelled) {
+          inFlight.delete(img);
+          return;
+        }
+        const blob = await response.blob();
+        if (cancelled) {
+          return;
+        }
+        const objectUrl = URL.createObjectURL(blob);
+        objectUrls.push(objectUrl);
+        img.src = objectUrl;
+      } catch {
+        inFlight.delete(img);
+        // Best effort; leave the broken image if fetch fails (offline).
+      }
+    };
+
+    const hydrate = () => {
+      document.querySelectorAll("img").forEach((img) => {
+        void hydrateImg(img);
+      });
+    };
+
+    void hydrate();
+
+    // Re-run when highlight/DOM mutations reinsert original HTML.
+    const observer = new MutationObserver(() => {
+      hydrate();
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    return () => {
+      cancelled = true;
+      observer.disconnect();
+      for (const url of objectUrls) {
+        URL.revokeObjectURL(url);
+      }
+    };
+  }, [assetAuth, htmlContent]);
+
   return (
     <div style={{ maxWidth: "100vw", overflowX: "hidden" }}>
       <ScrollProgressTracker
