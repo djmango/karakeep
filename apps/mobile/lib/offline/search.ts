@@ -1,5 +1,3 @@
-import type { ZBookmark } from "@karakeep/shared/types/bookmarks";
-
 import { getOfflineDb } from "./db";
 import type { OfflineSearchResult } from "./types";
 
@@ -40,10 +38,12 @@ export async function searchOfflineBookmarks(
     if (!bookmarkRow) {
       continue;
     }
-    const bookmark = JSON.parse(bookmarkRow.data_json) as ZBookmark;
-    bookmark.createdAt = new Date(bookmark.createdAt);
-    if (bookmark.modifiedAt) {
-      bookmark.modifiedAt = new Date(bookmark.modifiedAt);
+    let bookmark;
+    try {
+      const { hydrateBookmark } = await import("./bookmarkCodec");
+      bookmark = hydrateBookmark(JSON.parse(bookmarkRow.data_json));
+    } catch {
+      continue;
     }
     results.push({
       bookmark,

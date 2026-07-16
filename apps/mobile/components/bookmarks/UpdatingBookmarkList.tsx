@@ -1,8 +1,6 @@
-import { useEffect, useState } from "react";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import useAppSettings from "@/lib/settings";
 import { useOfflineBookmarks } from "@/lib/offline/hooks";
-import { isOnline } from "@/lib/offline/syncEngine";
 
 import type { ZGetBookmarksRequest } from "@karakeep/shared/types/bookmarks";
 import { useTRPC } from "@karakeep/shared-react/trpc";
@@ -28,17 +26,10 @@ export default function UpdatingBookmarkList({
     tagId: query.tagId,
     sortOrder: settings.bookmarkSortOrder,
   });
-  const [useOfflineFirst, setUseOfflineFirst] = useState(false);
 
-  useEffect(() => {
-    void (async () => {
-      if (!settings.offlineEnabled) {
-        setUseOfflineFirst(false);
-        return;
-      }
-      setUseOfflineFirst(!(await isOnline(settings)));
-    })();
-  }, [settings]);
+  // When offline mode is on, SQLite is the source of truth for the list.
+  // Background sync fills the cache; we never wait on the network query.
+  const useOfflineFirst = settings.offlineEnabled;
 
   const {
     data,
@@ -65,7 +56,12 @@ export default function UpdatingBookmarkList({
   );
 
   if (useOfflineFirst) {
-    if (offline.isLoading) {
+    const waitingForFirstSyncRows =
+      offline.bookmarks.length === 0 && offline.syncState === "syncing";
+    if (
+      (offline.isLoading && offline.bookmarks.length === 0) ||
+      waitingForFirstSyncRows
+    ) {
       return <FullPageSpinner />;
     }
     return (
@@ -81,44 +77,16 @@ export default function UpdatingBookmarkList({
   }
 
   if (error) {
-    if (settings.offlineEnabled && offline.bookmarks.length > 0) {
-      return (
-        <BookmarkList
-          bookmarks={offline.bookmarks.filter(
-            (b) => b.content.type != BookmarkTypes.UNKNOWN,
-          )}
-          header={header}
-          onRefresh={() => {
-            void refetch();
-            void offline.refresh();
-          }}
-          isRefreshing={offline.isLoading}
-        />
-      );
-    }
     return <FullPageError error={error.message} onRetry={() => refetch()} />;
   }
 
   if (isPending || !data) {
-    if (settings.offlineEnabled && offline.bookmarks.length > 0) {
-      return (
-        <BookmarkList
-          bookmarks={offline.bookmarks.filter(
-            (b) => b.content.type != BookmarkTypes.UNKNOWN,
-          )}
-          header={header}
-          onRefresh={() => offline.refresh()}
-          isRefreshing={offline.isLoading}
-        />
-      );
-    }
     return <FullPageSpinner />;
   }
 
   const onRefresh = () => {
     queryClient.invalidateQueries(api.bookmarks.getBookmarks.pathFilter());
     queryClient.invalidateQueries(api.bookmarks.getBookmark.pathFilter());
-    void offline.refresh();
   };
 
   return (

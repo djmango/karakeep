@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AppState } from "react-native";
 import NetInfo from "@react-native-community/netinfo";
 
@@ -67,24 +67,33 @@ export function useOfflineBookmarks(query: {
     Awaited<ReturnType<typeof import("./repository").listBookmarks>>
   >([]);
   const [isLoading, setIsLoading] = useState(true);
+  const hasLoadedOnce = useRef(false);
   const syncState = useOfflineStore((s) => s.syncState);
+  const cacheGeneration = useOfflineStore((s) => s.cacheGeneration);
 
   const refresh = useCallback(async () => {
-    setIsLoading(true);
-    const { listBookmarks } = await import("./repository");
-    const rows = await listBookmarks({
-      archived: query.archived,
-      favourited: query.favourited,
-      tagId: query.tagId,
-      sortOrder: query.sortOrder,
-    });
-    setBookmarks(rows);
-    setIsLoading(false);
+    // Only full-page load on the first read; mid-sync refreshes update quietly.
+    if (!hasLoadedOnce.current) {
+      setIsLoading(true);
+    }
+    try {
+      const { listBookmarks } = await import("./repository");
+      const rows = await listBookmarks({
+        archived: query.archived,
+        favourited: query.favourited,
+        tagId: query.tagId,
+        sortOrder: query.sortOrder,
+      });
+      setBookmarks(rows);
+    } finally {
+      hasLoadedOnce.current = true;
+      setIsLoading(false);
+    }
   }, [query.archived, query.favourited, query.sortOrder, query.tagId]);
 
   useEffect(() => {
     void refresh();
-  }, [refresh, syncState]);
+  }, [refresh, syncState, cacheGeneration]);
 
   return {
     bookmarks,
@@ -137,9 +146,12 @@ export function useOfflineSearch(query: string) {
         return;
       }
       setIsLoading(true);
-      const { searchOfflineBookmarks } = await import("./search");
-      setResults(await searchOfflineBookmarks(query));
-      setIsLoading(false);
+      try {
+        const { searchOfflineBookmarks } = await import("./search");
+        setResults(await searchOfflineBookmarks(query));
+      } finally {
+        setIsLoading(false);
+      }
     })();
   }, [query]);
 
