@@ -78,7 +78,9 @@ export default function Lists() {
   const { settings } = useAppSettings();
   const online = useIsAppOnline();
   const [refreshing, setRefreshing] = useState(false);
-  const listsEnabled = !settings.offlineEnabled || online !== false;
+  // Only hit the network when we know we're online. `online === null` used to
+  // still fire requests and surface "Network request failed" offline.
+  const listsEnabled = !settings.offlineEnabled || online === true;
   const {
     data: lists,
     isPending,
@@ -116,11 +118,7 @@ export default function Lists() {
     setRefreshing(isPending);
   }, [isPending]);
 
-  if (error) {
-    return <FullPageError error={error.message} onRetry={() => refetch()} />;
-  }
-
-  if (settings.offlineEnabled && online === false && !lists) {
+  if (settings.offlineEnabled && online !== true && !lists) {
     return (
       <EmptyState
         icon={ListIcon}
@@ -128,6 +126,10 @@ export default function Lists() {
         subtitle="Connect to the internet to browse lists"
       />
     );
+  }
+
+  if (error) {
+    return <FullPageError error={error.message} onRetry={() => refetch()} />;
   }
 
   if (!lists) {

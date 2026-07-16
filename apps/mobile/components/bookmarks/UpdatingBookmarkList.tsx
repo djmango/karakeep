@@ -81,11 +81,29 @@ export default function UpdatingBookmarkList({
   }
 
   // Network failed but we have a local cache — serve it instead of a dead end.
+  // Also treat generic RN offline errors as offline even if NetInfo is still
+  // "unknown" / optimistic, so we don't strand the user on "Network request failed".
   if (error && offline.bookmarks.length > 0) {
     return offlineList;
   }
 
   if (error) {
+    const msg = error.message || "";
+    const looksOffline =
+      online === false ||
+      /network request failed|failed to fetch|network error|timeout/i.test(msg);
+    if (looksOffline) {
+      return (
+        <FullPageError
+          error={
+            offline.bookmarks.length === 0
+              ? "You're offline and no bookmarks are cached yet. Go online, enable Offline mode, and sync once."
+              : msg
+          }
+          onRetry={() => refetch()}
+        />
+      );
+    }
     return <FullPageError error={error.message} onRetry={() => refetch()} />;
   }
 
@@ -102,6 +120,10 @@ export default function UpdatingBookmarkList({
           onRetry={() => refetch()}
         />
       );
+    }
+    // Local cache available while connectivity is still unknown / network pending.
+    if (!offline.isLoading && offline.bookmarks.length > 0) {
+      return offlineList;
     }
     return <FullPageSpinner />;
   }

@@ -117,6 +117,43 @@ const zSettingsSchema = z.object({
 
 export type Settings = z.infer<typeof zSettingsSchema>;
 
+/** Make sure Download is on the main toolbar (or at least known to settings). */
+export function ensureDownloadToolbarAction(settings: Settings): Settings {
+  const toolbarActions = [...settings.toolbarActions];
+  const overflowActions = [...(settings.overflowActions ?? [])];
+  const knownIds = new Set([...toolbarActions, ...overflowActions]);
+
+  if (!knownIds.has("download")) {
+    const shareIdx = toolbarActions.indexOf("share");
+    if (shareIdx >= 0) {
+      toolbarActions.splice(shareIdx, 0, "download");
+    } else {
+      toolbarActions.push("download");
+    }
+  } else if (
+    overflowActions.includes("download") &&
+    !toolbarActions.includes("download")
+  ) {
+    // Prefer main bar over overflow for discoverability.
+    overflowActions.splice(overflowActions.indexOf("download"), 1);
+    const shareIdx = toolbarActions.indexOf("share");
+    if (shareIdx >= 0) {
+      toolbarActions.splice(shareIdx, 0, "download");
+    } else {
+      toolbarActions.push("download");
+    }
+  }
+
+  const stillMissing = zToolbarActionId.options.filter(
+    (id) => !toolbarActions.includes(id) && !overflowActions.includes(id),
+  );
+  if (stillMissing.length > 0) {
+    overflowActions.push(...stillMissing);
+  }
+
+  return { ...settings, toolbarActions, overflowActions };
+}
+
 interface AppSettingsState {
   settings: { isLoading: boolean; settings: Settings };
   setSettings: (settings: Settings) => Promise<void>;
@@ -201,32 +238,29 @@ const useSettings = create<AppSettingsState>((set, get) => ({
       return;
     }
 
-    // Ensure any new action IDs (added in future updates) appear in overflow
-    const knownIds = new Set([
-      ...parsed.data.toolbarActions,
-      ...parsed.data.overflowActions,
-    ]);
-    // Download belongs on the main toolbar, not buried in overflow.
-    if (!knownIds.has("download")) {
-      const shareIdx = parsed.data.toolbarActions.indexOf("share");
-      if (shareIdx >= 0) {
-        parsed.data.toolbarActions.splice(shareIdx, 0, "download");
-      } else {
-        parsed.data.toolbarActions.push("download");
-      }
-      knownIds.add("download");
-    }
-    const missing = zToolbarActionId.options.filter((id) => !knownIds.has(id));
-    if (missing.length > 0) {
-      parsed.data.overflowActions = [
-        ...parsed.data.overflowActions,
-        ...missing,
-      ];
-    }
+    const migrated = ensureDownloadToolbarAction(parsed.data);
 
     set((_state) => ({
-      settings: { isLoading: false, settings: parsed.data },
+      settings: { isLoading: false, settings: migrated },
     }));
+
+    // Persist so Toolbar Settings / next launches keep Download visible.
+    if (
+      migrated.toolbarActions.join(",") !==
+        parsed.data.toolbarActions.join(",") ||
+      (migrated.overflowActions ?? []).join(",") !==
+        (parsed.data.overflowActions ?? []).join(",")
+    ) {
+      try {
+        await SecureStore.setItemAsync(
+          SETTING_NAME,
+          JSON.stringify(migrated),
+          SECURE_STORE_OPTIONS,
+        );
+      } catch (err) {
+        console.warn("[settings] Failed to persist toolbar migration", err);
+      }
+    }
   },
 }));
 

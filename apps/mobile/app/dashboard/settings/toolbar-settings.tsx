@@ -14,7 +14,7 @@ import useAppSettings, {
 } from "@/lib/settings";
 import { GripVertical, Minus, Plus } from "lucide-react-native";
 
-const MAX_VISIBLE = 6;
+const MAX_VISIBLE = 7;
 
 export default function ToolbarSettingsPage() {
   const { settings, setSettings } = useAppSettings();

@@ -124,34 +124,42 @@ export function BookmarkLinkReaderPreview({
     setOfflineChecked(false);
     setOfflineSeedError(null);
     void (async () => {
-      if (!settings.offlineEnabled) {
-        if (!cancelled) {
-          setOfflineHtml(null);
-          setOfflineChecked(true);
-        }
-        return;
-      }
-
+      // Prefer local HTML whenever it exists — even if Offline mode is off —
+      // so airplane-mode opens don't hang on a dead includeContent fetch.
       let html = await resolveOfflineReaderHtml(bookmark);
-      if (!html && (await isOnline(settings))) {
-        try {
-          const seeded = await seedBookmarkFromNetwork(
-            client,
-            settings,
-            bookmark.id,
-          );
-          html = await resolveOfflineReaderHtml(seeded);
-        } catch (err) {
-          if (!cancelled) {
-            setOfflineSeedError(
-              err instanceof Error ? err.message : "Failed to download article",
-            );
-          }
-        }
-      }
       if (!cancelled) {
         setOfflineHtml(html);
         setOfflineChecked(true);
+      }
+      if (html || cancelled || !settings.offlineEnabled) {
+        return;
+      }
+
+      if (!(await isOnline(settings))) {
+        return;
+      }
+      try {
+        const seeded = await seedBookmarkFromNetwork(
+          client,
+          settings,
+          bookmark.id,
+        );
+        if (cancelled) {
+          return;
+        }
+        html = await resolveOfflineReaderHtml(seeded);
+        setOfflineHtml(html);
+        if (!html) {
+          setOfflineSeedError(
+            "Article content is not available offline yet. Connect and sync, then try again.",
+          );
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setOfflineSeedError(
+            err instanceof Error ? err.message : "Failed to download article",
+          );
+        }
       }
     })();
     return () => {
@@ -159,7 +167,9 @@ export function BookmarkLinkReaderPreview({
     };
   }, [bookmark, client, settings, offlineRetry]);
 
-  const useLocalReader = settings.offlineEnabled && offlineChecked;
+  // Use local HTML if we have it, or when Offline mode is on (show empty/error).
+  const useLocalReader =
+    offlineChecked && (!!offlineHtml || settings.offlineEnabled);
 
   const {
     data: bookmarkWithContent,
@@ -173,7 +183,9 @@ export function BookmarkLinkReaderPreview({
         includeContent: true,
       },
       {
-        enabled: !settings.offlineEnabled,
+        // Skip network when Offline mode is on or local HTML already resolved.
+        enabled: !settings.offlineEnabled && offlineChecked && !offlineHtml,
+        retry: false,
       },
     ),
   );
@@ -184,7 +196,7 @@ export function BookmarkLinkReaderPreview({
         bookmarkId: bookmark.id,
       },
       {
-        enabled: !settings.offlineEnabled,
+        enabled: !settings.offlineEnabled && offlineChecked && !offlineHtml,
         retry: false,
       },
     ),
@@ -218,7 +230,10 @@ export function BookmarkLinkReaderPreview({
     setViewingImage(src);
   }, []);
 
-  if (settings.offlineEnabled && !offlineChecked) {
+  // Wait for the local-cache check whether Offline mode is on or off.
+  // Previously we only waited when Offline was on, so the online path threw
+  // "Wrong content type rendered" while bookmarkWithContent was still undefined.
+  if (!offlineChecked) {
     return <FullPageSpinner />;
   }
 
@@ -237,16 +252,32 @@ export function BookmarkLinkReaderPreview({
       );
     }
   } else {
-    if (isLoading) {
+    if (error) {
+      return (
+        <FullPageError
+          error={
+            /network request failed|failed to fetch|network error/i.test(
+              error.message,
+            )
+              ? "You're offline and this article isn't cached yet. Enable Offline mode while online, sync, then retry."
+              : error.message
+          }
+          onRetry={refetch}
+        />
+      );
+    }
+
+    if (isLoading || !bookmarkWithContent) {
       return <FullPageSpinner />;
     }
 
-    if (error) {
-      return <FullPageError error={error.message} onRetry={refetch} />;
-    }
-
-    if (bookmarkWithContent?.content.type !== BookmarkTypes.LINK) {
-      throw new Error("Wrong content type rendered");
+    if (bookmarkWithContent.content.type !== BookmarkTypes.LINK) {
+      return (
+        <FullPageError
+          error="This bookmark isn't a link article, so the reader can't open it."
+          onRetry={refetch}
+        />
+      );
     }
   }
 

@@ -40,6 +40,19 @@ function bumpCache() {
 
 const ONLINE_PROBE_MS = 3000;
 const SYNC_HARD_TIMEOUT_MS = 60_000;
+const SEED_TIMEOUT_MS = 8_000;
+
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string) {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(
+        () => reject(new Error(`${label} timed out after ${ms}ms`)),
+        ms,
+      ),
+    ),
+  ]);
+}
 
 export async function isOnline(settings: Settings): Promise<boolean> {
   if (__DEV__) {
@@ -312,10 +325,14 @@ export async function seedBookmarkFromNetwork(
   settings: Settings,
   bookmarkId: string,
 ) {
-  const bookmark = await client.bookmarks.getBookmark.query({
-    bookmarkId,
-    includeContent: true,
-  });
+  const bookmark = await withTimeout(
+    client.bookmarks.getBookmark.query({
+      bookmarkId,
+      includeContent: true,
+    }),
+    SEED_TIMEOUT_MS,
+    "seedBookmarkFromNetwork",
+  );
   await upsertBookmark(bookmark);
   bumpCache();
   // Don't block bookmark open on asset downloads — pin so they stay durable.
