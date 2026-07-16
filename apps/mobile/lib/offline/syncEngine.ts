@@ -235,18 +235,15 @@ async function runOfflineSyncInner(
       } catch (err) {
         console.warn("[offline-sync] background content enrich failed", err);
       }
-      // Mark bookmarks with durable local HTML as downloaded, and cache
-      // /api/assets/... images referenced inside the article HTML.
+      // Cache article images for offline reading, but don't mark everything as
+      // "downloaded" — that flag is reserved for open/explicit download so the
+      // green button can still be cleared by the user.
       if (settings.offlineCacheReaderHtml) {
         for (const bookmark of bookmarksToMirror) {
           try {
             const html = await resolveOfflineReaderHtml(bookmark);
             if (html) {
-              await mirrorHtmlReferencedAssets(html, bookmark.id, settings, {
-                durable: true,
-              });
-              await pinAssetsForBookmark(bookmark.id);
-              await markBookmarkDownloaded(bookmark.id, true);
+              await mirrorHtmlReferencedAssets(html, bookmark.id, settings);
             }
           } catch {
             // best effort

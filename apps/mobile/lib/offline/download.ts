@@ -12,6 +12,7 @@ import {
 } from "./assetMirror";
 import { resolveOfflineReaderHtml } from "./readerHtml";
 import {
+  deleteCachedAssetsForBookmark,
   getBookmarkById,
   isBookmarkDownloaded,
   markBookmarkDownloaded,
@@ -70,19 +71,31 @@ export async function downloadBookmarkForOffline(
 export async function getBookmarkDownloadStatus(bookmarkId: string): Promise<{
   downloaded: boolean;
 }> {
-  if (await isBookmarkDownloaded(bookmarkId)) {
-    return { downloaded: true };
-  }
-  // Legacy: treat existing local reader HTML as already downloaded, then pin it.
+  // Only the explicit downloaded flag — don't infer from cached HTML, or the
+  // green button can never be turned off (sync/open would re-mark it).
+  return { downloaded: await isBookmarkDownloaded(bookmarkId) };
+}
+
+/**
+ * Remove the durable offline pack for a bookmark (HTML + pinned assets).
+ * Does not delete the bookmark itself. Opening it again while online may
+ * re-download automatically.
+ */
+export async function removeBookmarkOfflineDownload(
+  bookmarkId: string,
+): Promise<void> {
   const local = await getBookmarkById(bookmarkId);
-  if (!local) {
-    return { downloaded: false };
+  if (local?.content.type === "link" && local.content.htmlContent) {
+    await upsertBookmark({
+      ...local,
+      content: {
+        ...local.content,
+        htmlContent: null,
+      },
+    });
   }
-  const html = await resolveOfflineReaderHtml(local);
-  if (!html) {
-    return { downloaded: false };
-  }
-  await pinAssetsForBookmark(bookmarkId);
-  await markBookmarkDownloaded(bookmarkId, true);
-  return { downloaded: true };
+
+  await deleteCachedAssetsForBookmark(bookmarkId);
+  await markBookmarkDownloaded(bookmarkId, false);
+  useOfflineStore.getState().bumpCacheGeneration();
 }

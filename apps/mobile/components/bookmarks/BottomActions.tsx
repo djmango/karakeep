@@ -126,6 +126,7 @@ function useToolbarActions(bookmark: ZBookmark) {
     downloaded,
     isDownloading,
     download: downloadBookmark,
+    remove: removeOfflineDownload,
   } = useBookmarkDownload(bookmark.id);
 
   const isOwner = currentUser?.id === bookmark.userId;
@@ -301,7 +302,38 @@ function useToolbarActions(bookmark: ZBookmark) {
         (bookmark.content.type === BookmarkTypes.LINK ||
           bookmark.content.type === BookmarkTypes.ASSET),
       onClick: () => {
-        if (downloaded || isDownloading) {
+        if (isDownloading) {
+          return;
+        }
+        if (downloaded) {
+          Alert.alert(
+            "Remove offline copy?",
+            "Frees local storage. The bookmark stays. Opening it again while online will re-download.",
+            [
+              { text: "Cancel", style: "cancel" },
+              {
+                text: "Remove",
+                style: "destructive",
+                onPress: () => {
+                  triggerHaptic();
+                  void removeOfflineDownload()
+                    .then(() => {
+                      toast({
+                        message: "Removed offline copy",
+                        showProgress: false,
+                      });
+                    })
+                    .catch(() => {
+                      toast({
+                        message: "Failed to remove offline copy",
+                        variant: "destructive",
+                        showProgress: false,
+                      });
+                    });
+                },
+              },
+            ],
+          );
           return;
         }
         triggerHaptic();
@@ -320,7 +352,7 @@ function useToolbarActions(bookmark: ZBookmark) {
             });
           });
       },
-      disabled: isDownloading || downloaded,
+      disabled: isDownloading,
     },
     delete: {
       id: "delete",
@@ -343,7 +375,7 @@ function useToolbarActions(bookmark: ZBookmark) {
     .map((id) => allActions[id])
     .filter((a): a is ToolbarAction => a !== undefined);
 
-  return { barActions, overflowActions, allActions };
+  return { barActions, overflowActions, allActions, downloaded };
 }
 
 function ToolbarContainer({
@@ -412,7 +444,7 @@ interface BottomActionsProps {
 }
 
 export default function BottomActions({ bookmark }: BottomActionsProps) {
-  const { barActions, overflowActions, allActions } =
+  const { barActions, overflowActions, allActions, downloaded } =
     useToolbarActions(bookmark);
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -427,8 +459,8 @@ export default function BottomActions({ bookmark }: BottomActionsProps) {
       const meta = TOOLBAR_ACTION_REGISTRY[a.id];
       const title =
         a.id === "download"
-          ? a.disabled
-            ? "Downloaded"
+          ? downloaded
+            ? "Remove Offline Copy"
             : "Download for Offline"
           : meta.render(bookmark);
       return {
@@ -436,15 +468,19 @@ export default function BottomActions({ bookmark }: BottomActionsProps) {
         title,
         image: Platform.select({
           ios:
-            a.id === "download" && a.disabled
+            a.id === "download" && downloaded
               ? "checkmark.circle.fill"
               : meta.sfSymbol,
           default: undefined,
         }),
         imageColor:
-          a.id === "delete" ? destructiveMenuIconColor : menuIconColor,
+          a.id === "delete" || (a.id === "download" && downloaded)
+            ? destructiveMenuIconColor
+            : menuIconColor,
         attributes: {
-          ...(a.id === "delete" && { destructive: true as const }),
+          ...((a.id === "delete" || (a.id === "download" && downloaded)) && {
+            destructive: true as const,
+          }),
           ...(a.disabled && { disabled: true as const }),
         },
       };
