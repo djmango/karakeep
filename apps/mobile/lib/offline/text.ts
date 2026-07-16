@@ -1,1 +1,4 @@
-export { bookmarkSearchBody, stripHtmlToText } from "@karakeep/shared/offlineText";
+export {
+  bookmarkSearchBody,
+  stripHtmlToText,
+} from "@karakeep/shared/offlineText";

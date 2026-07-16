@@ -17,9 +17,7 @@ import {
 import { getBookmarkListIds } from "@/lib/offline/repository";
 import useAppSettings from "@/lib/settings";
 import { isOnline } from "@/lib/offline/syncEngine";
-import {
-  useBookmarkLists,
-} from "@karakeep/shared-react/hooks/lists";
+import { useBookmarkLists } from "@karakeep/shared-react/hooks/lists";
 import { useTRPC } from "@karakeep/shared-react/trpc";
 
 const ListPickerPage = () => {

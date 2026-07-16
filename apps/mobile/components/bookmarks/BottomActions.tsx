@@ -25,10 +25,7 @@ import {
   Trash2,
 } from "lucide-react-native";
 
-import {
-  useDeleteBookmark,
-  useUpdateBookmark,
-} from "@/lib/offline/mutations";
+import { useDeleteBookmark, useUpdateBookmark } from "@/lib/offline/mutations";
 import { useWhoAmI } from "@karakeep/shared-react/hooks/users";
 import { BookmarkTypes, ZBookmark } from "@karakeep/shared/types/bookmarks";
 

@@ -1,5 +1,9 @@
 const IS_DEV = process.env.APP_VARIANT === "development";
 
+const IOS_APP_GROUP = IS_DEV
+  ? "group.gg.skg.karakeep.dev"
+  : "group.gg.skg.karakeep";
+
 export default {
   expo: {
     ...(IS_DEV
@@ -11,13 +15,10 @@ export default {
           name: "Karakeep",
           scheme: "karakeep",
         }),
-    slug: "hoarder",
+    slug: "karakeep-skg",
     version: "1.9.5",
     orientation: "portrait",
-    icon: {
-      light: "./assets/icon.png",
-      tinted: "./assets/icon-tinted.png",
-    },
+    icon: "./assets/icon.png",
     experiments: {
       reactCanary: true,
     },
@@ -25,9 +26,8 @@ export default {
     assetBundlePatterns: ["**/*"],
     ios: {
       supportsTablet: true,
-      bundleIdentifier: IS_DEV
-        ? "app.hoarder.hoardermobile.dev"
-        : "app.hoarder.hoardermobile",
+      appleTeamId: "A95F4H2423",
+      bundleIdentifier: IS_DEV ? "karakeep.skg.gg" : "gg.skg.karakeep",
       splash: {
         image: "./assets/splash.png",
         resizeMode: "contain",
@@ -46,7 +46,7 @@ export default {
           NSAllowsArbitraryLoads: true,
         },
       },
-      buildNumber: "42",
+      buildNumber: "43",
     },
     android: {
       adaptiveIcon: {
@@ -64,10 +64,8 @@ export default {
           backgroundColor: "#000000",
         },
       },
-      package: IS_DEV
-        ? "app.hoarder.hoardermobile.dev"
-        : "app.hoarder.hoardermobile",
-      versionCode: 42,
+      package: IS_DEV ? "karakeep.skg.gg" : "gg.skg.karakeep",
+      versionCode: 43,
     },
     plugins: [
       "./plugins/trust-local-certs.js",
@@ -76,6 +74,10 @@ export default {
       [
         "expo-share-intent",
         {
+          iosAppGroupIdentifier: IOS_APP_GROUP,
+          iosShareExtensionBundleIdentifier: IS_DEV
+            ? "karakeep.skg.gg.share-extension"
+            : "gg.skg.karakeep.share-extension",
           iosActivationRules: {
             NSExtensionActivationSupportsWebURLWithMaxCount: 1,
             NSExtensionActivationSupportsWebPageWithMaxCount: 1,
@@ -122,7 +124,7 @@ export default {
         origin: false,
       },
       eas: {
-        projectId: "d6d14643-ad43-4cd3-902a-92c5944d5e45",
+        projectId: "b5555997-af97-4a6a-b507-4d5db492cb87",
       },
     },
   },

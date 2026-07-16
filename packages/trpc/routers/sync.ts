@@ -13,7 +13,11 @@ import { zNewBookmarkRequestSchema } from "@karakeep/shared/types/bookmarks";
 import { zManipulatedTagSchema } from "@karakeep/shared/types/bookmarks";
 
 import type { AuthedContext } from "../index";
-import { createCallerFactory, createScopedAuthedProcedure, router } from "../index";
+import {
+  createCallerFactory,
+  createScopedAuthedProcedure,
+  router,
+} from "../index";
 import { Bookmark } from "../models/bookmarks";
 import {
   getLatestSyncSequence,
@@ -101,7 +105,9 @@ export const syncAppRouter = router({
         try {
           switch (operation.type) {
             case "bookmark.create": {
-              const payload = zNewBookmarkRequestSchema.parse(operation.payload);
+              const payload = zNewBookmarkRequestSchema.parse(
+                operation.payload,
+              );
               const bookmark = await bookmarksCaller.createBookmark(payload);
               await markOperationApplied(ctx, operation.id);
               results.push({

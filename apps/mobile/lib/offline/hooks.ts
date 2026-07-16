@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { AppState } from "react-native";
 import NetInfo from "@react-native-community/netinfo";
 
-import { useTRPC } from "@karakeep/shared-react/trpc";
+import { useTRPCClient } from "@karakeep/shared-react/trpc";
 
 import useAppSettings from "@/lib/settings";
 
@@ -11,7 +11,7 @@ import { runOfflineSync } from "./syncEngine";
 import { useOfflineStore } from "./store";
 
 export function useOfflineSyncLifecycle() {
-  const api = useTRPC();
+  const client = useTRPCClient();
   const { settings } = useAppSettings();
   const { setSyncState, setPendingCount, setLastSyncedAt } = useOfflineStore();
 
@@ -21,7 +21,7 @@ export function useOfflineSyncLifecycle() {
     }
     setSyncState("syncing");
     try {
-      const state = await runOfflineSync(api, settings);
+      const state = await runOfflineSync(client, settings);
       setSyncState(state);
       setLastSyncedAt(new Date().toISOString());
     } catch {
@@ -29,7 +29,7 @@ export function useOfflineSyncLifecycle() {
     } finally {
       setPendingCount(await getPendingSyncCount());
     }
-  }, [api, settings, setLastSyncedAt, setPendingCount, setSyncState]);
+  }, [client, settings, setLastSyncedAt, setPendingCount, setSyncState]);
 
   useEffect(() => {
     if (!settings.offlineEnabled) {
@@ -63,9 +63,9 @@ export function useOfflineBookmarks(query: {
   tagId?: string;
   sortOrder?: "asc" | "desc";
 }) {
-  const [bookmarks, setBookmarks] = useState<Awaited<
-    ReturnType<typeof import("./repository").listBookmarks>
-  >>([]);
+  const [bookmarks, setBookmarks] = useState<
+    Awaited<ReturnType<typeof import("./repository").listBookmarks>>
+  >([]);
   const [isLoading, setIsLoading] = useState(true);
   const syncState = useOfflineStore((s) => s.syncState);
 
@@ -95,10 +95,11 @@ export function useOfflineBookmarks(query: {
 }
 
 export function useOfflineBookmark(bookmarkId: string | undefined) {
-  const [bookmark, setBookmark] = useState<Awaited<
-    ReturnType<typeof import("./repository").getBookmarkById>
-  >>(null);
-  const api = useTRPC();
+  const [bookmark, setBookmark] =
+    useState<
+      Awaited<ReturnType<typeof import("./repository").getBookmarkById>>
+    >(null);
+  const client = useTRPCClient();
   const { settings } = useAppSettings();
 
   useEffect(() => {
@@ -111,14 +112,14 @@ export function useOfflineBookmark(bookmarkId: string | undefined) {
       if (!local && settings.offlineEnabled) {
         try {
           const { seedBookmarkFromNetwork } = await import("./syncEngine");
-          local = await seedBookmarkFromNetwork(api, settings, bookmarkId);
+          local = await seedBookmarkFromNetwork(client, settings, bookmarkId);
         } catch {
           local = await getBookmarkById(bookmarkId);
         }
       }
       setBookmark(local);
     })();
-  }, [api, bookmarkId, settings]);
+  }, [client, bookmarkId, settings]);
 
   return bookmark;
 }
