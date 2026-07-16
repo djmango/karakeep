@@ -125,7 +125,10 @@ function extractReadableContent(
     const purifyWindow = new JSDOM("").window;
     try {
       const purify = DOMPurify(purifyWindow);
-      const purifiedHTML = purify.sanitize(readableContent.content);
+      // Keep MathML so browsers can render equations; scripts still stripped.
+      const purifiedHTML = purify.sanitize(readableContent.content, {
+        USE_PROFILES: { html: true, mathMl: true },
+      });
       return { content: purifiedHTML };
     } finally {
       purifyWindow.close();
@@ -167,7 +170,9 @@ async function main() {
     const purifyWindow = new JSDOM("").window;
     try {
       const purify = DOMPurify(purifyWindow);
-      const purifiedHTML = purify.sanitize(meta.readableContentHtml);
+      const purifiedHTML = purify.sanitize(meta.readableContentHtml, {
+        USE_PROFILES: { html: true, mathMl: true },
+      });
       readableContent = { content: purifiedHTML };
     } finally {
       purifyWindow.close();

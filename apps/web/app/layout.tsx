@@ -4,6 +4,7 @@ import { NuqsAdapter } from "nuqs/adapters/next/app";
 
 import "@karakeep/tailwind-config/globals.css";
 import "streamdown/styles.css";
+import "katex/dist/katex.min.css";
 
 import type { Viewport } from "next";
 import React from "react";

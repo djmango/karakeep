@@ -1,6 +1,7 @@
 "use dom";
 
 import "@/globals.css";
+import "katex/dist/katex.min.css";
 
 import { useEffect } from "react";
 
@@ -32,6 +33,7 @@ export default function BookmarkHtmlHighlighterDom({
   onSavePosition,
   onScrollPositionChange,
   assetAuth,
+  isDark = false,
 }: {
   htmlContent: string;
   contentStyle?: React.CSSProperties;
@@ -63,8 +65,15 @@ export default function BookmarkHtmlHighlighterDom({
     serverAddress: string;
     headers: Record<string, string>;
   };
+  /** Enables Tailwind `dark:prose-invert` inside the Expo DOM reader. */
+  isDark?: boolean;
   dom?: import("expo/dom").DOMProps;
 }) {
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", isDark);
+    document.body.classList.toggle("dark", isDark);
+  }, [isDark]);
+
   // Strip href from links so the browser treats them as regular selectable text
   // instead of activating native link gestures (iOS preview, Android drag).
   // The URL is preserved in data-href for our click handler.

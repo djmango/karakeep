@@ -5,7 +5,10 @@ import {
   ReaderSettingsProvider as BaseReaderSettingsProvider,
   useReaderSettingsContext,
 } from "@karakeep/shared-react/hooks/reader-settings";
-import { ReaderSettingsPartial } from "@karakeep/shared/types/readers";
+import {
+  READER_FONT_FAMILIES,
+  ReaderSettingsPartial,
+} from "@karakeep/shared/types/readers";
 import { ZReaderFontFamily } from "@karakeep/shared/types/users";
 
 import { useSettings } from "./settings";
@@ -30,12 +33,8 @@ export const MOBILE_FONT_FAMILIES: Record<
   },
 })!;
 
-// Font families for WebView HTML content (CSS font stacks)
-export const WEBVIEW_FONT_FAMILIES: Record<ZReaderFontFamily, string> = {
-  serif: "Georgia, 'Times New Roman', serif",
-  sans: "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif",
-  mono: "ui-monospace, Menlo, Monaco, 'Courier New', monospace",
-} as const;
+// Match the web reader CSS stacks so article typography looks the same.
+export const WEBVIEW_FONT_FAMILIES = READER_FONT_FAMILIES;
 
 /**
  * Mobile-specific provider for reader settings.
