@@ -4,8 +4,7 @@
   "main": "index.ts",
   "scripts": {
     "clean": "git clean -xdf .expo .turbo node_modules",
-    "clean:prebuild": "APP_VARIANT=development expo prebuild --no-install --clean",
-    "expo": "expo",
+    "clean:prebuild": "APP_VARIANT=development npx expo prebuild --no-install --clean",
     "start": "expo start",
     "android": "APP_VARIANT=development expo run:android",
     "android:preview": "SENTRY_DISABLE_AUTO_UPLOAD=true APP_VARIANT=development pnpm run android --variant release",
@@ -40,14 +39,14 @@
     "clsx": "^2.1.0",
     "date-fns": "^3.6.0",
     "expo": "~54.0.31",
-    "expo-blur": "~55.0.8",
+    "expo-blur": "~15.0.8",
     "expo-build-properties": "~1.0.10",
     "expo-checkbox": "~5.0.8",
     "expo-clipboard": "~8.0.8",
     "expo-constants": "~18.0.13",
     "expo-dev-client": "~6.0.20",
     "expo-file-system": "~19.0.21",
-    "expo-glass-effect": "~55.0.10",
+    "expo-glass-effect": "~0.1.10",
     "expo-haptics": "~15.0.8",
     "expo-image": "~3.0.11",
     "expo-image-picker": "~17.0.10",
@@ -95,6 +94,26 @@
     "ajv": "latest",
     "tailwindcss": "^3.4.1",
     "typescript": "^5.9"
+  },
+  "expo": {
+    "install": {
+      "exclude": [
+        "@sentry/react-native",
+        "react",
+        "react-dom",
+        "@types/react",
+        "@react-native-community/slider",
+        "react-native-keyboard-controller",
+        "react-native-screens",
+        "expo",
+        "expo-dev-client",
+        "expo-file-system",
+        "expo-image-picker",
+        "expo-linking",
+        "expo-router",
+        "expo-web-browser"
+      ]
+    }
   },
   "private": true
 }

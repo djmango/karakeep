@@ -30,3 +30,8 @@ patchedDependencies:
 
 # Docker builds can prune packages that use one of the root patches.
 allowUnusedPatches: true
+
+# Keep a single React across the monorepo (avoids nested copies under workspace pkgs).
+overrides:
+  react: "19.2.6"
+  react-dom: "19.2.6"
