@@ -33,7 +33,7 @@
     "scripts": ["src/background/background.ts"]
   },
   "options_ui": {
-    "page": "index.html#options",
+    "page": "index.html#/options",
     "open_in_tab": false
   },
   "browser_specific_settings": {

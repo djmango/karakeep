@@ -16,7 +16,7 @@ import { Providers } from "./utils/providers.tsx";
 
 function App() {
   return (
-    <div className="w-96 p-4">
+    <div className="min-h-32 w-96 p-4">
       <Providers>
         <HashRouter>
           <Routes>
@@ -42,4 +42,8 @@ function App() {
   );
 }
 
-ReactDOM.createRoot(document.getElementById("root")!).render(<App />);
+const root = document.getElementById("root");
+if (!root) {
+  throw new Error("Karakeep popup root element missing");
+}
+ReactDOM.createRoot(root).render(<App />);
