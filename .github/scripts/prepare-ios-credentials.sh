@@ -55,11 +55,30 @@ if [[ ! "$APP_STORE_CONNECT_API_ISSUER_ID" =~ ^[0-9a-fA-F-]{36}$ ]]; then
   exit 1
 fi
 
+# The archive is only signed if a distribution identity is present. Automatic
+# signing cannot mint one on a fresh runner: the key it creates dies with the
+# runner, and a new run then hits the account's certificate limit (that is
+# exactly how the first two runs failed). A stored p12 gives every run the same
+# identity, so check it is really a p12 before promising the archive step one.
+have_cert=false
+if [[ -n "${IOS_DISTRIBUTION_CERTIFICATE_BASE64:-}" ]]; then
+  if ! printf '%s' "$IOS_DISTRIBUTION_CERTIFICATE_BASE64" | base64 --decode 2>/dev/null \
+      | head -c 2 | grep -q .; then
+    echo "::error::IOS_DISTRIBUTION_CERTIFICATE_BASE64 is not valid base64."
+    exit 1
+  fi
+  if [[ -z "${IOS_DISTRIBUTION_CERTIFICATE_PASSWORD:-}" ]]; then
+    echo "::error::IOS_DISTRIBUTION_CERTIFICATE_BASE64 is set but IOS_DISTRIBUTION_CERTIFICATE_PASSWORD is not."
+    exit 1
+  fi
+  have_cert=true
+fi
+
 {
   echo "APP_STORE_CONNECT_API_KEY_PATH=$key_path"
   echo "APP_STORE_CONNECT_API_KEY_ID=$APP_STORE_CONNECT_API_KEY_ID"
   echo "APP_STORE_CONNECT_API_ISSUER_ID=$APP_STORE_CONNECT_API_ISSUER_ID"
-  echo "HAVE_SIGNING_CERT=false"
+  echo "HAVE_SIGNING_CERT=$have_cert"
 } >> "$GITHUB_ENV"
 
 echo "   .p8 written ($(wc -c < "$key_path" | tr -d ' ') bytes), key id and issuer id loaded"
