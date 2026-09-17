@@ -1,0 +1,95 @@
+name: Install iOS signing material
+description: Import the Apple Distribution certificate, optional profiles, and App Store Connect API key from env (sops).
+
+runs:
+  using: composite
+  steps:
+    - name: Install Apple Distribution certificate
+      shell: bash
+      run: |
+        set -euo pipefail
+        KEYCHAIN_PASSWORD="${IOS_KEYCHAIN_PASSWORD:-karakeep-ci-keychain}"
+        CERTIFICATE_PATH="$RUNNER_TEMP/ios-distribution.p12"
+        KEYCHAIN_PATH="$RUNNER_TEMP/karakeep-ios.keychain-db"
+        echo "$IOS_DISTRIBUTION_CERTIFICATE_BASE64" | base64 --decode > "$CERTIFICATE_PATH"
+        security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+        security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+        security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+        # Make it the default as well as the unlocked one. Apple's own CI recipe
+        # does this, and without it a non-interactive build can still consult the
+        # *login* keychain, which no one has unlocked in a runner session: the
+        # archive then fails with "User interaction is not allowed" while Xcode
+        # gathers provisioning inputs, which reads like an Apple account problem
+        # rather than a keychain one.
+        security default-keychain -s "$KEYCHAIN_PATH"
+        security import "$CERTIFICATE_PATH" \
+          -P "$IOS_DISTRIBUTION_CERTIFICATE_PASSWORD" \
+          -A -t cert -f pkcs12 \
+          -k "$KEYCHAIN_PATH"
+        security set-key-partition-list \
+          -S apple-tool:,apple:,codesign: \
+          -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+        security list-keychains -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | sed -e 's/"//g')
+
+        # The chain has to be complete or codesign refuses the identity outright:
+        # "Warning: unable to build chain to self-signed root for signer" followed
+        # by errSecInternalComponent, and `security find-identity -v` then reports
+        # 0 valid identities for a certificate that is not expired - which reads
+        # like an expired or mismatched certificate and is neither. GitHub-hosted
+        # macOS images ship Apple's roots in the System keychain; this
+        # self-hosted VM does not (measured: the Apple Root CA count there is 0),
+        # which is why the identical workflow signed on a hosted runner and could
+        # not sign on the VM. Adding the roots to the build keychain fixes it
+        # without changing the machine.
+        CHAIN_DIR="$RUNNER_TEMP/apple-chain"
+        mkdir -p "$CHAIN_DIR"
+        add_apple_ca() {
+          local file="$1" url="$2" subject="$3"
+          if security find-certificate -c "$subject" "$KEYCHAIN_PATH" >/dev/null 2>&1; then
+            echo "already present: $subject"
+            return 0
+          fi
+          curl -fsSL -o "$CHAIN_DIR/$file" "$url"
+          security add-certificates -k "$KEYCHAIN_PATH" "$CHAIN_DIR/$file"
+          echo "added to the build keychain: $subject"
+        }
+        # The distribution certificate is issued by WWDR G3, which chains to
+        # Apple Root CA - G3.
+        add_apple_ca "AppleRootCA-G3.cer" \
+          "https://www.apple.com/certificateauthority/AppleRootCA-G3.cer" \
+          "Apple Root CA - G3"
+        add_apple_ca "AppleWWDRCAG3.cer" \
+          "https://www.apple.com/certificateauthority/AppleWWDRCAG3.cer" \
+          "Apple Worldwide Developer Relations Certification Authority"
+
+    - name: Install provisioning profiles
+      shell: bash
+      run: |
+        set -euo pipefail
+        if [[ -z "${IOS_PROVISIONING_PROFILES_BASE64:-}" ]]; then
+          echo "IOS_PROVISIONING_PROFILES_BASE64 not set; relying on Xcode automatic profile sync via ASC API."
+          exit 0
+        fi
+        PROFILES_DIR="$HOME/Library/MobileDevice/Provisioning Profiles"
+        mkdir -p "$PROFILES_DIR"
+        ARCHIVE="$RUNNER_TEMP/ios-profiles.tgz"
+        echo "$IOS_PROVISIONING_PROFILES_BASE64" | base64 --decode > "$ARCHIVE"
+        tar -xzf "$ARCHIVE" -C "$PROFILES_DIR"
+        echo "Installed $(find "$PROFILES_DIR" -name '*.mobileprovision' | wc -l | tr -d ' ') provisioning profile(s)."
+
+    - name: Install App Store Connect API key
+      shell: bash
+      run: |
+        set -euo pipefail
+        KEY_DIR="$HOME/.appstoreconnect/private_keys"
+        mkdir -p "$KEY_DIR" "$HOME/private_keys"
+        KEY_PATH="$KEY_DIR/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8"
+        printf '%s\n' "$APP_STORE_CONNECT_API_KEY" > "$KEY_PATH"
+        chmod 600 "$KEY_PATH"
+        ln -sf "$KEY_PATH" "$HOME/private_keys/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8"
+        {
+          echo "APP_STORE_CONNECT_API_KEY_PATH=$KEY_PATH"
+          echo "APPLE_API_KEY_PATH=$KEY_PATH"
+          echo "APPLE_API_KEY=${APP_STORE_CONNECT_API_KEY_ID}"
+          echo "APPLE_API_ISSUER=${APP_STORE_CONNECT_API_ISSUER_ID}"
+        } >> "$GITHUB_ENV"

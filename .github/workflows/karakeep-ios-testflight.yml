@@ -1,0 +1,82 @@
+name: karakeep-ios-testflight
+
+# Ships Karakeep to TestFlight from this public fork, where standard
+# GitHub-hosted runners (macOS included) are free. The monorepo copy of this
+# workflow cannot use hosted macOS: the private repository is billed and its
+# Actions spending limit is exhausted, so every hosted job there is refused.
+#
+# Signing / App Store Connect credentials live encrypted in
+# secrets/ci/apple.yaml (sops); the job decrypts them with the repository
+# secret SOPS_AGE_KEY. This repository is public, so the build log is public:
+# no step may echo a decrypted value.
+
+on:
+  push:
+    tags:
+      - "karakeep-ios-v*.*.*"
+      - "karakeep-ios-v*.*.*-alpha.*"
+      - "karakeep-ios-v*.*.*-beta.*"
+  workflow_dispatch:
+    inputs:
+      upload:
+        description: Upload the build to TestFlight (off = signed App Store export only)
+        type: boolean
+        default: true
+
+concurrency:
+  group: karakeep-ios-testflight-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  testflight:
+    name: Build and upload to TestFlight
+    runs-on: macos-26
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Verify iOS SDK
+        run: |
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-version
+
+      # The app is an Expo SDK 54 / RN 0.81 project; prebuild and CocoaPods want
+      # a modern node alongside the runner's Xcode toolchain.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install sops
+        run: |
+          brew install sops
+          sops --version
+
+      - name: Decrypt shared Apple team secrets
+        env:
+          SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
+          SOPS_AGE_SSH_PRIVATE_KEY: ${{ secrets.SOPS_AGE_SSH_PRIVATE_KEY }}
+        run: bash .github/scripts/decrypt-apple-ci.sh
+
+      - uses: ./.github/actions/install-ios-signing
+
+      - name: Archive, export, and upload to TestFlight
+        env:
+          KARAKEEP_TESTFLIGHT_UPLOAD: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.upload) }}
+        run: bash .github/scripts/karakeep-ios-archive.sh
+
+      - name: Upload IPA artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: karakeep-ios-ipa
+          path: apps/mobile/build/export/*.ipa
+          if-no-files-found: warn
+          retention-days: 14
