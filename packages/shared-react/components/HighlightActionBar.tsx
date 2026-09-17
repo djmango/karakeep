@@ -87,6 +87,15 @@ export default function HighlightActionBar({
     touchAction: "manipulation",
   };
 
+  // Secondary actions share a row with the swatches. The primary action gets a
+  // row of its own so it can never be squeezed or pushed onto a stray line.
+  const small: React.CSSProperties = {
+    ...button,
+    padding: "8px 8px",
+    fontSize: 13,
+    minHeight: 36,
+  };
+
   const copyText = () => {
     const value = text?.trim();
     if (!value || typeof navigator === "undefined" || !navigator.clipboard) {
@@ -145,7 +154,7 @@ export default function HighlightActionBar({
           display: "flex",
           alignItems: "center",
           gap: 8,
-          flexWrap: "wrap",
+          marginBottom: 8,
         }}
       >
         {SUPPORTED_HIGHLIGHT_COLORS.map((option) => (
@@ -156,9 +165,10 @@ export default function HighlightActionBar({
             aria-pressed={color === option}
             onClick={() => setColor(option)}
             style={{
-              width: 44,
-              height: 44,
-              borderRadius: 22,
+              width: 36,
+              height: 36,
+              flex: "0 0 auto",
+              borderRadius: 18,
               background: SWATCH_COLOR[option],
               border:
                 color === option ? `3px solid ${ink}` : "1px solid transparent",
@@ -170,7 +180,7 @@ export default function HighlightActionBar({
         <button
           type="button"
           onClick={() => setShowNote((value) => !value)}
-          style={button}
+          style={small}
         >
           Note
         </button>
@@ -178,18 +188,25 @@ export default function HighlightActionBar({
           type="button"
           onClick={copyText}
           disabled={!text}
-          style={{ ...button, color: text ? ink : muted }}
+          style={{ ...small, color: text ? ink : muted }}
         >
           {copied ? "Copied" : "Copy"}
         </button>
-        <button type="button" onClick={onCancel} style={button}>
-          Cancel
+        <button
+          type="button"
+          aria-label="Cancel"
+          onClick={onCancel}
+          style={{ ...small, minWidth: 40, fontSize: 15 }}
+        >
+          ✕
         </button>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         {mode === "edit" && onDelete && (
           <button
             type="button"
             onClick={onDelete}
-            style={{ ...button, color: "#dc2626" }}
+            style={{ ...button, color: "#dc2626", minWidth: 84 }}
           >
             Delete
           </button>
@@ -199,10 +216,13 @@ export default function HighlightActionBar({
           onClick={() => onSave(color, note.trim() ? note : null)}
           style={{
             ...button,
+            flex: 1,
             background: "#2563eb",
             borderColor: "#2563eb",
             color: "#ffffff",
-            minWidth: 96,
+            minHeight: 48,
+            fontSize: 16,
+            fontWeight: 600,
           }}
         >
           {mode === "create" ? "Highlight" : "Save"}
