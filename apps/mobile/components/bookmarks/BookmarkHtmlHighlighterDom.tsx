@@ -29,7 +29,9 @@ export default function BookmarkHtmlHighlighterDom({
   onImagePress,
   readingProgressOffset,
   readingProgressAnchor,
+  readingProgressPercent,
   restoreReadingPosition,
+  onRestoreResult,
   onSavePosition,
   onScrollPositionChange,
   assetAuth,
@@ -46,7 +48,10 @@ export default function BookmarkHtmlHighlighterDom({
   onImagePress?: (src: string) => void;
   readingProgressOffset?: number | null;
   readingProgressAnchor?: string | null;
+  readingProgressPercent?: number | null;
   restoreReadingPosition?: boolean;
+  /** Reports whether the reader managed to resume the saved position. */
+  onRestoreResult?: (restored: boolean) => void;
   onSavePosition?: (position: {
     offset: number;
     anchor: string;
@@ -222,6 +227,8 @@ export default function BookmarkHtmlHighlighterDom({
         restorePosition={restoreReadingPosition}
         readingProgressOffset={readingProgressOffset}
         readingProgressAnchor={readingProgressAnchor}
+        readingProgressPercent={readingProgressPercent}
+        onRestoreResult={onRestoreResult}
         showProgressBar
         progressBarStyle={{ position: "fixed" }}
       >

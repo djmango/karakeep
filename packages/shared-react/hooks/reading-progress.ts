@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type { ReadingPosition } from "@karakeep/shared/utils/reading-progress-dom";
+import { shouldResumeReading } from "@karakeep/shared/utils/reading-progress-dom";
 
 import { useTRPC } from "../trpc";
 
@@ -15,11 +16,14 @@ interface UseReadingProgressOptions {
  * Handles:
  * - Fetching reading progress via its own tRPC query
  * - Capturing initial reading position (stable across query re-fetches)
- * - "Continue reading" banner state and auto-dismiss on scroll past 15%
+ * - Resuming that position automatically on open, with the "Continue reading"
+ *   banner kept as the fallback for when the restore could not be applied
+ * - Banner auto-dismiss on scroll past 15%
  * - Lazy saving via onSavePosition (idle, visibility change, unmount)
  * - Deduplication of save calls by offset
  *
- * Pass the returned `onSavePosition` and `onScrollPositionChange` to ScrollProgressTracker.
+ * Pass the returned `onSavePosition`, `onScrollPositionChange`, `onRestoreResult`
+ * and position props to ScrollProgressTracker.
  */
 export function useReadingProgress({ bookmarkId }: UseReadingProgressOptions) {
   const api = useTRPC();
@@ -68,23 +72,31 @@ export function useReadingProgress({ bookmarkId }: UseReadingProgressOptions) {
   const initialAnchor = initialProgressRef.current?.anchor ?? null;
   const initialPercent = initialProgressRef.current?.percent ?? null;
 
-  // Banner state
+  // A saved position worth returning to. A finished article reopens at the top,
+  // and a position a few lines in is not worth a jump.
+  const canResume = shouldResumeReading(initialOffset, initialPercent);
+
+  // The reader resumes on its own. The banner is only the fallback for when the
+  // restore could not be applied (the article changed shape, the anchor is
+  // gone), where asking is better than silently starting at the top.
+  const [resumeFailed, setResumeFailed] = useState(false);
+  const [restoreRequestedAgain, setRestoreRequestedAgain] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState(false);
-  const [restoreRequested, setRestoreRequested] = useState(false);
-  const showBanner =
-    !!initialOffset &&
-    initialOffset > 0 &&
-    initialPercent != null &&
-    initialPercent >= 10 &&
-    initialPercent < 100 &&
-    !bannerDismissed;
+
+  const showBanner = canResume && resumeFailed && !bannerDismissed;
+  const restorePosition = (canResume && !resumeFailed) || restoreRequestedAgain;
+
+  const onRestoreResult = useCallback((restored: boolean) => {
+    setResumeFailed(!restored);
+  }, []);
 
   const bannerVisibleRef = useRef(false);
   bannerVisibleRef.current = showBanner;
 
   useEffect(() => {
+    setResumeFailed(false);
+    setRestoreRequestedAgain(false);
     setBannerDismissed(false);
-    setRestoreRequested(false);
   }, [bookmarkId]);
 
   // Save mutation
@@ -122,7 +134,7 @@ export function useReadingProgress({ bookmarkId }: UseReadingProgressOptions) {
   }, []);
 
   const onContinue = useCallback(() => {
-    setRestoreRequested(true);
+    setRestoreRequestedAgain(true);
     setBannerDismissed(true);
   }, []);
 
@@ -137,9 +149,11 @@ export function useReadingProgress({ bookmarkId }: UseReadingProgressOptions) {
     onContinue,
     onDismiss,
     // ScrollProgressTracker props
-    restorePosition: restoreRequested,
+    restorePosition,
     readingProgressOffset: initialOffset,
     readingProgressAnchor: initialAnchor,
+    readingProgressPercent: initialPercent,
+    onRestoreResult,
     onSavePosition,
     onScrollPositionChange,
   };

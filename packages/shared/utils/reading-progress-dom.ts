@@ -41,6 +41,29 @@ const SCROLL_BOTTOM_THRESHOLD = 5;
 /** Minimum interval between scroll position updates (milliseconds) */
 export const SCROLL_THROTTLE_MS = 150;
 
+/** Below this percentage a saved position is not worth returning to. */
+export const MIN_RESUME_PERCENT = 3;
+
+/** At or above this percentage the article was finished; reopen at the top. */
+export const DONE_PERCENT = 95;
+
+/**
+ * Whether a saved position is worth jumping back to on open. A finished article
+ * reopens at the top, and a position a couple of lines in is not worth a jump.
+ */
+export function shouldResumeReading(
+  offset: number | null | undefined,
+  percent: number | null | undefined,
+): boolean {
+  return (
+    offset != null &&
+    offset > 0 &&
+    percent != null &&
+    percent >= MIN_RESUME_PERCENT &&
+    percent < DONE_PERCENT
+  );
+}
+
 /**
  * Scroll position info for determining if user is at bottom of content.
  */
@@ -237,14 +260,16 @@ function getReadingPositionWithViewport(
 /**
  * Scrolls to the position in the content corresponding to the given text offset.
  * Uses anchor text for verification when available, falling back to offset-based lookup.
+ * Returns the element it scrolled to, or null when no position matched (which
+ * happens while the content is still empty, e.g. before the article loads).
  */
 export function scrollToReadingPosition(
   container: HTMLElement,
   offset: number,
   behavior: ScrollBehavior = "smooth",
   anchor?: string | null,
-): boolean {
-  if (offset <= 0) return false;
+): HTMLElement | null {
+  if (offset <= 0) return null;
 
   // Strategy 1: Try to find paragraph by anchor text (most reliable)
   if (anchor) {
@@ -252,7 +277,7 @@ export function scrollToReadingPosition(
       container.querySelectorAll(PARAGRAPH_SELECTOR_STRING),
     );
 
-    let fuzzyMatch: Element | null = null;
+    let fuzzyMatch: HTMLElement | null = null;
     const anchorPrefix = anchor.slice(0, 20);
 
     for (const paragraph of paragraphs) {
@@ -264,7 +289,7 @@ export function scrollToReadingPosition(
       // Exact match - immediate return
       if (paragraphAnchor === anchor) {
         paragraph.scrollIntoView({ behavior, block: "start" });
-        return true;
+        return paragraph as HTMLElement;
       }
 
       // Track first fuzzy match for fallback (first 20 chars match)
@@ -273,13 +298,13 @@ export function scrollToReadingPosition(
         anchor.length >= 20 &&
         paragraphAnchor.startsWith(anchorPrefix)
       ) {
-        fuzzyMatch = paragraph;
+        fuzzyMatch = paragraph as HTMLElement;
       }
     }
 
     if (fuzzyMatch) {
       fuzzyMatch.scrollIntoView({ behavior, block: "start" });
-      return true;
+      return fuzzyMatch;
     }
   }
 
@@ -322,7 +347,7 @@ export function scrollToReadingPosition(
 
       if (targetElement) {
         targetElement.scrollIntoView({ behavior, block: "start" });
-        return true;
+        return targetElement;
       }
       break;
     }
@@ -330,5 +355,5 @@ export function scrollToReadingPosition(
     currentOffset += nodeLength;
   }
 
-  return false;
+  return null;
 }

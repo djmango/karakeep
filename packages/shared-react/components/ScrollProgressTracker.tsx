@@ -29,11 +29,68 @@ interface ScrollProgressTrackerProps {
   restorePosition?: boolean;
   readingProgressOffset?: number | null;
   readingProgressAnchor?: string | null;
+  /** Progress through the article, used to verify a restore near the end. */
+  readingProgressPercent?: number | null;
+  /**
+   * Reports whether the restore landed. The content (and its images) can still
+   * be loading when a restore is asked for, so the caller needs to know when it
+   * could not be applied and has to fall back to asking the reader.
+   */
+  onRestoreResult?: (restored: boolean) => void;
   /** Show a Medium-style reading progress bar at the top */
   showProgressBar?: boolean;
   /** Custom styles for the progress bar container (e.g. positioning overrides) */
   progressBarStyle?: React.CSSProperties;
   children: React.ReactNode;
+}
+
+/**
+ * Backoff for restore attempts. The first attempt is immediate; the rest cover
+ * an article whose HTML, fonts and images are still arriving, because scrolling
+ * a document that is shorter than the saved position only lands part way.
+ */
+const RESTORE_ATTEMPT_DELAYS_MS = [0, 150, 400, 900, 1800, 3000, 5000, 8000];
+
+/** How close to the top of the viewport a restored paragraph has to land. */
+const RESTORE_TOP_TOLERANCE_PX = 8;
+
+/** Above this percentage the page may be unable to scroll the target to the top. */
+const RESTORE_BOTTOM_PERCENT = 90;
+
+/**
+ * Whether a restored paragraph actually landed. A document that is still
+ * loading cannot scroll the target all the way up, which is exactly the case
+ * that used to leave readers at the top; near the end of an article the page
+ * cannot reach the top at all, so being at the maximum offset counts.
+ */
+function isAtRestoredPosition(
+  container: HTMLElement,
+  target: HTMLElement,
+  percent: number | null | undefined,
+): boolean {
+  const scroller = findScrollableParent(container);
+  const isWindowScroll = scroller === document.documentElement;
+  const viewportTop = isWindowScroll ? 0 : scroller.getBoundingClientRect().top;
+
+  if (
+    Math.abs(target.getBoundingClientRect().top - viewportTop) <=
+    RESTORE_TOP_TOLERANCE_PX
+  ) {
+    return true;
+  }
+
+  if (percent == null || percent < RESTORE_BOTTOM_PERCENT) {
+    return false;
+  }
+
+  const scrollTop = isWindowScroll ? window.scrollY : scroller.scrollTop;
+  const scrollHeight = isWindowScroll
+    ? document.body.scrollHeight
+    : scroller.scrollHeight;
+  const clientHeight = isWindowScroll
+    ? window.innerHeight
+    : scroller.clientHeight;
+  return scrollTop + clientHeight >= scrollHeight - 1;
 }
 
 /**
@@ -51,6 +108,8 @@ const ScrollProgressTracker = forwardRef<
     restorePosition,
     readingProgressOffset,
     readingProgressAnchor,
+    readingProgressPercent,
+    onRestoreResult,
     showProgressBar,
     progressBarStyle,
     children,
@@ -65,12 +124,18 @@ const ScrollProgressTracker = forwardRef<
 
   const onSavePositionRef = useRef(onSavePosition);
   const onScrollPositionChangeRef = useRef(onScrollPositionChange);
+  const onRestoreResultRef = useRef(onRestoreResult);
   useEffect(() => {
     onSavePositionRef.current = onSavePosition;
     onScrollPositionChangeRef.current = onScrollPositionChange;
+    onRestoreResultRef.current = onRestoreResult;
   });
 
-  // Restore reading position when triggered
+  // Restore reading position when triggered. The article's HTML, fonts and
+  // images arrive after mount, so one attempt can scroll a document that is
+  // still shorter than the saved position and leave the reader near the top.
+  // Keep trying on a backoff until the paragraph actually lands, and let the
+  // caller know when it never did.
   const hasRestoredRef = useRef(false);
   useEffect(() => {
     if (
@@ -78,24 +143,73 @@ const ScrollProgressTracker = forwardRef<
       hasRestoredRef.current ||
       !readingProgressOffset ||
       readingProgressOffset <= 0
-    )
+    ) {
       return;
+    }
 
-    hasRestoredRef.current = true;
-    const rafId = requestAnimationFrame(() => {
+    let cancelled = false;
+    let timerId: ReturnType<typeof setTimeout> | null = null;
+    let attempt = 0;
+
+    const attemptRestore = () => {
+      if (cancelled) return;
       const container = containerRef.current;
       if (!container) return;
 
-      scrollToReadingPosition(
+      const target = scrollToReadingPosition(
         container,
         readingProgressOffset,
-        "smooth",
+        attempt === 0 ? "smooth" : "auto",
         readingProgressAnchor,
       );
-    });
 
-    return () => cancelAnimationFrame(rafId);
-  }, [restorePosition, readingProgressOffset, readingProgressAnchor]);
+      if (
+        target &&
+        isAtRestoredPosition(container, target, readingProgressPercent)
+      ) {
+        hasRestoredRef.current = true;
+        onRestoreResultRef.current?.(true);
+        return;
+      }
+
+      attempt += 1;
+      if (attempt < RESTORE_ATTEMPT_DELAYS_MS.length) {
+        timerId = setTimeout(
+          attemptRestore,
+          RESTORE_ATTEMPT_DELAYS_MS[attempt],
+        );
+      } else {
+        // Leave hasRestoredRef false so an explicit "continue reading" can try
+        // again once more of the article has loaded.
+        onRestoreResultRef.current?.(false);
+      }
+    };
+
+    // A reader who starts scrolling has taken over; stop moving the page.
+    const cancel = () => {
+      cancelled = true;
+      if (timerId) clearTimeout(timerId);
+    };
+    const cancelEvents = ["touchstart", "wheel", "keydown"] as const;
+    cancelEvents.forEach((event) =>
+      window.addEventListener(event, cancel, { passive: true, once: true }),
+    );
+    const rafId = requestAnimationFrame(attemptRestore);
+
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(rafId);
+      if (timerId) clearTimeout(timerId);
+      cancelEvents.forEach((event) =>
+        window.removeEventListener(event, cancel),
+      );
+    };
+  }, [
+    restorePosition,
+    readingProgressOffset,
+    readingProgressAnchor,
+    readingProgressPercent,
+  ]);
 
   // Scroll tracking — updates the progress bar on every scroll,
   // but only reports position lazily via an idle timer.

@@ -60,6 +60,8 @@ export default function ReaderView({
     restorePosition,
     readingProgressOffset,
     readingProgressAnchor,
+    readingProgressPercent,
+    onRestoreResult,
     onSavePosition,
     onScrollPositionChange,
   } = useReadingProgress({
@@ -139,6 +141,8 @@ export default function ReaderView({
         restorePosition={restorePosition}
         readingProgressOffset={readingProgressOffset}
         readingProgressAnchor={readingProgressAnchor}
+        readingProgressPercent={readingProgressPercent}
+        onRestoreResult={onRestoreResult}
         showProgressBar
         progressBarStyle={progressBarStyle}
       >

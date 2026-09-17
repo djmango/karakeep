@@ -1,5 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Linking, Pressable, TouchableOpacity, View } from "react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  AppState,
+  Linking,
+  Pressable,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import ImageView from "react-native-image-viewing";
 import WebView from "react-native-webview";
 import {
@@ -29,6 +35,7 @@ import {
 import { useReadingProgress } from "@karakeep/shared-react/hooks/reading-progress";
 import { useTRPC, useTRPCClient } from "@karakeep/shared-react/trpc";
 import { BookmarkTypes, ZBookmark } from "@karakeep/shared/types/bookmarks";
+import type { ReadingPosition } from "@karakeep/shared/utils/reading-progress-dom";
 
 import FullPageError from "../FullPageError";
 import FullPageSpinner from "../ui/FullPageSpinner";
@@ -218,11 +225,35 @@ export function BookmarkLinkReaderPreview({
     restorePosition,
     readingProgressOffset,
     readingProgressAnchor,
+    readingProgressPercent,
+    onRestoreResult,
     onSavePosition,
     onScrollPositionChange,
   } = useReadingProgress({
     bookmarkId: bookmark.id,
   });
+
+  // The WebView reports its position as the reader scrolls; keep the latest one
+  // so it can be flushed when the app leaves the foreground, where the WebView
+  // may be torn down before it gets a chance to save.
+  const latestReadingPositionRef = useRef<ReadingPosition | null>(null);
+  const handleScrollPositionChange = useCallback(
+    (position: ReadingPosition) => {
+      latestReadingPositionRef.current = position;
+      onScrollPositionChange(position);
+    },
+    [onScrollPositionChange],
+  );
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (state) => {
+      const position = latestReadingPositionRef.current;
+      if (state !== "active" && position) {
+        onSavePosition(position);
+      }
+    });
+    return () => subscription.remove();
+  }, [onSavePosition]);
 
   const [viewingImage, setViewingImage] = useState<string | null>(null);
   const [htmlContent, setHtmlContent] = useState("");
@@ -362,9 +393,11 @@ export function BookmarkLinkReaderPreview({
         highlights={highlights?.highlights ?? []}
         readingProgressOffset={readingProgressOffset}
         readingProgressAnchor={readingProgressAnchor}
+        readingProgressPercent={readingProgressPercent}
         restoreReadingPosition={restorePosition}
+        onRestoreResult={onRestoreResult}
         onSavePosition={onSavePosition}
-        onScrollPositionChange={onScrollPositionChange}
+        onScrollPositionChange={handleScrollPositionChange}
         onLinkPress={handleLinkPress}
         onImagePress={handleImagePress}
         assetAuth={assetAuth}
