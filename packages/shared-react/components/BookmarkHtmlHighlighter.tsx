@@ -15,6 +15,7 @@ import {
 } from "@karakeep/shared/types/highlights";
 
 import { renderReaderMath } from "../utils/renderReaderMath";
+import HighlightActionBar from "./HighlightActionBar";
 import { HIGHLIGHT_COLOR_MAP } from "./highlights";
 import { Button } from "./ui/button";
 import { Popover, PopoverContent } from "./ui/popover";
@@ -145,6 +146,14 @@ interface HTMLHighlighterProps {
   className?: string;
   highlights?: Highlight[];
   readOnly?: boolean;
+  /**
+   * "popover" floats a Radix popover at the selection, which suits the web app.
+   * "bar" pins an action bar to the bottom of the viewport, which is what the
+   * mobile reader needs: the popover lands exactly where iOS draws its own
+   * selection callout.
+   */
+  variant?: "popover" | "bar";
+  isDark?: boolean;
   onHighlight?: (highlight: Highlight) => void;
   onUpdateHighlight?: (highlight: Highlight) => void;
   onDeleteHighlight?: (highlight: Highlight) => void;
@@ -160,6 +169,8 @@ const BookmarkHTMLHighlighter = forwardRef<
     style,
     highlights = [],
     readOnly = false,
+    variant = "popover",
+    isDark = false,
     onHighlight,
     onUpdateHighlight,
     onDeleteHighlight,
@@ -186,6 +197,7 @@ const BookmarkHTMLHighlighter = forwardRef<
       typeof window !== "undefined" &&
       window.matchMedia("(pointer: coarse)").matches,
   )[0];
+  const isBar = variant === "bar";
 
   // Render LaTeX before highlights so formula DOM is stable for offsets.
   useEffect(() => {
@@ -217,10 +229,21 @@ const BookmarkHTMLHighlighter = forwardRef<
     highlights.forEach((highlight) => {
       applyHighlightByOffset(highlight);
     });
+
+    // A selection waiting for the action bar is not in `highlights` yet. Paint
+    // it now, because the bar mode drops the native selection on capture.
+    if (pendingHighlight) {
+      applyHighlightByOffset(pendingHighlight);
+    }
   });
 
-  // Re-apply the selection when the pending range changes
+  // Re-apply the selection when the pending range changes. Bar mode skips it:
+  // the pending range is painted as a highlight, and adding a range back on iOS
+  // summons the native callout again, which is what the bar exists to avoid.
   useEffect(() => {
+    if (isBar) {
+      return;
+    }
     if (!pendingHighlight) {
       return;
     }
@@ -277,15 +300,25 @@ const BookmarkHTMLHighlighter = forwardRef<
       return;
     }
 
-    // Position the menu based on device type
-    const rect = range.getBoundingClientRect();
-    setMenuPosition({
-      x: rect.left + rect.width / 2, // Center the menu horizontally
-      y: isMobile ? rect.bottom : rect.top, // Position below on mobile, above otherwise
-    });
+    // Position the menu based on device type. The bar is pinned to the bottom
+    // of the viewport, so it needs no geometry at all.
+    if (!isBar) {
+      const rect = range.getBoundingClientRect();
+      setMenuPosition({
+        x: rect.left + rect.width / 2, // Center the menu horizontally
+        y: isMobile ? rect.bottom : rect.top, // Position below on mobile, above otherwise
+      });
+    }
 
     // Store the highlight for later use
     setPendingHighlight(createHighlightFromRange(range, "yellow"));
+
+    if (isBar) {
+      // The range is captured, so the native selection can go. Leaving it up
+      // keeps the iOS callout on screen, where it covers the bar and swallows
+      // the first tap on it.
+      window.getSelection()?.removeAllRanges();
+    }
   };
 
   const handleSave = (color: ZHighlightColor, note: string | null) => {
@@ -427,14 +460,32 @@ const BookmarkHTMLHighlighter = forwardRef<
         )}
         style={style}
       />
-      <HighlightForm
-        position={menuPosition}
-        selectedHighlight={selectedHighlight || pendingHighlight}
-        onClose={closeForm}
-        onSave={handleSave}
-        onDelete={selectedHighlight ? handleDelete : undefined}
-        isMobile={isMobile}
-      />
+      {isBar ? (
+        (pendingHighlight || selectedHighlight) && (
+          <HighlightActionBar
+            key={selectedHighlight ? selectedHighlight.id : "pending"}
+            mode={pendingHighlight ? "create" : "edit"}
+            initialColor={
+              (pendingHighlight ?? selectedHighlight)?.color ?? "yellow"
+            }
+            initialNote={(pendingHighlight ?? selectedHighlight)?.note}
+            text={(pendingHighlight ?? selectedHighlight)?.text}
+            isDark={isDark}
+            onSave={handleSave}
+            onDelete={selectedHighlight ? handleDelete : undefined}
+            onCancel={closeForm}
+          />
+        )
+      ) : (
+        <HighlightForm
+          position={menuPosition}
+          selectedHighlight={selectedHighlight || pendingHighlight}
+          onClose={closeForm}
+          onSave={handleSave}
+          onDelete={selectedHighlight ? handleDelete : undefined}
+          isMobile={isMobile}
+        />
+      )}
     </div>
   );
 });

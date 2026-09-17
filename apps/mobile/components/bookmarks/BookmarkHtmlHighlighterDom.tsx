@@ -229,6 +229,8 @@ export default function BookmarkHtmlHighlighterDom({
           htmlContent={htmlContent}
           highlights={highlights}
           readOnly={readOnly}
+          variant="bar"
+          isDark={isDark}
           onHighlight={onHighlight}
           onUpdateHighlight={onUpdateHighlight}
           onDeleteHighlight={onDeleteHighlight}
