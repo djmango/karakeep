@@ -116,5 +116,13 @@ xcodebuild \
   -allowProvisioningUpdates \
   "${auth_args[@]}"
 
-find "$export_dir" -name "*.ipa" -maxdepth 1 | sed 's/^/   IPA: /'
+# destination=upload sends the archive straight to App Store Connect, so -exportPath
+# is never populated and the directory may not even exist. Do not require it:
+# `find` on a missing path exits 1, which under `set -e` failed the whole job AFTER
+# a successful upload.
+if [[ -d "$export_dir" ]]; then
+  find "$export_dir" -maxdepth 1 -name "*.ipa" | sed 's/^/   IPA: /'
+else
+  echo "   No local IPA: this export uploaded the archive straight to App Store Connect."
+fi
 echo "Done. TestFlight processes the build over the next few minutes."
