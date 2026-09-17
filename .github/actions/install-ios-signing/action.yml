@@ -77,6 +77,34 @@ runs:
         tar -xzf "$ARCHIVE" -C "$PROFILES_DIR"
         echo "Installed $(find "$PROFILES_DIR" -name '*.mobileprovision' | wc -l | tr -d ' ') provisioning profile(s)."
 
+    # An archive is signed twice: intermediate build steps use the development
+    # identity, the exported IPA uses the distribution one. With automatic
+    # signing on a fresh runner, both need a private key present, or Xcode tries
+    # to mint a certificate and hits the account's limit ("Choose a certificate
+    # to revoke") - which is why the earlier runs failed asking for an iOS App
+    # Development profile. Import a development identity as well when one is
+    # supplied; skip quietly when it is not, since a distribution-only run is
+    # still valid.
+    - name: Import the development certificate (optional)
+      if: ${{ env.IOS_DEVELOPMENT_CERTIFICATE_BASE64 != '' }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        KEYCHAIN_PASSWORD="${IOS_KEYCHAIN_PASSWORD:-karakeep-ci-keychain}"
+        KEYCHAIN_PATH="$RUNNER_TEMP/karakeep-ios.keychain-db"
+        CERTIFICATE_PATH="$RUNNER_TEMP/ios-development.p12"
+        echo "$IOS_DEVELOPMENT_CERTIFICATE_BASE64" | base64 --decode > "$CERTIFICATE_PATH"
+        security import "$CERTIFICATE_PATH" \
+          -P "$IOS_DEVELOPMENT_CERTIFICATE_PASSWORD" \
+          -A -t cert -f pkcs12 \
+          -k "$KEYCHAIN_PATH"
+        security set-key-partition-list \
+          -S apple-tool:,apple:,codesign: \
+          -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+        rm -f "$CERTIFICATE_PATH"
+        echo "Identities now in the build keychain:"
+        security find-identity -v -p codesigning "$KEYCHAIN_PATH" | tail -n +2
+
     - name: Install App Store Connect API key
       shell: bash
       run: |

@@ -74,6 +74,8 @@ jobs:
         env:
           IOS_DISTRIBUTION_CERTIFICATE_BASE64: ${{ secrets.IOS_DISTRIBUTION_CERTIFICATE_BASE64 }}
           IOS_DISTRIBUTION_CERTIFICATE_PASSWORD: ${{ secrets.IOS_DISTRIBUTION_CERTIFICATE_PASSWORD }}
+          IOS_DEVELOPMENT_CERTIFICATE_BASE64: ${{ secrets.IOS_DEVELOPMENT_CERTIFICATE_BASE64 }}
+          IOS_DEVELOPMENT_CERTIFICATE_PASSWORD: ${{ secrets.IOS_DEVELOPMENT_CERTIFICATE_PASSWORD }}
           # The action also installs the API key itself (into
           # ~/.appstoreconnect/private_keys, under the name Xcode looks for),
           # so it needs the raw value, not just the path the previous step set.

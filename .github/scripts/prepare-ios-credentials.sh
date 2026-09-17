@@ -55,31 +55,38 @@ if [[ ! "$APP_STORE_CONNECT_API_ISSUER_ID" =~ ^[0-9a-fA-F-]{36}$ ]]; then
   exit 1
 fi
 
-# The archive is only signed if a distribution identity is present. Automatic
-# signing cannot mint one on a fresh runner: the key it creates dies with the
-# runner, and a new run then hits the account's certificate limit (that is
-# exactly how the first two runs failed). A stored p12 gives every run the same
-# identity, so check it is really a p12 before promising the archive step one.
-have_cert=false
-if [[ -n "${IOS_DISTRIBUTION_CERTIFICATE_BASE64:-}" ]]; then
-  if [[ -z "${IOS_DISTRIBUTION_CERTIFICATE_PASSWORD:-}" ]]; then
-    echo "::error::IOS_DISTRIBUTION_CERTIFICATE_BASE64 is set but IOS_DISTRIBUTION_CERTIFICATE_PASSWORD is not."
+# The archive is signed twice: intermediate build steps take the development
+# identity, the export takes the distribution one. Automatic signing cannot mint
+# either on a fresh runner (the key dies with the runner, and the next run hits
+# the account's certificate limit), so a stored p12 per identity is what makes
+# the build signable. Check the decoded bytes, not the text: a p12 is binary, so
+# any text-shaped test rejects a good value. A PKCS#12 file is a DER SEQUENCE
+# (0x30 0x82) of a few KB.
+check_p12() {  # <base64 var name> <password var name>; returns 1 when absent
+  local b64_name=$1 pw_name=$2 b64="${!1:-}" pw="${!2:-}"
+  [[ -n "$b64" ]] || return 1
+  if [[ -z "$pw" ]]; then
+    echo "::error::$b64_name is set but $pw_name is not."
     exit 1
   fi
-  # Check the decoded bytes, not the text: a p12 is binary, so any text-shaped
-  # test (grep for a character, base64 of the base64) rejects a good value. A
-  # PKCS#12 file is a DER SEQUENCE (0x30 0x82) of a few KB.
-  decoded_bytes="${RUNNER_TEMP:-/tmp}/ios-distribution.check.p12"
-  printf '%s' "$IOS_DISTRIBUTION_CERTIFICATE_BASE64" | base64 --decode > "$decoded_bytes" 2>/dev/null || true
-  magic=$(od -An -tx1 -N2 "$decoded_bytes" 2>/dev/null | tr -d ' \n')
-  size=$(wc -c < "$decoded_bytes" 2>/dev/null | tr -d ' ')
-  rm -f "$decoded_bytes"
+  local probe="${RUNNER_TEMP:-/tmp}/ios-${b64_name}.probe.p12"
+  printf '%s' "$b64" | base64 --decode > "$probe" 2>/dev/null || true
+  local magic size
+  magic=$(od -An -tx1 -N2 "$probe" 2>/dev/null | tr -d ' \n')
+  size=$(wc -c < "$probe" 2>/dev/null | tr -d ' ')
+  rm -f "$probe"
   if [[ "$magic" != "3082" || "${size:-0}" -lt 1000 ]]; then
-    echo "::error::IOS_DISTRIBUTION_CERTIFICATE_BASE64 is not a PKCS#12 file (magic=${magic:-none}, ${size:-0} bytes)."
+    echo "::error::$b64_name is not a PKCS#12 file (magic=${magic:-none}, ${size:-0} bytes)."
     exit 1
   fi
+  return 0
+}
+
+have_cert=false
+if check_p12 IOS_DISTRIBUTION_CERTIFICATE_BASE64 IOS_DISTRIBUTION_CERTIFICATE_PASSWORD; then
   have_cert=true
 fi
+check_p12 IOS_DEVELOPMENT_CERTIFICATE_BASE64 IOS_DEVELOPMENT_CERTIFICATE_PASSWORD || true
 
 {
   echo "APP_STORE_CONNECT_API_KEY_PATH=$key_path"
