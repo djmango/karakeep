@@ -86,6 +86,15 @@ jobs:
       - name: Archive, export, and upload to TestFlight
         env:
           KARAKEEP_TESTFLIGHT_UPLOAD: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.upload) }}
+          # The Sentry React Native build phase (sentry-xcode.sh) uploads source
+          # maps to sentry.io while the archive runs. This job holds no
+          # SENTRY_AUTH_TOKEN, so that upload always fails and, without this,
+          # the phase exits 1 and takes the whole archive with it. The variable
+          # is Sentry's documented knob for exactly this: the phase skips the
+          # upload and still runs the React Native bundling step, so a genuine
+          # bundling failure still fails the build. It mirrors the
+          # SENTRY_DISABLE_AUTO_UPLOAD that eas.json's production profile sets.
+          SENTRY_DISABLE_AUTO_UPLOAD: "true"
         run: bash .github/scripts/karakeep-ios-archive.sh
 
       - name: Upload IPA artifact
