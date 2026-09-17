@@ -55,7 +55,10 @@ if [[ ! -d "$ios_dir/Karakeep.xcodeproj" ]]; then
   exit 1
 fi
 
-echo "→ Setting the build number to $build_number…"
+# Braces are load-bearing: the runner's bash treats high bytes as valid
+# identifier characters, so `$build_number…` parses as a variable named
+# "build_number…" and dies with `unbound variable` under `set -u`.
+echo "→ Setting the build number to ${build_number}…"
 # The app's Info.plist pins CFBundleVersion literally; the extension reads the
 # build setting, so both have to move together.
 /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $build_number" "$ios_dir/Karakeep/Info.plist"
