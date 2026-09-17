@@ -32,6 +32,12 @@ interface ScrollProgressTrackerProps {
   /** Progress through the article, used to verify a restore near the end. */
   readingProgressPercent?: number | null;
   /**
+   * Identity of the rendered article. A reader that swaps the content (a fresh
+   * sync, a re-crawl, offline assets arriving) replaces the DOM, which throws
+   * the scroll back to the top; the change is the signal to restore again.
+   */
+  contentKey?: string;
+  /**
    * Reports whether the restore landed. The content (and its images) can still
    * be loading when a restore is asked for, so the caller needs to know when it
    * could not be applied and has to fall back to asking the reader.
@@ -54,8 +60,19 @@ const RESTORE_ATTEMPT_DELAYS_MS = [0, 150, 400, 900, 1800, 3000, 5000, 8000];
 /** How close to the top of the viewport a restored paragraph has to land. */
 const RESTORE_TOP_TOLERANCE_PX = 8;
 
+/** How close to the top of the scroller counts as "thrown back to the top". */
+const AT_TOP_TOLERANCE_PX = 24;
+
 /** Above this percentage the page may be unable to scroll the target to the top. */
 const RESTORE_BOTTOM_PERCENT = 90;
+
+/** Whether the scroller is still where it started. */
+function isAtTop(container: HTMLElement): boolean {
+  const scroller = findScrollableParent(container);
+  const scrollTop =
+    scroller === document.documentElement ? window.scrollY : scroller.scrollTop;
+  return scrollTop <= AT_TOP_TOLERANCE_PX;
+}
 
 /**
  * Whether a restored paragraph actually landed. A document that is still
@@ -109,6 +126,7 @@ const ScrollProgressTracker = forwardRef<
     readingProgressOffset,
     readingProgressAnchor,
     readingProgressPercent,
+    contentKey,
     onRestoreResult,
     showProgressBar,
     progressBarStyle,
@@ -137,6 +155,32 @@ const ScrollProgressTracker = forwardRef<
   // Keep trying on a backoff until the paragraph actually lands, and let the
   // caller know when it never did.
   const hasRestoredRef = useRef(false);
+
+  // Replacing the article resets the scroll to the top. When that happens after
+  // the position was restored, and the reader has not scrolled since, put them
+  // back; a reader who moved away is left where they are.
+  const contentKeyRef = useRef(contentKey);
+  const [restoreNonce, setRestoreNonce] = useState(0);
+  useEffect(() => {
+    if (contentKeyRef.current === contentKey) {
+      return;
+    }
+    contentKeyRef.current = contentKey;
+    const container = containerRef.current;
+    if (
+      !container ||
+      !restorePosition ||
+      !hasRestoredRef.current ||
+      !readingProgressOffset ||
+      readingProgressOffset <= 0 ||
+      !isAtTop(container)
+    ) {
+      return;
+    }
+    hasRestoredRef.current = false;
+    setRestoreNonce((nonce) => nonce + 1);
+  }, [contentKey, restorePosition, readingProgressOffset]);
+
   useEffect(() => {
     if (
       !restorePosition ||
@@ -209,6 +253,7 @@ const ScrollProgressTracker = forwardRef<
     readingProgressOffset,
     readingProgressAnchor,
     readingProgressPercent,
+    restoreNonce,
   ]);
 
   // Scroll tracking — updates the progress bar on every scroll,

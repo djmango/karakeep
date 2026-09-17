@@ -142,6 +142,7 @@ export default function ReaderView({
         readingProgressOffset={readingProgressOffset}
         readingProgressAnchor={readingProgressAnchor}
         readingProgressPercent={readingProgressPercent}
+        contentKey={cachedContent || ""}
         onRestoreResult={onRestoreResult}
         showProgressBar
         progressBarStyle={progressBarStyle}

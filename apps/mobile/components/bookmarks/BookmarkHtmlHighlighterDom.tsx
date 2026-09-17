@@ -228,6 +228,7 @@ export default function BookmarkHtmlHighlighterDom({
         readingProgressOffset={readingProgressOffset}
         readingProgressAnchor={readingProgressAnchor}
         readingProgressPercent={readingProgressPercent}
+        contentKey={htmlContent}
         onRestoreResult={onRestoreResult}
         showProgressBar
         progressBarStyle={{ position: "fixed" }}

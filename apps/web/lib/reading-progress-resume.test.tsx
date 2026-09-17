@@ -52,6 +52,12 @@ beforeAll(() => {
 
 beforeEach(() => {
   paragraphTop = 0;
+  // Always a fresh window scroll position: jsdom never scrolls, the tests do.
+  Object.defineProperty(window, "scrollY", {
+    value: 0,
+    writable: true,
+    configurable: true,
+  });
   vi.clearAllMocks();
   // Keep the stubbed requestAnimationFrame (a 0ms timeout) deterministic
   // instead of letting fake timers replace it with a 16ms frame clock.
@@ -71,6 +77,7 @@ const renderTracker = (props: {
   offset: number;
   anchor?: string | null;
   percent?: number | null;
+  contentKey?: string;
   body?: React.ReactNode;
   onRestoreResult: (restored: boolean) => void;
 }) =>
@@ -80,9 +87,28 @@ const renderTracker = (props: {
       readingProgressOffset={props.offset}
       readingProgressAnchor={props.anchor ?? null}
       readingProgressPercent={props.percent ?? null}
+      contentKey={props.contentKey ?? "v1"}
       onRestoreResult={props.onRestoreResult}
     >
       {props.body ?? <p>{ANCHOR}</p>}
+    </ScrollProgressTracker>,
+  );
+
+/** The reader replaces the article, which drops the scroll back to the top. */
+const swapContent = (
+  rerender: (ui: React.ReactElement) => void,
+  props: { offset: number; anchor: string; contentKey: string },
+  onRestoreResult: (restored: boolean) => void,
+) =>
+  rerender(
+    <ScrollProgressTracker
+      restorePosition
+      readingProgressOffset={props.offset}
+      readingProgressAnchor={props.anchor}
+      contentKey={props.contentKey}
+      onRestoreResult={onRestoreResult}
+    >
+      <p>{ANCHOR}</p>
     </ScrollProgressTracker>,
   );
 
@@ -157,5 +183,70 @@ describe("restoring the reading position", () => {
     // No further attempts, and no failure report either: the reader took over.
     expect(Element.prototype.scrollIntoView).toHaveBeenCalledTimes(1);
     expect(onRestoreResult).not.toHaveBeenCalled();
+  });
+
+  it("puts the reader back after a content swap throws the scroll to the top", async () => {
+    const onRestoreResult = vi.fn();
+    const { rerender } = renderTracker({
+      offset: 5000,
+      anchor: ANCHOR,
+      percent: 42,
+      onRestoreResult,
+    });
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(50);
+    });
+    expect(onRestoreResult).toHaveBeenCalledWith(true);
+    expect(Element.prototype.scrollIntoView).toHaveBeenCalledTimes(1);
+
+    // A fresh sync swaps the article in; the reader is back at the top.
+    await act(async () => {
+      swapContent(
+        rerender,
+        { offset: 5000, anchor: ANCHOR, contentKey: "v2" },
+        onRestoreResult,
+      );
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(50);
+    });
+
+    expect(Element.prototype.scrollIntoView).toHaveBeenCalledTimes(2);
+    expect(onRestoreResult).toHaveBeenLastCalledWith(true);
+  });
+
+  it("leaves a reader who scrolled away alone when the content is swapped", async () => {
+    const onRestoreResult = vi.fn();
+    const { rerender } = renderTracker({
+      offset: 5000,
+      anchor: ANCHOR,
+      percent: 42,
+      onRestoreResult,
+    });
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(50);
+    });
+    expect(Element.prototype.scrollIntoView).toHaveBeenCalledTimes(1);
+
+    // They have read past the restored paragraph and are deep in the article.
+    Object.defineProperty(window, "scrollY", {
+      value: 4200,
+      writable: true,
+      configurable: true,
+    });
+
+    await act(async () => {
+      swapContent(
+        rerender,
+        { offset: 5000, anchor: ANCHOR, contentKey: "v2" },
+        onRestoreResult,
+      );
+      await vi.advanceTimersByTimeAsync(30_000);
+    });
+
+    expect(Element.prototype.scrollIntoView).toHaveBeenCalledTimes(1);
+    expect(onRestoreResult).toHaveBeenCalledTimes(1);
   });
 });
