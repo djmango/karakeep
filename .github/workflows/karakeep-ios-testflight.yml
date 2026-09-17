@@ -54,18 +54,21 @@ jobs:
         with:
           node-version: 24
 
-      - name: Install sops
-        run: |
-          brew install sops
-          sops --version
-
-      - name: Decrypt shared Apple team secrets
+      # Two credential sources, in this order: the sops team file (which also
+      # carries the distribution certificate), or the App Store Connect API key
+      # kept directly as repository secrets, in which case Xcode's automatic
+      # signing provisions the certificate and profiles from the API key alone.
+      - name: Provide App Store Connect credentials
         env:
           SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
           SOPS_AGE_SSH_PRIVATE_KEY: ${{ secrets.SOPS_AGE_SSH_PRIVATE_KEY }}
-        run: bash .github/scripts/decrypt-apple-ci.sh
+          APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          APP_STORE_CONNECT_API_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_ISSUER_ID }}
+        run: bash .github/scripts/prepare-ios-credentials.sh
 
       - uses: ./.github/actions/install-ios-signing
+        if: env.HAVE_SIGNING_CERT == 'true'
 
       - name: Archive, export, and upload to TestFlight
         env:
