@@ -62,13 +62,20 @@ fi
 # identity, so check it is really a p12 before promising the archive step one.
 have_cert=false
 if [[ -n "${IOS_DISTRIBUTION_CERTIFICATE_BASE64:-}" ]]; then
-  if ! printf '%s' "$IOS_DISTRIBUTION_CERTIFICATE_BASE64" | base64 --decode 2>/dev/null \
-      | head -c 2 | grep -q .; then
-    echo "::error::IOS_DISTRIBUTION_CERTIFICATE_BASE64 is not valid base64."
-    exit 1
-  fi
   if [[ -z "${IOS_DISTRIBUTION_CERTIFICATE_PASSWORD:-}" ]]; then
     echo "::error::IOS_DISTRIBUTION_CERTIFICATE_BASE64 is set but IOS_DISTRIBUTION_CERTIFICATE_PASSWORD is not."
+    exit 1
+  fi
+  # Check the decoded bytes, not the text: a p12 is binary, so any text-shaped
+  # test (grep for a character, base64 of the base64) rejects a good value. A
+  # PKCS#12 file is a DER SEQUENCE (0x30 0x82) of a few KB.
+  decoded_bytes="${RUNNER_TEMP:-/tmp}/ios-distribution.check.p12"
+  printf '%s' "$IOS_DISTRIBUTION_CERTIFICATE_BASE64" | base64 --decode > "$decoded_bytes" 2>/dev/null || true
+  magic=$(od -An -tx1 -N2 "$decoded_bytes" 2>/dev/null | tr -d ' \n')
+  size=$(wc -c < "$decoded_bytes" 2>/dev/null | tr -d ' ')
+  rm -f "$decoded_bytes"
+  if [[ "$magic" != "3082" || "${size:-0}" -lt 1000 ]]; then
+    echo "::error::IOS_DISTRIBUTION_CERTIFICATE_BASE64 is not a PKCS#12 file (magic=${magic:-none}, ${size:-0} bytes)."
     exit 1
   fi
   have_cert=true
